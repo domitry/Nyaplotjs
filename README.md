@@ -1,0 +1,4 @@
+Ecolijs
+=======
+
+JavaScript plotting library
