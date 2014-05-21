@@ -1,0 +1,20 @@
+<html lang='en'>
+<head>
+  <title>Ecolijs example -- Histogram</title>
+  <script src='d3'></script>
+  <script src='../release/ecoli.min.js'></script>
+</head>
+<body>
+<div id='vis'></div>
+<script>
+models = {
+data: {type1:{val1:50}, type2:{val1:20}, type3:{val1:4}, type4:{val1:12}},
+panes: [
+{type:'rectangular', diagrams:[{type: 'rect', y:'val1'}], width:500, height:500}
+]};
+window.onload = function(){
+Ecoli.core.parse(models, '#vis');
+}
+</script>
+</body>
+</html>
