@@ -10,14 +10,14 @@ module.exports = function(grunt){
                     startFile: 'src/wrap/start.js',
                     endFile: 'src/wrap/end.js'
                 }
-	    },
+	    },/*
             production: {
                 options: {
 		    optimizeAllPluginResources: true,
 		    optimize: 'uglify2',
 		    out: "release/ecoli.min.js"
 		}
-	    },
+	    },*/
             development: {
 		options: {
                     optimize: "none",
