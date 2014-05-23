@@ -6,7 +6,7 @@ define([
 	    _.extend(options,{
 		width:0,
 		height:0,
-		stroke_color:#000000
+		stroke_color:"#000000"
 	    });
 	}
 
