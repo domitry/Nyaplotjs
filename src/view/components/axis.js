@@ -36,17 +36,14 @@ define([
 
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;
+	this.model = parent.selectAll(".x_axis,.y_axis");
 
 	return this;
     }
 
-    Axis.prototype.zoom(){
-	svg.select(".x_axis").call(this.xAxis);
-	svg.select(".y_axis").call(this.yAxis);
-    }
-
-    Axis.prototype.update(data){
-	// axes do not depend on any data.
+    Axis.prototype.zoom = function(){
+	this.model.select(".x_axis").call(this.xAxis);
+	this.model.select(".y_axis").call(this.yAxis);
     }
 
     return Axis;
