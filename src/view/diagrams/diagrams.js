@@ -1,7 +1,7 @@
 define(function(require, exports, module){
     diagrams = {};
 
-    diagrams.rect = require('view/diagrams/rect');
+    diagrams.bar = require('view/diagrams/bar');
 
     return diagrams;
 });

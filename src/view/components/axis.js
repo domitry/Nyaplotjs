@@ -1,14 +1,14 @@
 define([
     'underscore'
 ],function(_){
-    function Axis(parent, scales, options){
-	if(arguments.length>2){
-	    _.extend(options,{
-		width:0,
-		height:0,
-		stroke_color:"#000000"
-	    });
-	}
+    function Axis(parent, scales, _options){
+	options = {
+	    width:0,
+	    height:0,
+	    stroke_color:"#000000"
+	};
+
+	if(arguments.length>2)_.extend(options, _options);
 
 	var xAxis = d3.svg.axis()
 	    .scale(scales.x)

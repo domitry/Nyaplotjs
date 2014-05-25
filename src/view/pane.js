@@ -1,20 +1,25 @@
 define([
     'underscore',
-    'view/diagrams/diagrams'
-],function(_, diagrams){
-    function Pane(parent, options){
-	if(arguments.length>2){
-	    _.extend(options, {
-		width: 500,
-		height: 500,
-		margin: {top: 20, bottom: 20, left: 20, right: 20},
-		zoom: true
-	    });
-	}
+    'view/diagrams/diagrams',
+    'view/components/axis'
+],function(_, diagrams, Axis){
+    function Pane(parent, _options){
+	options = {
+	    width: 500,
+	    height: 500,
+	    margin: {top: 20, bottom: 20, left: 20, right: 20},
+	    xrange: [0,0],
+	    yrange: [0,0],
+	    zoom: true
+	};
+	if(arguments.length>1)_.extend(options, _options);
 
 	var model = parent.append("svg")
 	    .attr("width", options.width)
 	    .attr("height", options.height)
+
+	var inner_width = options.width - options.margin.left - options.margin.right;
+	var inner_height = options.height - options.margin.top - options.margin.bottom;
 
 	model.append("g")
 	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
@@ -24,25 +29,37 @@ define([
 	    .append("rect")
 	    .attr("x", 0)
 	    .attr("y", 0)
-	    .attr("width", options.width - options.margin.left - options.margin.right)
-	    .attr("height", options.height - options.margin.top - options.margin.bottom)
+	    .attr("width", inner_width)
+	    .attr("height", inner_height)
+
+	ranges = {x:[0,inner_width], y:[inner_height,0]}
+	scales = {};
+
+	_.each({x:'xrange',y:'yrange'},function(val, key){
+	    if(options[val].length > 2)
+		scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
+	    else
+		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
+	});
+
+	axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
 
 	this.model = model;
-	this.scales = {
-	    x:d3.scale.linear().domain(0,1).range(0,this.options.width),
-	    y:d3.scale.linear().domain(0,1).range(0,this.options.height)
-	};
+	this.diagrams = [];
+	this.options = options;
+	this.axis = axis;
+	this.scales = scales;
 
 	return this;
     }
 
     Pane.prototype.add = function(type, data, options){
+	parent = this.model.select(".context");
+	scales = this.scales;
 
+	diagram = new diagrams[type](parent, scales, data, options);
+	this.diagrams.push(diagram);
     };
-
-    Pane.prototype.render = function(){
-	new diagrams[type](this.model.select(".context"), data, scales, options);
-    }
 
     return Pane;
 });

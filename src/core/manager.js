@@ -3,12 +3,18 @@ define([
 ], function(_){
     var Manager = {data_frames: {}, panes: []};
 
-    Manager.addData = function(name, data){
-	_.extend(this.data_frames, {name:data});
+    Manager.addData = function(name, df){
+	entry = {};
+	entry[name] = df;
+	_.extend(this.data_frames, entry);
+    }
+
+    Manager.getData = function(name){
+	return this.data_frames[name];
     }
 
     Manager.addPane = function(pane){
-	this.panes.append(pane);
+	this.panes.push(pane);
     }
 
     Manager.selected = function(data_id, rows){

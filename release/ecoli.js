@@ -1770,8 +1770,269 @@ define("../lib/almond/almond", function(){});
   }
 }).call(this);
 
-define('core/parse',['underscore'],function(_){
+define('core/manager',[
+    "underscore"
+], function(_){
+    var Manager = {data_frames: {}, panes: []};
 
+    Manager.addData = function(name, df){
+	entry = {};
+	entry[name] = df;
+	_.extend(this.data_frames, entry);
+    }
+
+    Manager.getData = function(name){
+	return this.data_frames[name];
+    }
+
+    Manager.addPane = function(pane){
+	this.panes.push(pane);
+    }
+
+    Manager.selected = function(data_id, rows){
+	
+    }
+
+    Manager.updateData = function(data_id, column_name, value){
+
+    }
+
+    return Manager;
+});
+
+define('view/diagrams/bar',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+    function Bar(parent, scales, data, _options){
+	options = {
+	    x: null,
+	    y: null,
+	    width: 1.0,
+	    color:'#ff0000'
+	};
+	if(arguments.length>3)_.extend(options, _options);
+
+	var df = Manager.getData(data);
+	var raw_data = _.map(
+	    _.zip(df.column(options.x), df.column(options.y)),
+	    function(d, i){return {i:i,x:d[0], y:d[1]};}
+	);
+
+	width = scales.x.rangeBand()*options.width;
+
+	model = parent.append("g");
+	model.selectAll("rect")
+	    .data(raw_data)
+	    .enter()
+	    .append("rect")
+	    .attr("x",function(d){return (scales.x(d.x))})
+	    .attr("y", function(d){return (_.max(scales.y.range()) - scales.y(d.y))})
+	    .attr("width", width)
+	    .attr("height", function(d){return scales.y(d.y);})
+	    .attr("fill", options.color);
+	
+	this.model = model;
+	this.df = df;
+
+	return this;
+    }
+
+    Bar.prototype.clear = function(){
+	this.model.selectAll("rect")
+	    .data([])
+	    .exit();
+    }
+
+    Bar.prototype.update = function(scales){
+
+    }
+
+    return Bar;
+});
+
+define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar'],function(require, exports, module){
+    diagrams = {};
+
+    diagrams.bar = require('view/diagrams/bar');
+
+    return diagrams;
+});
+
+define('view/components/axis',[
+    'underscore'
+],function(_){
+    function Axis(parent, scales, _options){
+	options = {
+	    width:0,
+	    height:0,
+	    stroke_color:"#000000"
+	};
+
+	if(arguments.length>2)_.extend(options, _options);
+
+	var xAxis = d3.svg.axis()
+	    .scale(scales.x)
+	    .orient("bottom")
+	    .tickSize((-1)*options.height)
+
+	var yAxis = d3.svg.axis()
+	    .scale(scales.y)
+	    .orient("left")
+	    .tickSize((-1)*options.width)
+
+	parent.append("g")
+	    .attr("class", "x_axis")
+	    .attr("transform", "translate(0," + options.height + ")")
+	    .call(xAxis)
+
+	parent.append("g")
+	    .attr("class", "y_axis")
+	    .call(yAxis)
+
+	parent.selectAll(".x_axis, .y_axis")
+	    .selectAll("path, line")
+	    .style("fill","none")
+	    .style("stroke",options.stroke_color)
+
+	this.xAxis = xAxis;
+	this.yAxis = yAxis;
+	this.model = parent.selectAll(".x_axis,.y_axis");
+
+	return this;
+    }
+
+    Axis.prototype.zoom = function(){
+	this.model.select(".x_axis").call(this.xAxis);
+	this.model.select(".y_axis").call(this.yAxis);
+    }
+
+    return Axis;
+});
+
+define('view/pane',[
+    'underscore',
+    'view/diagrams/diagrams',
+    'view/components/axis'
+],function(_, diagrams, Axis){
+    function Pane(parent, _options){
+	options = {
+	    width: 500,
+	    height: 500,
+	    margin: {top: 20, bottom: 20, left: 20, right: 20},
+	    xrange: [0,0],
+	    yrange: [0,0],
+	    zoom: true
+	};
+	if(arguments.length>1)_.extend(options, _options);
+
+	var model = parent.append("svg")
+	    .attr("width", options.width)
+	    .attr("height", options.height)
+
+	var inner_width = options.width - options.margin.left - options.margin.right;
+	var inner_height = options.height - options.margin.top - options.margin.bottom;
+
+	model.append("g")
+	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
+	    .append("g")
+	    .attr("class", "context")
+	    .append("clipPath")
+	    .append("rect")
+	    .attr("x", 0)
+	    .attr("y", 0)
+	    .attr("width", inner_width)
+	    .attr("height", inner_height)
+
+	ranges = {x:[0,inner_width], y:[inner_height,0]}
+	scales = {};
+
+	_.each({x:'xrange',y:'yrange'},function(val, key){
+	    if(options[val].length > 2)
+		scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
+	    else
+		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
+	});
+
+	axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+
+	this.model = model;
+	this.diagrams = [];
+	this.options = options;
+	this.axis = axis;
+	this.scales = scales;
+
+	return this;
+    }
+
+    Pane.prototype.add = function(type, data, options){
+	parent = this.model.select(".context");
+	scales = this.scales;
+
+	diagram = new diagrams[type](parent, scales, data, options);
+	this.diagrams.push(diagram);
+    };
+
+    return Pane;
+});
+
+define('utils/dataframe',[
+    'underscore'
+],function(_){
+    function Dataframe(name, data){
+	this.raw = data;
+	return this;
+    }
+    
+    Dataframe.prototype.row = function(num){
+	return this.raw[num];
+    }
+
+    Dataframe.prototype.column = function(label){
+	arr = [];
+	_.each(this.raw, function(row){arr.push(row[label]);});
+	return arr;
+    }
+
+    Dataframe.prototype.columnRange = function(label){
+	column = this.column(label);
+	return {
+	    max: d3.max(column, function(val){return val;}),
+	    min: d3.min(column, function(val){return val;})
+	}
+    }
+
+    return Dataframe;
+});
+
+define('core/parse',[
+    'underscore',
+    'core/manager',
+    'view/pane',
+    'utils/dataframe'
+],function(_, Manager, Pane, Dataframe){
+    function parse(model, element_name){
+
+	element = d3.select(element_name);
+
+	_.each(model.data, function(value, name){
+	    Manager.addData(name, new Dataframe(name, value));
+	});
+
+	_.each(model.panes, function(pane_model){
+	    var pane = new Pane(element, pane_model.options);
+	    var data_list = [];
+
+	    _.each(pane_model.diagrams, function(diagram){
+		pane.add(diagram.type, diagram.data, diagram.options);
+		data_list.push(diagram.data);
+	    });
+
+	    Manager.addPane({pane:pane, data: data_list});
+	});
+    }
+
+    return parse;
 });
 
 define('main',['require','exports','module','core/parse'],function(require, exports, module){

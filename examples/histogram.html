@@ -1,14 +1,14 @@
 <html lang='en'>
 <head>
   <title>Ecolijs example -- Histogram</title>
-  <script src='d3'></script>
-  <script src='../release/ecoli.min.js'></script>
+  <script src='http://d3js.org/d3.v3.min.js'></script>
+  <script src='../release/ecoli.js'></script>
 </head>
 <body>
 <div id='vis'></div>
 <script>
-models = {data:{data1: [{name:'type1',val1:50,val2:13}, {name:'type2',val1:20,val2:25}, {name:'type3',val1:4,val2:11}, {name:'type4',val1:12,val2:34}]},panes: [{type:'rectangular', diagrams:[{type: 'rect', data: 'data1', options:{ y:'val1'}}],options:{width:500, height:500}}]};
-window.onload = function(){Ecoli.core.parse(models, '#vis');}
+models = {data:{data1: [{name:'type1',val1:50,val2:13}, {name:'type2',val1:20,val2:25}, {name:'type3',val1:4,val2:11}, {name:'type4',val1:12,val2:34}]},panes: [{type:'rectangular', diagrams:[{type: 'bar', data: 'data1', options: {x:'name', y:'val1'}}],options:{width:500, height:500, xrange: ['type1','type2','type3','type4'], yrange: [0,50]}}]};
+window.onload = function(){Ecoli.core.parse(models, '#vis');};
 </script>
 </body>
 </html>
