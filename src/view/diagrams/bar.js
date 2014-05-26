@@ -6,8 +6,8 @@ define([
 	options = {
 	    x: null,
 	    y: null,
-	    width: 1.0,
-	    color:'#ff0000'
+	    width: 0.9,
+	    color:'steelblue'
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -17,17 +17,18 @@ define([
 	    function(d, i){return {i:i,x:d[0], y:d[1]};}
 	);
 
-	width = scales.x.rangeBand()*options.width;
+	var width = scales.x.rangeBand()*options.width;
+	var padding = scales.x.rangeBand()*((1-options.width)/2);
 
 	model = parent.append("g");
 	model.selectAll("rect")
 	    .data(raw_data)
 	    .enter()
 	    .append("rect")
-	    .attr("x",function(d){return (scales.x(d.x))})
-	    .attr("y", function(d){return (_.max(scales.y.range()) - scales.y(d.y))})
+	    .attr("x",function(d){return scales.x(d.x) + padding})
+	    .attr("y", function(d){return scales.y(d.y)})
 	    .attr("width", width)
-	    .attr("height", function(d){return scales.y(d.y);})
+	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
 	    .attr("fill", options.color);
 	
 	this.model = model;
