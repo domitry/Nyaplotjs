@@ -1805,7 +1805,7 @@ define('view/diagrams/bar',[
     'core/manager'
 ],function(_, Manager){
     function Bar(parent, scales, data, _options){
-	options = {
+	var options = {
 	    x: null,
 	    y: null,
 	    width: 0.9,
@@ -1819,10 +1819,22 @@ define('view/diagrams/bar',[
 	    function(d, i){return {i:i,x:d[0], y:d[1]};}
 	);
 
+	var onMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", d3.rgb(options.color).darker(1));
+	}
+
+	var outMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", options.color);
+	}
+
 	var width = scales.x.rangeBand()*options.width;
 	var padding = scales.x.rangeBand()*((1-options.width)/2);
+	var model = parent.append("g");
 
-	model = parent.append("g");
 	model.selectAll("rect")
 	    .data(raw_data)
 	    .enter()
@@ -1831,7 +1843,9 @@ define('view/diagrams/bar',[
 	    .attr("y", function(d){return scales.y(d.y)})
 	    .attr("width", width)
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
-	    .attr("fill", options.color);
+	    .attr("fill", options.color)
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
 	
 	this.model = model;
 	this.df = df;
@@ -1920,7 +1934,7 @@ define('view/pane',[
 	options = {
 	    width: 500,
 	    height: 500,
-	    margin: {top: 20, bottom: 20, left: 20, right: 20},
+	    margin: {top: 30, bottom: 30, left: 30, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
 	    zoom: true
@@ -1934,19 +1948,8 @@ define('view/pane',[
 	var inner_width = options.width - options.margin.left - options.margin.right;
 	var inner_height = options.height - options.margin.top - options.margin.bottom;
 
-	model.append("g")
-	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
-	    .append("g")
-	    .attr("class", "context")
-	    .append("clipPath")
-	    .append("rect")
-	    .attr("x", 0)
-	    .attr("y", 0)
-	    .attr("width", inner_width)
-	    .attr("height", inner_height)
-
-	ranges = {x:[0,inner_width], y:[inner_height,0]}
-	scales = {};
+	var ranges = {x:[0,inner_width], y:[inner_height,0]}
+	var scales = {};
 
 	_.each({x:'xrange',y:'yrange'},function(val, key){
 	    if(options[val].length > 2)
@@ -1955,7 +1958,21 @@ define('view/pane',[
 		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
 	});
 
-	axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+	model.append("g")
+	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
+
+	var axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+
+	model.select("g")
+	    .append("g")
+	    .attr("class", "context")
+	    .append("clipPath")
+	    .append("rect")
+	    .attr("x", 0)
+	    .attr("y", 0)
+	    .attr("width", inner_width)
+	    .attr("height", inner_height);
+
 
 	this.model = model;
 	this.diagrams = [];

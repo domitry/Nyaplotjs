@@ -7,7 +7,7 @@ define([
 	options = {
 	    width: 500,
 	    height: 500,
-	    margin: {top: 20, bottom: 20, left: 20, right: 20},
+	    margin: {top: 30, bottom: 30, left: 30, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
 	    zoom: true
@@ -21,19 +21,8 @@ define([
 	var inner_width = options.width - options.margin.left - options.margin.right;
 	var inner_height = options.height - options.margin.top - options.margin.bottom;
 
-	model.append("g")
-	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
-	    .append("g")
-	    .attr("class", "context")
-	    .append("clipPath")
-	    .append("rect")
-	    .attr("x", 0)
-	    .attr("y", 0)
-	    .attr("width", inner_width)
-	    .attr("height", inner_height)
-
-	ranges = {x:[0,inner_width], y:[inner_height,0]}
-	scales = {};
+	var ranges = {x:[0,inner_width], y:[inner_height,0]}
+	var scales = {};
 
 	_.each({x:'xrange',y:'yrange'},function(val, key){
 	    if(options[val].length > 2)
@@ -42,7 +31,21 @@ define([
 		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
 	});
 
-	axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+	model.append("g")
+	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
+
+	var axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+
+	model.select("g")
+	    .append("g")
+	    .attr("class", "context")
+	    .append("clipPath")
+	    .append("rect")
+	    .attr("x", 0)
+	    .attr("y", 0)
+	    .attr("width", inner_width)
+	    .attr("height", inner_height);
+
 
 	this.model = model;
 	this.diagrams = [];

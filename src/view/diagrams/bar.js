@@ -3,7 +3,7 @@ define([
     'core/manager'
 ],function(_, Manager){
     function Bar(parent, scales, data, _options){
-	options = {
+	var options = {
 	    x: null,
 	    y: null,
 	    width: 0.9,
@@ -17,10 +17,22 @@ define([
 	    function(d, i){return {i:i,x:d[0], y:d[1]};}
 	);
 
+	var onMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", d3.rgb(options.color).darker(1));
+	}
+
+	var outMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", options.color);
+	}
+
 	var width = scales.x.rangeBand()*options.width;
 	var padding = scales.x.rangeBand()*((1-options.width)/2);
+	var model = parent.append("g");
 
-	model = parent.append("g");
 	model.selectAll("rect")
 	    .data(raw_data)
 	    .enter()
@@ -29,7 +41,9 @@ define([
 	    .attr("y", function(d){return scales.y(d.y)})
 	    .attr("width", width)
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
-	    .attr("fill", options.color);
+	    .attr("fill", options.color)
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
 	
 	this.model = model;
 	this.df = df;
