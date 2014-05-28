@@ -30,22 +30,28 @@ define([
 		.attr("fill", options.color);
 	}
 
-	var model = parent.append("g");
+	var update_models = function(selector){
+	    selector.attr("x",function(d){return scales.x(d.x)})
+		.attr("y", function(d){return scales.y(d.y)})
+		.attr("width", function(d){return scales.x(d.dx) - scales.x(0)})
+		.attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+		.attr("fill", options.color)
+		.attr("stroke", options.stroke_color)
+		.attr("stroke-width", options.stroke_width)
+		.on("mouseover", onMouse)
+		.on("mouseout", outMouse)
+		.attr("clip-path","url(#clip_context)");//dirty. should be modified.
+	}
 
-	model.selectAll("rect")
+	var model = parent.append("g");
+	var rects = model.selectAll("rect")
 	    .data(raw_data)
 	    .enter()
-	    .append("rect")
-	    .attr("x",function(d){return scales.x(d.x)})
-	    .attr("y", function(d){return scales.y(d.y)})
-	    .attr("width", function(d){return scales.x(d.dx)})
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
-	    .attr("fill", options.color)
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width)
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+	    .append("rect");
+	update_models(rects);
 
+	this.scales = scales;
+	this.update_models = update_models;
 	this.model = model;
 	this.df = df;
 
@@ -58,8 +64,8 @@ define([
 	    .exit();
     }
 
-    Histogram.prototype.update = function(scales){
-
+    Histogram.prototype.update = function(){
+	this.update_models(this.model.selectAll("rect"));
     }
 
     return Histogram;

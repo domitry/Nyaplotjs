@@ -1870,6 +1870,8 @@ define('view/components/filter',[
     'underscore',
     'core/manager'
 ],function(_, Manager){
+    var callback = function(ranges){};
+
     function Filter(parent, scales, _options){
 	var options = {
 	    opacity: 0.125,
@@ -1878,12 +1880,17 @@ define('view/components/filter',[
 	if(arguments.length>2)_.extend(options, _options);
 
 	var brushed = function(){
+	    var ranges = {
+		x: (brush.empty() ? scales.x.domain() : brush.extent()),
+		y: scales.y.domain()
+	    }
+	    callback(ranges);
 	    console.log("brushed!");
 	}
 
 	var brush = d3.svg.brush()
 	    .x(scales.x)
-	    .on("brush", brushed);
+	    .on("brushend", brushed);
 
 	var model = parent.append("g");
 	var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
@@ -1894,10 +1901,14 @@ define('view/components/filter',[
 	    .attr("y", y)
 	    .attr("height", height)
 	    .style("fill-opacity", options.opacity)
-	    .stype("fill", options.color)
+	    .style("fill", options.color)
 	    .style("shape-rendering", "crispEdges");
 	
 	return this;
+    }
+
+    Filter.prototype.selected = function(func){
+	callback = func;
     }
 
     return Filter;
@@ -1935,22 +1946,28 @@ define('view/diagrams/histogram',[
 		.attr("fill", options.color);
 	}
 
-	var model = parent.append("g");
+	var update_models = function(selector){
+	    selector.attr("x",function(d){return scales.x(d.x)})
+		.attr("y", function(d){return scales.y(d.y)})
+		.attr("width", function(d){return scales.x(d.dx) - scales.x(0)})
+		.attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+		.attr("fill", options.color)
+		.attr("stroke", options.stroke_color)
+		.attr("stroke-width", options.stroke_width)
+		.on("mouseover", onMouse)
+		.on("mouseout", outMouse)
+		.attr("clip-path","url(#clip_context)");//dirty. should be modified.
+	}
 
-	model.selectAll("rect")
+	var model = parent.append("g");
+	var rects = model.selectAll("rect")
 	    .data(raw_data)
 	    .enter()
-	    .append("rect")
-	    .attr("x",function(d){return scales.x(d.x)})
-	    .attr("y", function(d){return scales.y(d.y)})
-	    .attr("width", function(d){return scales.x(d.dx)})
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
-	    .attr("fill", options.color)
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width)
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+	    .append("rect");
+	update_models(rects);
 
+	this.scales = scales;
+	this.update_models = update_models;
 	this.model = model;
 	this.df = df;
 
@@ -1963,8 +1980,8 @@ define('view/diagrams/histogram',[
 	    .exit();
     }
 
-    Histogram.prototype.update = function(scales){
-
+    Histogram.prototype.update = function(){
+	this.update_models(this.model.selectAll("rect"));
     }
 
     return Histogram;
@@ -2023,14 +2040,14 @@ define('view/components/axis',[
 
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;
-	this.model = parent.selectAll(".x_axis,.y_axis");
+	this.model = parent;
 
 	return this;
     }
 
-    Axis.prototype.zoom = function(){
-	this.model.select(".x_axis").call(this.xAxis);
-	this.model.select(".y_axis").call(this.yAxis);
+    Axis.prototype.update = function(){
+	this.model.selectAll(".x_axis").call(this.xAxis);
+	this.model.selectAll(".y_axis").call(this.yAxis);
     }
 
     return Axis;
@@ -2080,12 +2097,12 @@ define('view/pane',[
 	    .append("g")
 	    .attr("class", "context")
 	    .append("clipPath")
+	    .attr("id", "clip_context")
 	    .append("rect")
 	    .attr("x", 0)
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height);
-
 
 	this.model = model;
 	this.diagrams = [];
@@ -2098,17 +2115,23 @@ define('view/pane',[
 
     Pane.prototype.add = function(type, data, options){
 	var parent = this.model.select(".context");
-	var scales = this.scales;
-
-	var diagram = new diagrams[type](parent, scales, data, options);
+	var diagram = new diagrams[type](parent, this.scales, data, options);
+	diagram.model.selectAll().attr("clip-path","url(#clip_context)");
 	this.diagrams.push(diagram);
     };
 
     Pane.prototype.filter = function(target, options){
 	var parent = this.model.select(".context");
+	var axis = this.axis;
 	var scales = this.scales;
-	
-	filter = new Filter(parent, scales, options);
+	var diagrams = this.diagrams;
+	this.filter = new Filter(parent, scales, options);
+	this.filter.selected(function(ranges){
+	    scales.x.domain(ranges.x);
+	    scales.y.domain(ranges.y);
+	    axis.update(scales);
+	    _.each(diagrams, function(diagram){diagram.update();});
+	});
     }
 
     return Pane;

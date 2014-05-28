@@ -42,12 +42,12 @@ define([
 	    .append("g")
 	    .attr("class", "context")
 	    .append("clipPath")
+	    .attr("id", "clip_context")
 	    .append("rect")
 	    .attr("x", 0)
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height);
-
 
 	this.model = model;
 	this.diagrams = [];
@@ -60,17 +60,23 @@ define([
 
     Pane.prototype.add = function(type, data, options){
 	var parent = this.model.select(".context");
-	var scales = this.scales;
-
-	var diagram = new diagrams[type](parent, scales, data, options);
+	var diagram = new diagrams[type](parent, this.scales, data, options);
+	diagram.model.selectAll().attr("clip-path","url(#clip_context)");
 	this.diagrams.push(diagram);
     };
 
     Pane.prototype.filter = function(target, options){
 	var parent = this.model.select(".context");
+	var axis = this.axis;
 	var scales = this.scales;
-	
-	filter = new Filter(parent, scales, options);
+	var diagrams = this.diagrams;
+	this.filter = new Filter(parent, scales, options);
+	this.filter.selected(function(ranges){
+	    scales.x.domain(ranges.x);
+	    scales.y.domain(ranges.y);
+	    axis.update(scales);
+	    _.each(diagrams, function(diagram){diagram.update();});
+	});
     }
 
     return Pane;

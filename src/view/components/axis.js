@@ -42,14 +42,14 @@ define([
 
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;
-	this.model = parent.selectAll(".x_axis,.y_axis");
+	this.model = parent;
 
 	return this;
     }
 
-    Axis.prototype.zoom = function(){
-	this.model.select(".x_axis").call(this.xAxis);
-	this.model.select(".y_axis").call(this.yAxis);
+    Axis.prototype.update = function(){
+	this.model.selectAll(".x_axis").call(this.xAxis);
+	this.model.selectAll(".y_axis").call(this.yAxis);
     }
 
     return Axis;
