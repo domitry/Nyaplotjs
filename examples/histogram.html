@@ -7,7 +7,8 @@
 <body>
 <div id='vis'></div>
 <script>
-models = {data:{data1: [{name:'type1',val1:48,val2:13}, {name:'type2',val1:20,val2:25}, {name:'type3',val1:4,val2:11}, {name:'type4',val1:12,val2:34}, {name:'type5',val1:22,val2:34}]},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}],options:{width:500, height:500, xrange: [0,50], yrange: [0,2]}}]};
+var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(val)};});
+models = {data:{data1: values},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}],options:{width:500, height:500, xrange: [0,1], yrange: [0,30]}}]};
 window.onload = function(){Ecoli.core.parse(models, '#vis');};
 </script>
 </body>

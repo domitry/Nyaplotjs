@@ -1901,7 +1901,7 @@ define('view/diagrams/histogram',[
 	    .data(raw_data)
 	    .enter()
 	    .append("rect")
-	    .attr("x",function(d){return scales.x(d.x) + 1})
+	    .attr("x",function(d){return scales.x(d.x)})
 	    .attr("y", function(d){return scales.y(d.y)})
 	    .attr("width", function(d){return scales.x(d.dx)})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
