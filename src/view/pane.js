@@ -11,7 +11,8 @@ define([
 	    margin: {top: 30, bottom: 30, left: 30, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
-	    zoom: true
+	    zoom: true,
+	    grid: true
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -35,7 +36,7 @@ define([
 	model.append("g")
 	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
 
-	var axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+	var axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height, grid:options.grid});
 
 	model.select("g")
 	    .append("g")

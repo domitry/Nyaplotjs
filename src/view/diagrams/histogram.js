@@ -1,7 +1,8 @@
 define([
     'underscore',
-    'core/manager'
-],function(_, Manager){
+    'core/manager',
+    'view/components/filter'
+],function(_, Manager, Filter){
     function Histogram(parent, scales, data, _options){
 	var options = {
 	    value: null,
@@ -44,7 +45,7 @@ define([
 	    .attr("stroke-width", options.stroke_width)
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
-	
+
 	this.model = model;
 	this.df = df;
 

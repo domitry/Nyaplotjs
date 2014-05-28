@@ -1866,10 +1866,48 @@ define('view/diagrams/bar',[
     return Bar;
 });
 
-define('view/diagrams/histogram',[
+define('view/components/filter',[
     'underscore',
     'core/manager'
 ],function(_, Manager){
+    function Filter(parent, scales, _options){
+	var options = {
+	    opacity: 0.125,
+	    color: 'gray'
+	};
+	if(arguments.length>2)_.extend(options, _options);
+
+	var brushed = function(){
+	    console.log("brushed!");
+	}
+
+	var brush = d3.svg.brush()
+	    .x(scales.x)
+	    .on("brush", brushed);
+
+	var model = parent.append("g");
+	var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
+	var y = d3.min(scales.y.range());
+
+	model.call(brush)
+	    .selectAll("rect")
+	    .attr("y", y)
+	    .attr("height", height)
+	    .style("fill-opacity", options.opacity)
+	    .stype("fill", options.color)
+	    .style("shape-rendering", "crispEdges");
+	
+	return this;
+    }
+
+    return Filter;
+});
+
+define('view/diagrams/histogram',[
+    'underscore',
+    'core/manager',
+    'view/components/filter'
+],function(_, Manager, Filter){
     function Histogram(parent, scales, data, _options){
 	var options = {
 	    value: null,
@@ -1912,7 +1950,7 @@ define('view/diagrams/histogram',[
 	    .attr("stroke-width", options.stroke_width)
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
-	
+
 	this.model = model;
 	this.df = df;
 
@@ -1948,7 +1986,9 @@ define('view/components/axis',[
 	options = {
 	    width:0,
 	    height:0,
-	    stroke_color:"#000000"
+	    stroke_color:"#000000",
+	    stroke_width: 0.5,
+	    grid:true
 	};
 
 	if(arguments.length>2)_.extend(options, _options);
@@ -1956,12 +1996,15 @@ define('view/components/axis',[
 	var xAxis = d3.svg.axis()
 	    .scale(scales.x)
 	    .orient("bottom")
-	    .tickSize((-1)*options.height)
 
 	var yAxis = d3.svg.axis()
 	    .scale(scales.y)
 	    .orient("left")
-	    .tickSize((-1)*options.width)
+
+	if(options.grid){
+	    xAxis.tickSize((-1)*options.height);
+	    yAxis.tickSize((-1)*options.width);
+	}
 
 	parent.append("g")
 	    .attr("class", "x_axis")
@@ -1976,6 +2019,7 @@ define('view/components/axis',[
 	    .selectAll("path, line")
 	    .style("fill","none")
 	    .style("stroke",options.stroke_color)
+	    .style("stroke-width",options.stroke_width);
 
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;
@@ -1992,43 +2036,6 @@ define('view/components/axis',[
     return Axis;
 });
 
-define('view/components/filter',[
-    'underscore',
-    'core/manager'
-],function(_, Manager){
-    function Filter(parent, scales, _options){
-	var options = {
-	    opacity: 0.125,
-	    color: 'gray'
-	};
-	if(arguments.length>2)_.extend(options, _options);
-
-	var brushed = function(){
-	    console.log("brushed!");
-	}
-
-	var brush = d3.svg.brush()
-	    .x(scales.x)
-	    .on("brush", brushed);
-
-	var model = parent.append("g");
-	var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
-	var y = d3.min(scales.y.range());
-
-	model.call(brush)
-	    .selectAll("rect")
-	    .attr("y", y)
-	    .attr("height", height)
-	    .style("fill-opacity", options.opacity)
-	    .stype("fill", options.color)
-	    .style("shape-rendering", "crispEdges");
-	
-	return this;
-    }
-
-    return Filter;
-});
-
 define('view/pane',[
     'underscore',
     'view/diagrams/diagrams',
@@ -2042,7 +2049,8 @@ define('view/pane',[
 	    margin: {top: 30, bottom: 30, left: 30, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
-	    zoom: true
+	    zoom: true,
+	    grid: true
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -2066,7 +2074,7 @@ define('view/pane',[
 	model.append("g")
 	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
 
-	var axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height});
+	var axis = new Axis(model.select("g"), scales, {width:inner_width, height:inner_height, grid:options.grid});
 
 	model.select("g")
 	    .append("g")
