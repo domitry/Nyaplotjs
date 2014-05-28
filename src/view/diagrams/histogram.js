@@ -7,7 +7,9 @@ define([
 	    value: null,
 	    bin_num: 10,
 	    width: 0.9,
-	    color:'steelblue'
+	    color:'steelblue',
+	    stroke_color: 'black',
+	    stroke_width: 1
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -38,6 +40,8 @@ define([
 	    .attr("width", function(d){return scales.x(d.dx)})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
 	    .attr("fill", options.color)
+	    .attr("stroke", options.stroke_color)
+	    .attr("stroke-width", options.stroke_width)
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
 	

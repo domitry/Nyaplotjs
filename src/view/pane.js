@@ -1,8 +1,9 @@
 define([
     'underscore',
     'view/diagrams/diagrams',
-    'view/components/axis'
-],function(_, diagrams, Axis){
+    'view/components/axis',
+    'view/components/filter'
+],function(_, diagrams, Axis, Filter){
     function Pane(parent, _options){
 	options = {
 	    width: 500,
@@ -57,12 +58,19 @@ define([
     }
 
     Pane.prototype.add = function(type, data, options){
-	parent = this.model.select(".context");
-	scales = this.scales;
+	var parent = this.model.select(".context");
+	var scales = this.scales;
 
-	diagram = new diagrams[type](parent, scales, data, options);
+	var diagram = new diagrams[type](parent, scales, data, options);
 	this.diagrams.push(diagram);
     };
+
+    Pane.prototype.filter = function(target, options){
+	var parent = this.model.select(".context");
+	var scales = this.scales;
+	
+	filter = new Filter(parent, scales, options);
+    }
 
     return Pane;
 });

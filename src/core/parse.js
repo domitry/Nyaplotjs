@@ -17,9 +17,14 @@ define([
 	    var data_list = [];
 
 	    _.each(pane_model.diagrams, function(diagram){
-		pane.add(diagram.type, diagram.data, diagram.options);
+		pane.add(diagram.type, diagram.data, diagram.options || {});
 		data_list.push(diagram.data);
 	    });
+
+	    if(pane_model['filter'] !== undefined){
+		var filter = pane_model.filter;
+		pane.filter(filter.type, filter.options || {});
+	    }
 
 	    Manager.addPane({pane:pane, data: data_list});
 	});

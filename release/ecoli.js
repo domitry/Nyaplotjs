@@ -1875,7 +1875,9 @@ define('view/diagrams/histogram',[
 	    value: null,
 	    bin_num: 10,
 	    width: 0.9,
-	    color:'steelblue'
+	    color:'steelblue',
+	    stroke_color: 'black',
+	    stroke_width: 1
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -1906,6 +1908,8 @@ define('view/diagrams/histogram',[
 	    .attr("width", function(d){return scales.x(d.dx)})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
 	    .attr("fill", options.color)
+	    .attr("stroke", options.stroke_color)
+	    .attr("stroke-width", options.stroke_width)
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
 	
@@ -1988,11 +1992,49 @@ define('view/components/axis',[
     return Axis;
 });
 
+define('view/components/filter',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+    function Filter(parent, scales, _options){
+	var options = {
+	    opacity: 0.125,
+	    color: 'gray'
+	};
+	if(arguments.length>2)_.extend(options, _options);
+
+	var brushed = function(){
+	    console.log("brushed!");
+	}
+
+	var brush = d3.svg.brush()
+	    .x(scales.x)
+	    .on("brush", brushed);
+
+	var model = parent.append("g");
+	var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
+	var y = d3.min(scales.y.range());
+
+	model.call(brush)
+	    .selectAll("rect")
+	    .attr("y", y)
+	    .attr("height", height)
+	    .style("fill-opacity", options.opacity)
+	    .stype("fill", options.color)
+	    .style("shape-rendering", "crispEdges");
+	
+	return this;
+    }
+
+    return Filter;
+});
+
 define('view/pane',[
     'underscore',
     'view/diagrams/diagrams',
-    'view/components/axis'
-],function(_, diagrams, Axis){
+    'view/components/axis',
+    'view/components/filter'
+],function(_, diagrams, Axis, Filter){
     function Pane(parent, _options){
 	options = {
 	    width: 500,
@@ -2047,12 +2089,19 @@ define('view/pane',[
     }
 
     Pane.prototype.add = function(type, data, options){
-	parent = this.model.select(".context");
-	scales = this.scales;
+	var parent = this.model.select(".context");
+	var scales = this.scales;
 
-	diagram = new diagrams[type](parent, scales, data, options);
+	var diagram = new diagrams[type](parent, scales, data, options);
 	this.diagrams.push(diagram);
     };
+
+    Pane.prototype.filter = function(target, options){
+	var parent = this.model.select(".context");
+	var scales = this.scales;
+	
+	filter = new Filter(parent, scales, options);
+    }
 
     return Pane;
 });
@@ -2105,9 +2154,14 @@ define('core/parse',[
 	    var data_list = [];
 
 	    _.each(pane_model.diagrams, function(diagram){
-		pane.add(diagram.type, diagram.data, diagram.options);
+		pane.add(diagram.type, diagram.data, diagram.options || {});
 		data_list.push(diagram.data);
 	    });
+
+	    if(pane_model['filter'] !== undefined){
+		var filter = pane_model.filter;
+		pane.filter(filter.type, filter.options || {});
+	    }
 
 	    Manager.addPane({pane:pane, data: data_list});
 	});
