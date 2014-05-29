@@ -18,7 +18,9 @@ define([
     }
 
     Manager.selected = function(data_id, rows){
-	
+	_.each(this.panes, function(pane){
+	    pane.selected(data_id, rows);
+	});
     }
 
     Manager.updateData = function(data_id, column_name, value){

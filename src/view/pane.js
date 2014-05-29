@@ -12,7 +12,8 @@ define([
 	    xrange: [0,0],
 	    yrange: [0,0],
 	    zoom: true,
-	    grid: true
+	    grid: true,
+	    scale: 'fixed'
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -51,9 +52,9 @@ define([
 
 	this.model = model;
 	this.diagrams = [];
-	this.options = options;
 	this.axis = axis;
 	this.scales = scales;
+	this.options = options;
 
 	return this;
     }
@@ -61,7 +62,6 @@ define([
     Pane.prototype.add = function(type, data, options){
 	var parent = this.model.select(".context");
 	var diagram = new diagrams[type](parent, this.scales, data, options);
-	diagram.model.selectAll().attr("clip-path","url(#clip_context)");
 	this.diagrams.push(diagram);
     };
 
@@ -71,11 +71,24 @@ define([
 	var scales = this.scales;
 	var diagrams = this.diagrams;
 	this.filter = new Filter(parent, scales, options);
-	this.filter.selected(function(ranges){
-	    scales.x.domain(ranges.x);
-	    scales.y.domain(ranges.y);
-	    axis.update(scales);
-	    _.each(diagrams, function(diagram){diagram.update();});
+	var funcs = {
+	    fixed:function(ranges){
+		_.each(diagrams, function(diagram){diagram.checkIfSelected(ranges)})
+	    },
+	    fluid:function(ranges){
+		scales.x.domain(ranges.x);
+		scales.y.domain(ranges.y);
+		axis.update(scales);
+		_.each(diagrams, function(diagram){diagram.update();});
+	    }
+	};
+	this.filter.selected(funcs[this.options.scale]);
+    }
+
+    Pane.prototype.selected = function(data, rows){
+	_.each(this.diagrams, function(diagram){
+	    if(diagram.data == data)
+		diagram.selected(data, rows);//dirty
 	});
     }
 
