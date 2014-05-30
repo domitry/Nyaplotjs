@@ -5,8 +5,8 @@
   <script src='../release/ecoli.js'></script>
 </head>
 <body>
-<div id='vis1'></div>
-<div id='vis2'>
+<div id='vis1' style='float:left'></div>
+<div id='vis2' style='float:left'>
 <script>
 var mutation_types = ['c->a', 'g->a', 't->a'];
 var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(val), mutation_type: (val>50? mutation_types[0] : mutation_types[1])};});

@@ -1955,10 +1955,9 @@ define('view/diagrams/histogram',[
 	}
 
 	var update_models = function(selector){
-	    selector.attr("x",function(d){return scales.x(d.x)})
-		.attr("y", function(d){return scales.y(d.y)})
-		.attr("width", width)
-		.attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+	    selector
+		.attr("x",function(d){return scales.x(d.x)})
+	    	.attr("width", width)
 		.attr("fill", options.color)
 		.attr("stroke", options.stroke_color)
 		.attr("stroke-width", options.stroke_width)
@@ -1972,7 +1971,10 @@ define('view/diagrams/histogram',[
 		    d3.select(this).transition()
 			.duration(200)
 			.attr("fill", options.color);
-		});
+		})
+		.transition().duration(200)
+	    	.attr("y", function(d){return scales.y(d.y);})
+		.attr("height", function(d){return scales.y(0) - scales.y(d.y);});
 	}
 
 	var raw_data = proceed_data(df.column(options.value));
@@ -1980,7 +1982,9 @@ define('view/diagrams/histogram',[
 	var rects = model.selectAll("rect")
 	    .data(raw_data)
 	    .enter()
-	    .append("rect");
+	    .append("rect")
+	    .attr("height", 0)
+	    .attr("y", scales.y(0));
 	update_models(rects);
 
 	this.proceed_data = proceed_data;
