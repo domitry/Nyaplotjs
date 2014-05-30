@@ -18,8 +18,8 @@ define([
     }
 
     Manager.selected = function(data_id, rows){
-	_.each(this.panes, function(pane){
-	    pane.selected(data_id, rows);
+	_.each(this.panes, function(entry){
+	    entry.pane.selected(data_id, rows);
 	});
     }
 

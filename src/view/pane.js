@@ -5,7 +5,7 @@ define([
     'view/components/filter'
 ],function(_, diagrams, Axis, Filter){
     function Pane(parent, _options){
-	options = {
+	var options = {
 	    width: 500,
 	    height: 500,
 	    margin: {top: 30, bottom: 30, left: 30, right: 30},
@@ -71,25 +71,25 @@ define([
 	var scales = this.scales;
 	var diagrams = this.diagrams;
 	this.filter = new Filter(parent, scales, options);
-	var funcs = {
-	    fixed:function(ranges){
-		_.each(diagrams, function(diagram){diagram.checkIfSelected(ranges)})
-	    },
-	    fluid:function(ranges){
-		scales.x.domain(ranges.x);
-		scales.y.domain(ranges.y);
-		axis.update(scales);
-		_.each(diagrams, function(diagram){diagram.update();});
-	    }
-	};
-	this.filter.selected(funcs[this.options.scale]);
+	this.filter.selected(function(ranges){
+	    _.each(diagrams, function(diagram){
+		diagram.checkIfSelected(ranges)
+	    });
+	});
     }
 
     Pane.prototype.selected = function(data, rows){
-	_.each(this.diagrams, function(diagram){
-	    if(diagram.data == data)
-		diagram.selected(data, rows);//dirty
-	});
+	var diagrams = this.diagrams;
+	var funcs = {
+	    fixed:function(){return;},
+	    fluid:function(){
+		_.each(diagrams, function(diagram){
+		    if(diagram.data == data)
+			diagram.selected(data, rows);//dirty
+		});
+	    }
+	};
+	funcs[this.options.scale]();
     }
 
     return Pane;

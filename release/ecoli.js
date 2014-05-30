@@ -1790,8 +1790,8 @@ define('core/manager',[
     }
 
     Manager.selected = function(data_id, rows){
-	_.each(this.panes, function(pane){
-	    pane.selected(data_id, rows);
+	_.each(this.panes, function(entry){
+	    entry.pane.selected(data_id, rows);
 	});
     }
 
@@ -2001,7 +2001,7 @@ define('view/diagrams/histogram',[
     }
 
     Histogram.prototype.selected = function(data, rows){
-	var column = this.df.colums(this.options.value);
+	var column = this.df.column(this.options.value);
 	var row_data = _.map(rows, function(i){
 	    return column[i];
 	});
@@ -2016,9 +2016,10 @@ define('view/diagrams/histogram',[
     }
 
     Histogram.prototype.checkIfSelected = function(ranges){
-	rows = [];
-	_.each(this.df.colums(this.options.value), function(val, i){
-	    if(val < ranges[0] && val > ranges[1])rows.push(i);
+	var rows = [];
+	var column = this.df.column(this.options.value);
+	_.each(column, function(val, i){
+	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
 	});
 	Manager.selected(this.data, rows);
     }
@@ -2099,7 +2100,7 @@ define('view/pane',[
     'view/components/filter'
 ],function(_, diagrams, Axis, Filter){
     function Pane(parent, _options){
-	options = {
+	var options = {
 	    width: 500,
 	    height: 500,
 	    margin: {top: 30, bottom: 30, left: 30, right: 30},
@@ -2165,25 +2166,25 @@ define('view/pane',[
 	var scales = this.scales;
 	var diagrams = this.diagrams;
 	this.filter = new Filter(parent, scales, options);
-	var funcs = {
-	    fixed:function(ranges){
-		_.each(diagrams, function(diagram){diagram.checkIfSelected(ranges)})
-	    },
-	    fluid:function(ranges){
-		scales.x.domain(ranges.x);
-		scales.y.domain(ranges.y);
-		axis.update(scales);
-		_.each(diagrams, function(diagram){diagram.update();});
-	    }
-	};
-	this.filter.selected(funcs[this.options.scale]);
+	this.filter.selected(function(ranges){
+	    _.each(diagrams, function(diagram){
+		diagram.checkIfSelected(ranges)
+	    });
+	});
     }
 
     Pane.prototype.selected = function(data, rows){
-	_.each(this.diagrams, function(diagram){
-	    if(diagram.data == data)
-		diagram.selected(data, rows);//dirty
-	});
+	var diagrams = this.diagrams;
+	var funcs = {
+	    fixed:function(){return;},
+	    fluid:function(){
+		_.each(diagrams, function(diagram){
+		    if(diagram.data == data)
+			diagram.selected(data, rows);//dirty
+		});
+	    }
+	};
+	funcs[this.options.scale]();
     }
 
     return Pane;

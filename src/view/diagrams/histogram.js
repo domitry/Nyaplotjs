@@ -83,7 +83,7 @@ define([
     }
 
     Histogram.prototype.selected = function(data, rows){
-	var column = this.df.colums(this.options.value);
+	var column = this.df.column(this.options.value);
 	var row_data = _.map(rows, function(i){
 	    return column[i];
 	});
@@ -98,9 +98,10 @@ define([
     }
 
     Histogram.prototype.checkIfSelected = function(ranges){
-	rows = [];
-	_.each(this.df.colums(this.options.value), function(val, i){
-	    if(val < ranges[0] && val > ranges[1])rows.push(i);
+	var rows = [];
+	var column = this.df.column(this.options.value);
+	_.each(column, function(val, i){
+	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
 	});
 	Manager.selected(this.data, rows);
     }
