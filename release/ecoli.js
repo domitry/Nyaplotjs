@@ -2107,12 +2107,14 @@ define('view/pane',[
 	var options = {
 	    width: 500,
 	    height: 500,
-	    margin: {top: 30, bottom: 30, left: 30, right: 30},
+	    margin: {top: 30, bottom: 80, left: 80, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
 	    zoom: true,
 	    grid: true,
-	    scale: 'fixed'
+	    scale: 'fixed',
+	    x_label:'X',
+	    y_label:'Y'
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -2148,6 +2150,25 @@ define('view/pane',[
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height);
+
+	model.select("g")
+	    .append("text")
+	    .attr("x", inner_width/2)
+	    .attr("y", options.height- options.margin.bottom/1.5)
+	    .attr("text-anchor", "middle")
+	    .attr("fill", "black")
+	    .attr("font-size", 22)
+	    .text(options.x_label);
+
+	model.select("g")
+	    .append("text")
+	    .attr("x", -options.margin.left/1.5)
+	    .attr("y", inner_height/2)
+	    .attr("text-anchor", "middle")
+	    .attr("fill", "black")
+	    .attr("font-size", 22)
+	    .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + inner_height/2 + ")")
+	    .text(options.y_label);
 
 	this.model = model;
 	this.diagrams = [];
