@@ -43,7 +43,7 @@ define([
 		.attr("fill", options.color)
 		.attr("stroke", options.stroke_color)
 		.attr("stroke-width", options.stroke_width)
-	    	.attr("clip-path","url(#clip_context)")//dirty. should be modified.
+	    	.attr("clip-path","url(#clip_context)")
 		.on("mouseover", function(){
 		    d3.select(this).transition()
 			.duration(200)
@@ -101,7 +101,7 @@ define([
 	this.update_models(this.model.selectAll("rect"));
     }
 
-    Histogram.prototype.checkIfSelected = function(ranges){
+    Histogram.prototype.checkSelectedData = function(ranges){
 	var rows = [];
 	var column = this.df.column(this.options.value);
 	_.each(column, function(val, i){

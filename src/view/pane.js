@@ -31,7 +31,7 @@ define([
 	var scales = {};
 
 	_.each({x:'xrange',y:'yrange'},function(val, key){
-	    if(options[val].length > 2)
+	    if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el)}))
 		scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
 	    else
 		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
@@ -44,6 +44,8 @@ define([
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height)
+	    .attr("stroke", "#000000")
+	    .attr("stroke_width", 2)
 	    .attr("fill", options.bg_color);
 
 	var axis = new Axis(model.select("g"), scales, {
@@ -82,12 +84,12 @@ define([
 
     Pane.prototype.filter = function(target, options){
 	var diagrams = this.diagrams;
-	this.filter = new Filter(this.context, this.scales, options);
-	this.filter.selected(function(ranges){
+	var callback = function(ranges){
 	    _.each(diagrams, function(diagram){
-		diagram.checkIfSelected(ranges)
+		diagram.checkSelectedData(ranges)
 	    });
-	});
+	}
+	this.filter = new Filter(this.context, this.scales, callback, options);
     }
 
     Pane.prototype.selected = function(data, rows){
@@ -96,8 +98,7 @@ define([
 	    fixed:function(){return;},
 	    fluid:function(){
 		_.each(diagrams, function(diagram){
-		    if(diagram.data == data)
-			diagram.selected(data, rows);//dirty
+		    if(diagram.data == data)diagram.selected(data, rows);
 		});
 	    }
 	};

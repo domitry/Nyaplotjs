@@ -2,9 +2,8 @@ define([
     'underscore',
     'core/manager'
 ],function(_, Manager){
-    var callback = function(ranges){};
 
-    function Filter(parent, scales, _options){
+    function Filter(parent, scales, callback, _options){
 	var options = {
 	    opacity: 0.125,
 	    color: 'gray'
@@ -15,9 +14,8 @@ define([
 	    var ranges = {
 		x: (brush.empty() ? scales.x.domain() : brush.extent()),
 		y: scales.y.domain()
-	    }
+	    };
 	    callback(ranges);
-	    console.log("brushed!");
 	}
 
 	var brush = d3.svg.brush()
@@ -37,10 +35,6 @@ define([
 	    .style("shape-rendering", "crispEdges");
 	
 	return this;
-    }
-
-    Filter.prototype.selected = function(func){
-	callback = func;
     }
 
     return Filter;

@@ -1872,9 +1872,8 @@ define('view/components/filter',[
     'underscore',
     'core/manager'
 ],function(_, Manager){
-    var callback = function(ranges){};
 
-    function Filter(parent, scales, _options){
+    function Filter(parent, scales, callback, _options){
 	var options = {
 	    opacity: 0.125,
 	    color: 'gray'
@@ -1885,9 +1884,8 @@ define('view/components/filter',[
 	    var ranges = {
 		x: (brush.empty() ? scales.x.domain() : brush.extent()),
 		y: scales.y.domain()
-	    }
+	    };
 	    callback(ranges);
-	    console.log("brushed!");
 	}
 
 	var brush = d3.svg.brush()
@@ -1907,10 +1905,6 @@ define('view/components/filter',[
 	    .style("shape-rendering", "crispEdges");
 	
 	return this;
-    }
-
-    Filter.prototype.selected = function(func){
-	callback = func;
     }
 
     return Filter;
@@ -1961,7 +1955,7 @@ define('view/diagrams/histogram',[
 		.attr("fill", options.color)
 		.attr("stroke", options.stroke_color)
 		.attr("stroke-width", options.stroke_width)
-	    	.attr("clip-path","url(#clip_context)")//dirty. should be modified.
+	    	.attr("clip-path","url(#clip_context)")
 		.on("mouseover", function(){
 		    d3.select(this).transition()
 			.duration(200)
@@ -2019,7 +2013,7 @@ define('view/diagrams/histogram',[
 	this.update_models(this.model.selectAll("rect"));
     }
 
-    Histogram.prototype.checkIfSelected = function(ranges){
+    Histogram.prototype.checkSelectedData = function(ranges){
 	var rows = [];
 	var column = this.df.column(this.options.value);
 	_.each(column, function(val, i){
@@ -2149,7 +2143,7 @@ define('view/pane',[
 	var scales = {};
 
 	_.each({x:'xrange',y:'yrange'},function(val, key){
-	    if(options[val].length > 2)
+	    if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el)}))
 		scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
 	    else
 		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
@@ -2162,6 +2156,8 @@ define('view/pane',[
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height)
+	    .attr("stroke", "#000000")
+	    .attr("stroke_width", 2)
 	    .attr("fill", options.bg_color);
 
 	var axis = new Axis(model.select("g"), scales, {
@@ -2200,12 +2196,12 @@ define('view/pane',[
 
     Pane.prototype.filter = function(target, options){
 	var diagrams = this.diagrams;
-	this.filter = new Filter(this.context, this.scales, options);
-	this.filter.selected(function(ranges){
+	var callback = function(ranges){
 	    _.each(diagrams, function(diagram){
-		diagram.checkIfSelected(ranges)
+		diagram.checkSelectedData(ranges)
 	    });
-	});
+	}
+	this.filter = new Filter(this.context, this.scales, callback, options);
     }
 
     Pane.prototype.selected = function(data, rows){
@@ -2214,8 +2210,7 @@ define('view/pane',[
 	    fixed:function(){return;},
 	    fluid:function(){
 		_.each(diagrams, function(diagram){
-		    if(diagram.data == data)
-			diagram.selected(data, rows);//dirty
+		    if(diagram.data == data)diagram.selected(data, rows);
 		});
 	    }
 	};
