@@ -2048,8 +2048,8 @@ define('view/components/axis',[
 	    width:0,
 	    height:0,
 	    margin: {top:0,bottom:0,left:0,right:0},
-	    stroke_color:"#000000",
-	    stroke_width: 0.5,
+	    stroke_color:"#fff",
+	    stroke_width: 1.0,
 	    x_label:'X',
 	    y_label:'Y',
 	    grid:true
@@ -2133,7 +2133,9 @@ define('view/pane',[
 	    y_label:'Y',
 	    zoom: true,
 	    grid: true,
-	    scale: 'fixed'
+	    scale: 'fixed',
+	    bg_color: '#eee',
+	    grid_color: '#fff'
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -2154,7 +2156,13 @@ define('view/pane',[
 	});
 
 	model.append("g")
-	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
+	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
+	    .append("rect")
+	    .attr("x", 0)
+	    .attr("y", 0)
+	    .attr("width", inner_width)
+	    .attr("height", inner_height)
+	    .attr("fill", options.bg_color);
 
 	var axis = new Axis(model.select("g"), scales, {
 	    width:inner_width, 
@@ -2162,7 +2170,8 @@ define('view/pane',[
 	    margin:options.margin,
 	    grid:options.grid,
 	    x_label:options.x_label,
-	    y_label:options.y_label
+	    y_label:options.y_label,
+	    stroke_color: options.grid_color
 	});
 
 	model.select("g")
