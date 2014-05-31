@@ -6,18 +6,26 @@ define([
 	return this;
     }
     
-    Dataframe.prototype.row = function(num){
-	return this.raw[num];
+    Dataframe.prototype.row = function(row_num){
+	return this.raw[row_num];
     }
 
     Dataframe.prototype.column = function(label){
-	arr = [];
-	_.each(this.raw, function(row){arr.push(row[label]);});
+	var arr = [];
+	var raw = this.raw;
+	_.each(raw, function(row){arr.push(row[label]);});
 	return arr;
     }
 
+    Dataframe.prototype.pickUpCells = function(label, row_nums){
+	var column = this.column(label);
+	return _.map(row_nums, function(i){
+	    return column[i];
+	});
+    }
+
     Dataframe.prototype.columnRange = function(label){
-	column = this.column(label);
+	var column = this.column(label);
 	return {
 	    max: d3.max(column, function(val){return val;}),
 	    min: d3.min(column, function(val){return val;})

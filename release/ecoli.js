@@ -1806,8 +1806,9 @@ define('view/diagrams/bar',[
     'underscore',
     'core/manager'
 ],function(_, Manager){
-    function Bar(parent, scales, data, _options){
+    function Bar(parent, scales, df_id, _options){
 	var options = {
+	    value: null,
 	    x: null,
 	    y: null,
 	    width: 0.9,
@@ -1815,12 +1816,51 @@ define('view/diagrams/bar',[
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
-	var df = Manager.getData(data);
-	var raw_data = _.map(
-	    _.zip(df.column(options.x), df.column(options.y)),
+	var df = Manager.getData(df_id);
+	var data;
+	if(options.count !== null){
+	    var raw = this.countData(df.column(options.value));
+	    data = this.proceedData(raw.x, raw.y, options);
+	}else{
+	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
+	}
+
+	var model = parent.append("g");
+	var rects = model.selectAll("rect")
+	    .data(data)
+	    .enter()
+	    .append("rect")
+	    .attr("height", 0)
+	    .attr("y", scales.y(0));
+
+	this.updateModels(rects, scales, options);
+
+	this.model = model;
+	this.scales = scales;
+	this.options = options;
+	this.df = df;
+	this.df_id = df_id;
+
+	return this;
+    }
+
+    Bar.prototype.countData = function(values){
+	var hash = {}
+	_.each(values, function(val){
+	    hash[val] = hash[val] || 0;
+	    hash[val] += 1;
+	});
+	return {x: _.keys(hash), y: _.values(hash)};
+    }
+    
+    Bar.prototype.proceedData = function(x, y, options){
+	return _.map(
+	    _.zip(x,y),
 	    function(d, i){return {i:i,x:d[0], y:d[1]};}
 	);
+    }
 
+    Bar.prototype.updateModels = function(selector, scales, options){
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
@@ -1835,34 +1875,41 @@ define('view/diagrams/bar',[
 
 	var width = scales.x.rangeBand()*options.width;
 	var padding = scales.x.rangeBand()*((1-options.width)/2);
-	var model = parent.append("g");
 
-	model.selectAll("rect")
-	    .data(raw_data)
-	    .enter()
-	    .append("rect")
+	selector
 	    .attr("x",function(d){return scales.x(d.x) + padding})
-	    .attr("y", function(d){return scales.y(d.y)})
 	    .attr("width", width)
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
 	    .attr("fill", options.color)
 	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
-	
-	this.model = model;
-	this.df = df;
-
-	return this;
+	    .on("mouseout", outMouse)
+	    .transition().duration(200)
+	    .attr("y", function(d){return scales.y(d.y)})
+	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+	;
     }
 
-    Bar.prototype.clear = function(){
-	this.model.selectAll("rect")
-	    .data([])
-	    .exit();
+    Bar.prototype.selected = function(df_id, row_nums){
+	var data, df = this.df;
+	if(this.options.value !== null){
+	    var selected_values = df.pickUpCells(this.options.value, row_nums);
+	    var raw = this.countData(selected_values);
+	    data = this.proceedData(raw.x, raw.y, this.options);
+	}else{
+	    var selected_x = df.pickUpCells(this.options.x, row_nums);
+	    var selected_y = df.pickUpCells(this.options.y, row_nums);
+	    data = this.proceedData(selected_x, selected_y, this.options);
+	}
+	var models = this.model.selectAll("rect").data(data);
+	this.updateModels(models, this.scales, this.options);
     }
 
-    Bar.prototype.update = function(scales){
+    Bar.prototype.update = function(){
+	var models = this.model.selectAll("rect");
+	this.updateModels(models,  this.scales, this.options);
+    }
 
+    Bar.prototype.checkSelectedData = function(ranges){
+	return;
     }
 
     return Bar;
@@ -1915,10 +1962,10 @@ define('view/diagrams/histogram',[
     'core/manager',
     'view/components/filter'
 ],function(_, Manager, Filter){
-    function Histogram(parent, scales, data, _options){
+    function Histogram(parent, scales, df_id, _options){
 	var options = {
 	    value: null,
-	    bin_num: 10,
+	    bin_num: 20,
 	    width: 0.9,
 	    color:'steelblue',
 	    stroke_color: 'black',
@@ -1926,91 +1973,70 @@ define('view/diagrams/histogram',[
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
-	var df = Manager.getData(data);
+	this.scales = scales;
+	var df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
 
-	var raw_data, width;
-
-	var proceed_data = function(column){
-	    var raw_data = [];
-	    if(scales.x.domain().length > 2){
-		var hash = {}
-		_.each(column, function(val){
-		    hash[val] = hash[val] || {x:val, y:0};
-		    hash[val].y += 1;
-		});
-		raw_data = _.map(hash, function(val, key){return val;});
-		width = scales.x.rangeBand();
-	    }else{
-		raw_data = d3.layout.histogram()
-		    .bins(scales.x.ticks(20))(column);
-		width = scales.x(raw_data[0].dx) - scales.x(0);
-	    }
-	    return raw_data;
-	}
-
-	var update_models = function(selector){
-	    selector
-		.attr("x",function(d){return scales.x(d.x)})
-	    	.attr("width", width)
-		.attr("fill", options.color)
-		.attr("stroke", options.stroke_color)
-		.attr("stroke-width", options.stroke_width)
-	    	.attr("clip-path","url(#clip_context)")
-		.on("mouseover", function(){
-		    d3.select(this).transition()
-			.duration(200)
-			.attr("fill", d3.rgb(options.color).darker(1));
-		})
-		.on("mouseout", function(){
-		    d3.select(this).transition()
-			.duration(200)
-			.attr("fill", options.color);
-		})
-		.transition().duration(200)
-	    	.attr("y", function(d){return scales.y(d.y);})
-		.attr("height", function(d){return scales.y(0) - scales.y(d.y);});
-	}
-
-	var raw_data = proceed_data(df.column(options.value));
 	var model = parent.append("g");
 	var rects = model.selectAll("rect")
-	    .data(raw_data)
+	    .data(data)
 	    .enter()
 	    .append("rect")
 	    .attr("height", 0)
 	    .attr("y", scales.y(0));
-	update_models(rects);
 
-	this.proceed_data = proceed_data;
-	this.update_models = update_models;
+	this.updateModels(rects, scales, options);
 
 	this.options = options;
 	this.model = model;
 	this.df = df;
-	this.data = data; //dirty.
+	this.df_id = df_id;
 
 	return this;
     }
 
-    Histogram.prototype.clear = function(){
-	this.model.selectAll("rect")
-	    .data([])
-	    .exit();
+    Histogram.prototype.proceedData = function(raw_data, options){
+	return d3.layout.histogram()
+	    .bins(this.scales.x.ticks(options.bin_num))(raw_data);
     }
 
-    Histogram.prototype.selected = function(data, rows){
-	var column = this.df.column(this.options.value);
-	var row_data = _.map(rows, function(i){
-	    return column[i];
-	});
-	var data = this.proceed_data(row_data);
-	var models = this.model.selectAll("rect")
-	    .data(data);
-	this.update_models(models);
+    Histogram.prototype.updateModels = function(selector, scales, options){
+	var onMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", d3.rgb(options.color).darker(1));
+	}
+
+	var outMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", options.color);
+	}
+
+	selector
+	    .attr("x",function(d){return scales.x(d.x)})
+	    .attr("width", function(d){return scales.x(d.dx) - scales.x(0)})
+	    .attr("fill", options.color)
+	    .attr("stroke", options.stroke_color)
+	    .attr("stroke-width", options.stroke_width)
+	    .attr("clip-path","url(#clip_context)")
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse)
+	    .transition().duration(200)
+	    .attr("y", function(d){return scales.y(d.y);})
+	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+    }
+
+    Histogram.prototype.selected = function(data, row_nums){
+	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
+	var data = this.proceedData(selected_cells, this.options);
+	var models = this.model.selectAll("rect").data(data);
+	this.updateModels(models, this.scales, this.options);
     }
 
     Histogram.prototype.update = function(){
-	this.update_models(this.model.selectAll("rect"));
+	var models = this.model.selectAll("rect");
+	this.updateModels(models,  this.scales, this.options);
     }
 
     Histogram.prototype.checkSelectedData = function(ranges){
@@ -2019,7 +2045,7 @@ define('view/diagrams/histogram',[
 	_.each(column, function(val, i){
 	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
 	});
-	Manager.selected(this.data, rows);
+	Manager.selected(this.df_id, rows);
     }
 
     return Histogram;
@@ -2205,13 +2231,13 @@ define('view/pane',[
 	this.filter = new Filter(this.context, this.scales, callback, options);
     }
 
-    Pane.prototype.selected = function(data, rows){
+    Pane.prototype.selected = function(df_id, rows){
 	var diagrams = this.diagrams;
 	var funcs = {
 	    fixed:function(){return;},
 	    fluid:function(){
 		_.each(diagrams, function(diagram){
-		    if(diagram.data == data)diagram.selected(data, rows);
+		    if(diagram.df_id == df_id)diagram.selected(df_id, rows);
 		});
 	    }
 	};
@@ -2229,18 +2255,26 @@ define('utils/dataframe',[
 	return this;
     }
     
-    Dataframe.prototype.row = function(num){
-	return this.raw[num];
+    Dataframe.prototype.row = function(row_num){
+	return this.raw[row_num];
     }
 
     Dataframe.prototype.column = function(label){
-	arr = [];
-	_.each(this.raw, function(row){arr.push(row[label]);});
+	var arr = [];
+	var raw = this.raw;
+	_.each(raw, function(row){arr.push(row[label]);});
 	return arr;
     }
 
+    Dataframe.prototype.pickUpCells = function(label, row_nums){
+	var column = this.column(label);
+	return _.map(row_nums, function(i){
+	    return column[i];
+	});
+    }
+
     Dataframe.prototype.columnRange = function(label){
-	column = this.column(label);
+	var column = this.column(label);
 	return {
 	    max: d3.max(column, function(val){return val;}),
 	    min: d3.min(column, function(val){return val;})

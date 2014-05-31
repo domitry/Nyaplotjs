@@ -93,13 +93,13 @@ define([
 	this.filter = new Filter(this.context, this.scales, callback, options);
     }
 
-    Pane.prototype.selected = function(data, rows){
+    Pane.prototype.selected = function(df_id, rows){
 	var diagrams = this.diagrams;
 	var funcs = {
 	    fixed:function(){return;},
 	    fluid:function(){
 		_.each(diagrams, function(diagram){
-		    if(diagram.data == data)diagram.selected(data, rows);
+		    if(diagram.df_id == df_id)diagram.selected(df_id, rows);
 		});
 	    }
 	};
