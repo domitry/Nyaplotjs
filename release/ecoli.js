@@ -1812,7 +1812,7 @@ define('view/diagrams/bar',[
 	    x: null,
 	    y: null,
 	    width: 0.9,
-	    color:'steelblue'
+	    color: null
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -1823,6 +1823,12 @@ define('view/diagrams/bar',[
 	    data = this.proceedData(raw.x, raw.y, options);
 	}else{
 	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
+	}
+
+	if(options.color == null){
+	    this.color_scale = d3.scale.category20b();
+	}else{
+	    this.color_scale = d3.scale.ordinal().range(options.color);
 	}
 
 	var model = parent.append("g");
@@ -1856,21 +1862,23 @@ define('view/diagrams/bar',[
     Bar.prototype.proceedData = function(x, y, options){
 	return _.map(
 	    _.zip(x,y),
-	    function(d, i){return {i:i,x:d[0], y:d[1]};}
+	    function(d, i){return {x:d[0], y:d[1]};}
 	);
     }
 
     Bar.prototype.updateModels = function(selector, scales, options){
+	var color_scale = this.color_scale;
+
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", d3.rgb(options.color).darker(1));
+		.attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1)});
 	}
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", options.color);
+		.attr("fill", function(d){return color_scale(d.x)})
 	}
 
 	var width = scales.x.rangeBand()*options.width;
@@ -1879,7 +1887,7 @@ define('view/diagrams/bar',[
 	selector
 	    .attr("x",function(d){return scales.x(d.x) + padding})
 	    .attr("width", width)
-	    .attr("fill", options.color)
+	    .attr("fill", function(d){return color_scale(d.x)})
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse)
 	    .transition().duration(200)

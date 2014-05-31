@@ -13,7 +13,7 @@ var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(v
 
 var model1 = {data:{data1: values},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}], filter: {target: 'x'}, options:{width:500, height:500, xrange: [0,1], yrange: [0,30], scale:'fixed',grid:true, x_label:'PNR', y_label:'Frequency'}}]};
 
-var model2 = {data:{},panes:[{type:'rectangular', diagrams:[{type:'bar', data: 'data1', options: {value:'mutation_type', color:'#a1d99b'}}],options:{width:300, height:500, xrange:['c->a', 'g->a', 't->a'], yrange: [0,100], scale:'fluid', grid:true, x_label:'indivisual 1', y_label:'Relative Conditions'}}]};
+var model2 = {data:{},panes:[{type:'rectangular', diagrams:[{type:'bar', data: 'data1', options: {value:'mutation_type'}}],options:{width:300, height:500, xrange:['c->a', 'g->a', 't->a'], yrange: [0,100], scale:'fluid', grid:true, x_label:'indivisual 1', y_label:'Relative Conditions'}}]};
 
 window.onload = function(){
     Ecoli.core.parse(model1, '#vis1');
