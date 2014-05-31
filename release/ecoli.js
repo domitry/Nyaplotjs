@@ -2044,14 +2044,16 @@ define('view/components/axis',[
     'underscore'
 ],function(_){
     function Axis(parent, scales, _options){
-	options = {
+	var options = {
 	    width:0,
 	    height:0,
+	    margin: {top:0,bottom:0,left:0,right:0},
 	    stroke_color:"#000000",
 	    stroke_width: 0.5,
+	    x_label:'X',
+	    y_label:'Y',
 	    grid:true
 	};
-
 	if(arguments.length>2)_.extend(options, _options);
 
 	var xAxis = d3.svg.axis()
@@ -2082,6 +2084,23 @@ define('view/components/axis',[
 	    .style("stroke",options.stroke_color)
 	    .style("stroke-width",options.stroke_width);
 
+	parent.append("text")
+	    .attr("x", options.width/2)
+	    .attr("y", options.height + options.margin.bottom/1.5)
+	    .attr("text-anchor", "middle")
+	    .attr("fill", "black")
+	    .attr("font-size", 22)
+	    .text(options.x_label);
+
+	parent.append("text")
+	    .attr("x", -options.margin.left/1.5)
+	    .attr("y", options.height/2)
+	    .attr("text-anchor", "middle")
+	    .attr("fill", "black")
+	    .attr("font-size", 22)
+	    .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
+	    .text(options.y_label);
+
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;
 	this.model = parent;
@@ -2110,21 +2129,20 @@ define('view/pane',[
 	    margin: {top: 30, bottom: 80, left: 80, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
+	    x_label:'X',
+	    y_label:'Y',
 	    zoom: true,
 	    grid: true,
-	    scale: 'fixed',
-	    x_label:'X',
-	    y_label:'Y'
+	    scale: 'fixed'
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
 	var model = parent.append("svg")
 	    .attr("width", options.width)
-	    .attr("height", options.height)
+	    .attr("height", options.height);
 
 	var inner_width = options.width - options.margin.left - options.margin.right;
 	var inner_height = options.height - options.margin.top - options.margin.bottom;
-
 	var ranges = {x:[0,inner_width], y:[inner_height,0]};
 	var scales = {};
 
@@ -2141,6 +2159,7 @@ define('view/pane',[
 	var axis = new Axis(model.select("g"), scales, {
 	    width:inner_width, 
 	    height:inner_height,
+	    margin:options.margin,
 	    grid:options.grid,
 	    x_label:options.x_label,
 	    y_label:options.y_label

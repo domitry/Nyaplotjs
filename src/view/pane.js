@@ -11,21 +11,20 @@ define([
 	    margin: {top: 30, bottom: 80, left: 80, right: 30},
 	    xrange: [0,0],
 	    yrange: [0,0],
+	    x_label:'X',
+	    y_label:'Y',
 	    zoom: true,
 	    grid: true,
-	    scale: 'fixed',
-	    x_label:'X',
-	    y_label:'Y'
+	    scale: 'fixed'
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
 	var model = parent.append("svg")
 	    .attr("width", options.width)
-	    .attr("height", options.height)
+	    .attr("height", options.height);
 
 	var inner_width = options.width - options.margin.left - options.margin.right;
 	var inner_height = options.height - options.margin.top - options.margin.bottom;
-
 	var ranges = {x:[0,inner_width], y:[inner_height,0]};
 	var scales = {};
 
@@ -42,6 +41,7 @@ define([
 	var axis = new Axis(model.select("g"), scales, {
 	    width:inner_width, 
 	    height:inner_height,
+	    margin:options.margin,
 	    grid:options.grid,
 	    x_label:options.x_label,
 	    y_label:options.y_label
