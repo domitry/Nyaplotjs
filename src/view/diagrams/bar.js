@@ -14,7 +14,7 @@ define([
 
 	var df = Manager.getData(df_id);
 	var data;
-	if(options.count !== null){
+	if(options.value !== null){
 	    var raw = this.countData(df.column(options.value));
 	    data = this.proceedData(raw.x, raw.y, options);
 	}else{
