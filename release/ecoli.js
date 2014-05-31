@@ -2185,16 +2185,17 @@ define('view/pane',[
 	this.context = model.select(".context");
 	this.scales = scales;
 	this.options = options;
+	this.filter = null;
 
 	return this;
     }
 
-    Pane.prototype.add = function(type, data, options){
+    Pane.prototype.addDiagram = function(type, data, options){
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
 	this.diagrams.push(diagram);
     };
 
-    Pane.prototype.filter = function(target, options){
+    Pane.prototype.addFilter = function(target, options){
 	var diagrams = this.diagrams;
 	var callback = function(ranges){
 	    _.each(diagrams, function(diagram){
@@ -2268,13 +2269,13 @@ define('core/parse',[
 	    var data_list = [];
 
 	    _.each(pane_model.diagrams, function(diagram){
-		pane.add(diagram.type, diagram.data, diagram.options || {});
+		pane.addDiagram(diagram.type, diagram.data, diagram.options || {});
 		data_list.push(diagram.data);
 	    });
 
 	    if(pane_model['filter'] !== undefined){
 		var filter = pane_model.filter;
-		pane.filter(filter.type, filter.options || {});
+		pane.addFilter(filter.type, filter.options || {});
 	    }
 
 	    Manager.addPane({pane:pane, data: data_list});
