@@ -1,0 +1,16 @@
+<html lang='en'>
+<head>
+  <title>Ecolijs example -- Line chart</title>
+  <script src='http://d3js.org/d3.v3.min.js'></script>
+  <script src='../release/ecoli.js'></script>
+</head>
+<body>
+<div id='vis'></div>
+<script>
+var data1 = [], MAX=10, MIN=0;
+for(var x=MIN;x<MAX;x+=0.1)data1.push({x: x, y: Math.sin(x)});
+models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'line', data: 'data1', options: {x:'x', y:'y', stroke_width:2}}],options:{width:500, height:500, xrange: [MIN, MAX], yrange: [-2, 2]}}]};
+window.onload = function(){Ecoli.core.parse(models, '#vis');};
+</script>
+</body>
+</html>
