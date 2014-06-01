@@ -2,11 +2,12 @@ define([
     'underscore',
     'view/diagrams/diagrams',
     'view/components/axis',
-    'view/components/filter'
-],function(_, diagrams, Axis, Filter){
+    'view/components/filter',
+    'view/components/legend'
+],function(_, diagrams, Axis, Filter, Legend){
     function Pane(parent, _options){
 	var options = {
-	    width: 500,
+	    width: 700,
 	    height: 500,
 	    margin: {top: 30, bottom: 80, left: 80, right: 30},
 	    xrange: [0,0],
@@ -17,7 +18,10 @@ define([
 	    grid: true,
 	    scale: 'fixed',
 	    bg_color: '#eee',
-	    grid_color: '#fff'
+	    grid_color: '#fff',
+	    legend: true,
+	    legend_width: 100,
+	    legend_options: {}
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -27,6 +31,9 @@ define([
 
 	var inner_width = options.width - options.margin.left - options.margin.right;
 	var inner_height = options.height - options.margin.top - options.margin.bottom;
+	if(options.legend){
+	    inner_width -= options.legend_width;
+	}
 	var ranges = {x:[0,inner_width], y:[inner_height,0]};
 	var scales = {};
 
@@ -69,6 +76,15 @@ define([
 	    .attr("width", inner_width)
 	    .attr("height", inner_height);
 
+	if(options.legend){
+	    var legend_space = model.select("g")
+		.append("g")
+		.attr("transform", "translate(" + inner_width + ",0)");
+
+	    options.legend_options['height'] = inner_height;
+	    this.legend = new Legend(legend_space, options.legend_options);
+	}
+
 	this.diagrams = [];
 	this.context = model.select(".context");
 	this.scales = scales;
@@ -80,6 +96,12 @@ define([
 
     Pane.prototype.addDiagram = function(type, data, options){
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
+	var legend = this.legend;
+	if(this.options.legend){
+	    _.each(diagram.legends, function(l){
+		legend.add(l.label, l.color, function(){console.log("hoge")});
+	    });
+	}
 	this.diagrams.push(diagram);
     };
 

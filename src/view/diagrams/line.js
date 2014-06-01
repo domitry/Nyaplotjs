@@ -7,6 +7,7 @@ define([
 	var options = {
 	    x: null,
 	    y: null,
+	    title: 'line',
 	    color:'steelblue',
 	    stroke_width: 2
 	};
@@ -19,9 +20,10 @@ define([
 	var model = parent.append("g");
 	var path = model.append("path")
 	    .datum(data)
-
+	
 	this.updateModels(path, scales, options);
 
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;

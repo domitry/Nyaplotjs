@@ -1825,11 +1825,13 @@ define('view/diagrams/bar',[
 	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
 	}
 
+	var color_scale;
 	if(options.color == null){
-	    this.color_scale = d3.scale.category20b();
+	    color_scale = d3.scale.category20b();
 	}else{
-	    this.color_scale = d3.scale.ordinal().range(options.color);
+	    color_scale = d3.scale.ordinal().range(options.color);
 	}
+	this.color_scale = color_scale;
 
 	var model = parent.append("g");
 	var rects = model.selectAll("rect")
@@ -1838,12 +1840,18 @@ define('view/diagrams/bar',[
 	    .append("rect")
 	    .attr("height", 0)
 	    .attr("y", scales.y(0));
+	
+	var legends = [];
+	_.each(data, function(d){
+	    legends.push({label: d.x, color:color_scale(d.x)})
+	});
 
 	this.updateModels(rects, scales, options);
 
 	this.model = model;
 	this.scales = scales;
 	this.options = options;
+	this.legends = legends;
 	this.df = df;
 	this.df_id = df_id;
 
@@ -1972,6 +1980,7 @@ define('view/diagrams/histogram',[
 ],function(_, Manager, Filter){
     function Histogram(parent, scales, df_id, _options){
 	var options = {
+	    title: 'histogram',
 	    value: null,
 	    bin_num: 20,
 	    width: 0.9,
@@ -1995,6 +2004,7 @@ define('view/diagrams/histogram',[
 
 	this.updateModels(rects, scales, options);
 
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2066,6 +2076,7 @@ define('view/diagrams/scatter',[
 ],function(_, Manager, Filter){
     function Scatter(parent, scales, df_id, _options){
 	var options = {
+	    title: 'scatter',
 	    x: null,
 	    y: null,
 	    r: 5,
@@ -2089,6 +2100,7 @@ define('view/diagrams/scatter',[
 
 	this.updateModels(circles, scales, options);
 
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2160,6 +2172,7 @@ define('view/diagrams/line',[
 	var options = {
 	    x: null,
 	    y: null,
+	    title: 'line',
 	    color:'steelblue',
 	    stroke_width: 2
 	};
@@ -2172,9 +2185,10 @@ define('view/diagrams/line',[
 	var model = parent.append("g");
 	var path = model.append("path")
 	    .datum(data)
-
+	
 	this.updateModels(path, scales, options);
 
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2235,13 +2249,126 @@ define('view/diagrams/line',[
     return Line;
 });
 
-define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar','view/diagrams/histogram','view/diagrams/scatter','view/diagrams/line'],function(require, exports, module){
+define('view/diagrams/venn',[
+    'underscore',
+    'core/manager',
+    'view/components/filter'
+],function(_, Manager, Filter){
+    function Venn(parent, scales, df_id, _options){
+	var options = {
+	    category: null,
+	    count: null,
+	    color:null,
+	    stroke_color:'#000',
+	    stroke_width: 1,
+	    opacity: 0.5
+	};
+	if(arguments.length>3)_.extend(options, _options);
+
+	this.scales = scales;
+	var df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.category), df.column(options.count), options);
+
+	var model = parent.append("g");
+	var circles = model
+	    .selectAll("circle")
+	    .data(data)
+	    .enter()
+	    .append("circle");
+
+	if(options.color == null)this.color_scale = d3.scale.category20b();
+	else this.color_scale = d3.scale.ordinal().range(options.color);
+
+	this.updateModels(circles, scales, options);
+
+	this.options = options;
+	this.model = model;
+	this.df = df;
+	this.df_id = df_id;
+
+	return this;
+    }
+
+    Venn.prototype.proceedData = function(category, count, options){
+	return ['hoge', 'fuga', 'nyaa'];
+    }
+
+    Venn.prototype.updateModels = function(selector, scales, options){
+	var color_scale = this.color_scale;
+	var onMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", function(d){return d3.rgb(color_scale(d)).darker(1)});
+	}
+
+	var outMouse = function(){
+	    d3.select(this).transition()
+		.duration(200)
+		.attr("fill", function(d){return color_scale(d)});
+	}
+
+	// This is the *fake implementation*
+	var w4 = d3.max(scales.x.range())/4;
+	var h1 = (d3.max(scales.y.range()) - w4*Math.sqrt(3))/2;
+	var h2 = h1 + w4*Math.sqrt(3);
+	var x_scale = d3.scale.ordinal().domain(['hoge', 'fuga', 'nyaa']).range([w4*2, w4+40, w4*3-40]);
+	var y_scale = d3.scale.ordinal().domain(['hoge', 'fuga', 'nyaa']).range([h1,h2-40,h2-40]);
+
+	selector
+	    .attr("r", 100)
+	    .attr("cx", function(d){return x_scale(d)})
+	    .attr("cy", function(d){return y_scale(d)})
+	    .attr("stroke", options.stroke_color)
+	    .attr("stroke-width", options.stroke_width)
+	    .attr("fill", function(d){return color_scale(d)})
+	    .attr("fill-opacity", options.opacity)
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
+
+	selector
+	    .append("text")
+	    .attr("x", function(d){return x_scale(d)})
+	    .attr("y", function(d){return y_scale(d)})
+	    .attr("text-anchor", "middle")
+	    .text(function(d){return d})
+    }
+
+    Venn.prototype.selected = function(data, row_nums){
+	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
+	var data = this.proceedData(selected_cells, this.options);
+	var models = this.model.selectAll("path").datum(data);
+	this.updateModels(models, this.scales, this.options);
+    }
+
+    Venn.prototype.update = function(){
+	var models = this.model.selectAll("path");
+	this.updateModels(models,  this.scales, this.options);
+    }
+
+    Venn.prototype.checkSelectedData = function(ranges){
+	var rows = [];
+	var column = this.df.column(this.options.value);
+	_.each(column, function(val, i){
+	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
+	});
+	Manager.selected(this.df_id, rows);
+    }
+
+    Venn.prototype.legends = function(){
+	return [];
+    }
+
+    return Venn;
+});
+
+define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar','view/diagrams/histogram','view/diagrams/scatter','view/diagrams/line','view/diagrams/venn'],function(require, exports, module){
     diagrams = {};
 
     diagrams.bar = require('view/diagrams/bar');
     diagrams.histogram = require('view/diagrams/histogram');
     diagrams.scatter = require('view/diagrams/scatter');
     diagrams.line = require('view/diagrams/line');
+    diagrams.venn = require('view/diagrams/venn');
 
     return diagrams;
 });
@@ -2322,15 +2449,93 @@ define('view/components/axis',[
     return Axis;
 });
 
+define('view/components/legend',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+    function Legend(parent, _options){
+	var options = {
+	    title: '',
+	    width: 100,
+	    height: 500,
+	    fill_color: "none",
+	    stroke_color: "#000",
+	    stroke_width: 0,
+	    title_height: 15,
+	    margin: {top:18, bottom:8, right:8, left: 18},
+	    middle: false
+	};
+	if(arguments.length>1)_.extend(options, _options);
+
+	parent.append("rect")
+	    .attr("width", options.width)
+	    .attr("height", options.height)
+	    .attr("x", 0)
+	    .attr("y", 0)
+	    .attr("fill", options.fill_color)
+	    .attr("stroke", options.stroke_color)
+	    .attr("stroke-width", options.stroke_width);
+
+	var model = parent.append("g")
+	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
+
+	model.append("text")
+	    .attr("x", 0)
+	    .attr("y", 0)
+	    .text(options.title)
+
+	this.model = model;
+	this.options = options;
+	this.data = [];
+
+	return this;
+    }
+
+    Legend.prototype.add = function(label, color, callback){
+	this.data.push({label:label, color:color, callback:callback});
+
+	var new_entry = this.model.selectAll("g")
+	    .data(this.data)
+	    .enter()
+	    .append("g")
+
+	var padding = this.options.title_height;
+	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")"})
+	    .append("circle")
+	    .attr("cx","8")
+	    .attr("cy","8")
+	    .attr("r","6")
+	    .attr("stroke", function(d){return d.color})
+	    .attr("stroke-width","2")
+	    .attr("fill",function(d){return d.color})
+	    .on("click", function(d){return d.callback();})
+	    .style("cursor","pointer");
+
+	new_entry.append("text")
+	    .attr("x","18")
+	    .attr("y","12")
+	    .attr("font-size","12")
+	    .text(function(d){return d.label});
+
+	if(this.options.middle){
+	    var height = padding + this.data.length * 25;
+	    this.model.attr("transform", "translate(" + this.options.margin.left + "," + (this.options.height - height)/2 + ")");
+	}
+    }
+
+    return Legend;
+});
+
 define('view/pane',[
     'underscore',
     'view/diagrams/diagrams',
     'view/components/axis',
-    'view/components/filter'
-],function(_, diagrams, Axis, Filter){
+    'view/components/filter',
+    'view/components/legend'
+],function(_, diagrams, Axis, Filter, Legend){
     function Pane(parent, _options){
 	var options = {
-	    width: 500,
+	    width: 700,
 	    height: 500,
 	    margin: {top: 30, bottom: 80, left: 80, right: 30},
 	    xrange: [0,0],
@@ -2341,7 +2546,10 @@ define('view/pane',[
 	    grid: true,
 	    scale: 'fixed',
 	    bg_color: '#eee',
-	    grid_color: '#fff'
+	    grid_color: '#fff',
+	    legend: true,
+	    legend_width: 100,
+	    legend_options: {}
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
@@ -2351,6 +2559,9 @@ define('view/pane',[
 
 	var inner_width = options.width - options.margin.left - options.margin.right;
 	var inner_height = options.height - options.margin.top - options.margin.bottom;
+	if(options.legend){
+	    inner_width -= options.legend_width;
+	}
 	var ranges = {x:[0,inner_width], y:[inner_height,0]};
 	var scales = {};
 
@@ -2393,6 +2604,15 @@ define('view/pane',[
 	    .attr("width", inner_width)
 	    .attr("height", inner_height);
 
+	if(options.legend){
+	    var legend_space = model.select("g")
+		.append("g")
+		.attr("transform", "translate(" + inner_width + ",0)");
+
+	    options.legend_options['height'] = inner_height;
+	    this.legend = new Legend(legend_space, options.legend_options);
+	}
+
 	this.diagrams = [];
 	this.context = model.select(".context");
 	this.scales = scales;
@@ -2404,6 +2624,12 @@ define('view/pane',[
 
     Pane.prototype.addDiagram = function(type, data, options){
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
+	var legend = this.legend;
+	if(this.options.legend){
+	    _.each(diagram.legends, function(l){
+		legend.add(l.label, l.color, function(){console.log("hoge")});
+	    });
+	}
 	this.diagrams.push(diagram);
     };
 

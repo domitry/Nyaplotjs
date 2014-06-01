@@ -5,6 +5,7 @@ define([
 ],function(_, Manager, Filter){
     function Scatter(parent, scales, df_id, _options){
 	var options = {
+	    title: 'scatter',
 	    x: null,
 	    y: null,
 	    r: 5,
@@ -28,6 +29,7 @@ define([
 
 	this.updateModels(circles, scales, options);
 
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;

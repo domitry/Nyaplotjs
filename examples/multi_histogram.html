@@ -6,14 +6,19 @@
 </head>
 <body>
 <div id='vis1' style='float:left'></div>
-<div id='vis2' style='float:left'>
+<div id='vis2' style='float:left'></div>
+<div id='vis3' style='clear:left'></div>
 <script>
 var mutation_types = ['c->a', 'g->a', 't->a'];
-var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(val), mutation_type: (val>50? mutation_types[0] : mutation_types[1])};});
-var model1 = {data:{data1: values},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}], filter: {target: 'x'}, options:{width:500, height:500, xrange: [0,1], yrange: [0,30], scale:'fixed',grid:true, x_label:'PNR', y_label:'Frequency'}},{type:'rectangular', diagrams:[{type:'bar', data: 'data1', options: {value:'mutation_type'}}],options:{width:300, height:500, xrange:['c->a', 'g->a', 't->a'], yrange: [0,100], scale:'fluid', grid:true, x_label:'indivisual 1', y_label:'Relative Conditions'}}]};
+var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(val), mutation_type: mutation_types[Math.floor(Math.random()*3)]};});
+var model1 = {data:{data1: values},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}], filter: {target: 'x'}, options:{width:500, height:500, xrange: [0,1], yrange: [0,30], scale:'fixed',grid:true, x_label:'PNR', y_label:'Frequency', legend:false}}]};
+var model2 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'bar', data: 'data1', options: {value:'mutation_type'}}],options:{width:400, height:500, xrange:['c->a', 'g->a', 't->a'], yrange: [0,100], scale:'fluid', grid:true, x_label:'indivisual 1', y_label:'Relative Conditions', legend_options:{title: 'mutations'}}}]};
+var model3 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'venn', data: 'data1', options: {category:'group',count:'mutation_type'}}],options:{width:600, height:500, xrange:[0,1], yrange: [0,1], scale:'fluid', grid:true, x_label:'', y_label:''}}]};
 
 window.onload = function(){
     Ecoli.core.parse(model1, '#vis1');
+    Ecoli.core.parse(model2, '#vis2');
+    Ecoli.core.parse(model3, '#vis3');
 };
 </script>
 </body>

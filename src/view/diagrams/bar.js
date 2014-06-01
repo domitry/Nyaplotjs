@@ -21,11 +21,13 @@ define([
 	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
 	}
 
+	var color_scale;
 	if(options.color == null){
-	    this.color_scale = d3.scale.category20b();
+	    color_scale = d3.scale.category20b();
 	}else{
-	    this.color_scale = d3.scale.ordinal().range(options.color);
+	    color_scale = d3.scale.ordinal().range(options.color);
 	}
+	this.color_scale = color_scale;
 
 	var model = parent.append("g");
 	var rects = model.selectAll("rect")
@@ -34,12 +36,18 @@ define([
 	    .append("rect")
 	    .attr("height", 0)
 	    .attr("y", scales.y(0));
+	
+	var legends = [];
+	_.each(data, function(d){
+	    legends.push({label: d.x, color:color_scale(d.x)})
+	});
 
 	this.updateModels(rects, scales, options);
 
 	this.model = model;
 	this.scales = scales;
 	this.options = options;
+	this.legends = legends;
 	this.df = df;
 	this.df_id = df_id;
 

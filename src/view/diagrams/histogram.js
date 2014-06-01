@@ -5,6 +5,7 @@ define([
 ],function(_, Manager, Filter){
     function Histogram(parent, scales, df_id, _options){
 	var options = {
+	    title: 'histogram',
 	    value: null,
 	    bin_num: 20,
 	    width: 0.9,
@@ -28,6 +29,7 @@ define([
 
 	this.updateModels(rects, scales, options);
 
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
