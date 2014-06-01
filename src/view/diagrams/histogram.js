@@ -29,7 +29,7 @@ define([
 
 	this.updateModels(rects, scales, options);
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = [{label: options.title, color:options.color, on:function(){}, off:function(){}}];
 	this.options = options;
 	this.model = model;
 	this.df = df;

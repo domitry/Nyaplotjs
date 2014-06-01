@@ -40,8 +40,8 @@ define([
 	return this;
     }
 
-    Legend.prototype.add = function(label, color, callback){
-	this.data.push({label:label, color:color, callback:callback});
+    Legend.prototype.add = function(label, color, callback_on, callback_off){
+	this.data.push({label:label, color:color, on:callback_on, off:callback_off});
 
 	var new_entry = this.model.selectAll("g")
 	    .data(this.data)
@@ -57,7 +57,16 @@ define([
 	    .attr("stroke", function(d){return d.color})
 	    .attr("stroke-width","2")
 	    .attr("fill",function(d){return d.color})
-	    .on("click", function(d){return d.callback();})
+	    .on("click", function(d){
+		var el = d3.select(this);
+		if(el.attr("fill-opacity")==1){
+		    el.attr("fill-opacity", 0);
+		    d.off();
+		}else{
+		    el.attr("fill-opacity", 1);
+		    d.on();
+		};
+	    })
 	    .style("cursor","pointer");
 
 	new_entry.append("text")

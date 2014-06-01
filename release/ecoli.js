@@ -1826,11 +1826,8 @@ define('view/diagrams/bar',[
 	}
 
 	var color_scale;
-	if(options.color == null){
-	    color_scale = d3.scale.category20b();
-	}else{
-	    color_scale = d3.scale.ordinal().range(options.color);
-	}
+	if(options.color == null)color_scale = d3.scale.category20b();
+	else color_scale = d3.scale.ordinal().range(options.color);
 	this.color_scale = color_scale;
 
 	var model = parent.append("g");
@@ -1843,7 +1840,9 @@ define('view/diagrams/bar',[
 	
 	var legends = [];
 	_.each(data, function(d){
-	    legends.push({label: d.x, color:color_scale(d.x)})
+	    var on = function(){};
+	    var off = function(){};
+	    legends.push({label: d.x, color:color_scale(d.x), on:on, off:off})
 	});
 
 	this.updateModels(rects, scales, options);
@@ -2491,8 +2490,8 @@ define('view/components/legend',[
 	return this;
     }
 
-    Legend.prototype.add = function(label, color, callback){
-	this.data.push({label:label, color:color, callback:callback});
+    Legend.prototype.add = function(label, color, callback_on, callback_off){
+	this.data.push({label:label, color:color, on:callback_on, off:callback_off});
 
 	var new_entry = this.model.selectAll("g")
 	    .data(this.data)
@@ -2508,7 +2507,16 @@ define('view/components/legend',[
 	    .attr("stroke", function(d){return d.color})
 	    .attr("stroke-width","2")
 	    .attr("fill",function(d){return d.color})
-	    .on("click", function(d){return d.callback();})
+	    .on("click", function(d){
+		var el = d3.select(this);
+		if(el.attr("fill-opacity")==1){
+		    el.attr("fill-opacity", 0);
+		    d.off();
+		}else{
+		    el.attr("fill-opacity", 1);
+		    d.on();
+		};
+	    })
 	    .style("cursor","pointer");
 
 	new_entry.append("text")
@@ -2627,7 +2635,7 @@ define('view/pane',[
 	var legend = this.legend;
 	if(this.options.legend){
 	    _.each(diagram.legends, function(l){
-		legend.add(l.label, l.color, function(){console.log("hoge")});
+		legend.add(l.label, l.color, l.on, l.off);
 	    });
 	}
 	this.diagrams.push(diagram);

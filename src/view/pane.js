@@ -99,7 +99,7 @@ define([
 	var legend = this.legend;
 	if(this.options.legend){
 	    _.each(diagram.legends, function(l){
-		legend.add(l.label, l.color, function(){console.log("hoge")});
+		legend.add(l.label, l.color, l.on, l.off);
 	    });
 	}
 	this.diagrams.push(diagram);

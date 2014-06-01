@@ -22,11 +22,8 @@ define([
 	}
 
 	var color_scale;
-	if(options.color == null){
-	    color_scale = d3.scale.category20b();
-	}else{
-	    color_scale = d3.scale.ordinal().range(options.color);
-	}
+	if(options.color == null)color_scale = d3.scale.category20b();
+	else color_scale = d3.scale.ordinal().range(options.color);
 	this.color_scale = color_scale;
 
 	var model = parent.append("g");
@@ -39,7 +36,9 @@ define([
 	
 	var legends = [];
 	_.each(data, function(d){
-	    legends.push({label: d.x, color:color_scale(d.x)})
+	    var on = function(){};
+	    var off = function(){};
+	    legends.push({label: d.x, color:color_scale(d.x), on:on, off:off})
 	});
 
 	this.updateModels(rects, scales, options);
