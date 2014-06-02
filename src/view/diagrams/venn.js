@@ -1,8 +1,9 @@
 define([
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'utils/simplex'
+],function(_, Manager, Filter, simplex){
     function Venn(parent, scales, df_id, _options){
 	var options = {
 	    category: null,
@@ -39,7 +40,16 @@ define([
     }
 
     Venn.prototype.proceedData = function(category, count, options){
-	return ['hoge', 'fuga', 'nyaa'];
+	var func_count = function(arr){
+	    var hash;
+	    _.each(arr,function(val){hash[val]=true});
+	    return _.keys(hash);
+	}
+	var items = func_count(count);
+	_.each(_.zip(category, count), function(arr){
+	    hash[arr[0]] |= {};
+	    hash[arr[0]][arr[1]] = true;
+	});
     }
 
     Venn.prototype.updateModels = function(selector, scales, options){
