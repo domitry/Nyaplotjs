@@ -77,8 +77,10 @@ define([
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Histogram.prototype.update = function(){
-	var models = this.model.selectAll("rect");
+    Histogram.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
+	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 

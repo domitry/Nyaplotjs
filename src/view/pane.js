@@ -128,5 +128,11 @@ define([
 	funcs[this.options.scale]();
     }
 
+    Pane.prototype.update = function(){
+	_.each(this.diagrams, function(diagram){
+	    diagram.updateData();
+	});
+    }
+
     return Pane;
 });

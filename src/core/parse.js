@@ -10,6 +10,7 @@ define([
 
 	_.each(model.data, function(value, name){
 	    Manager.addData(name, new Dataframe(name, value));
+	    Manager.update();
 	});
 
 	_.each(model.panes, function(pane_model){

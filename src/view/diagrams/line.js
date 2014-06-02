@@ -67,8 +67,10 @@ define([
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Line.prototype.update = function(){
-	var models = this.model.selectAll("path");
+    Line.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
+	var models = this.model.selectAll("path").datum(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 

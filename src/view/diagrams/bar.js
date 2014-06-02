@@ -114,8 +114,16 @@ define([
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Bar.prototype.update = function(){
-	var models = this.model.selectAll("rect");
+    Bar.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data;
+	if(options.value !== null){
+	    var raw = this.countData(df.column(options.value));
+	    data = this.proceedData(raw.x, raw.y, options);
+	}else{
+	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
+	}
+	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 

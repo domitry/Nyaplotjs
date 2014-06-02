@@ -23,6 +23,12 @@ define([
 	});
     }
 
+    Manager.update = function(){
+	_.each(this.panes, function(entry){
+	    entry.update();
+	});
+    }
+
     Manager.updateData = function(data_id, column_name, value){
 
     }

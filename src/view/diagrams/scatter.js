@@ -75,8 +75,10 @@ define([
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Scatter.prototype.update = function(){
-	var models = this.model.selectAll("rect");
+    Scatter.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
+	var models = this.model.selectAll("circle").data(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 

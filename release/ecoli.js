@@ -1795,6 +1795,12 @@ define('core/manager',[
 	});
     }
 
+    Manager.update = function(){
+	_.each(this.panes, function(entry){
+	    entry.update();
+	});
+    }
+
     Manager.updateData = function(data_id, column_name, value){
 
     }
@@ -1918,8 +1924,16 @@ define('view/diagrams/bar',[
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Bar.prototype.update = function(){
-	var models = this.model.selectAll("rect");
+    Bar.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data;
+	if(options.value !== null){
+	    var raw = this.countData(df.column(options.value));
+	    data = this.proceedData(raw.x, raw.y, options);
+	}else{
+	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
+	}
+	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 
@@ -2003,7 +2017,7 @@ define('view/diagrams/histogram',[
 
 	this.updateModels(rects, scales, options);
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = [{label: options.title, color:options.color, on:function(){}, off:function(){}}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2051,8 +2065,10 @@ define('view/diagrams/histogram',[
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Histogram.prototype.update = function(){
-	var models = this.model.selectAll("rect");
+    Histogram.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
+	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 
@@ -2099,7 +2115,7 @@ define('view/diagrams/scatter',[
 
 	this.updateModels(circles, scales, options);
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = [{label: options.title, color:options.color,on:function(){}, off:function(){}}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2145,8 +2161,10 @@ define('view/diagrams/scatter',[
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Scatter.prototype.update = function(){
-	var models = this.model.selectAll("rect");
+    Scatter.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
+	var models = this.model.selectAll("circle").data(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 
@@ -2187,7 +2205,7 @@ define('view/diagrams/line',[
 	
 	this.updateModels(path, scales, options);
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = [{label: options.title, color:options.color, on:function(){}, off:function(){}}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2231,8 +2249,10 @@ define('view/diagrams/line',[
 	this.updateModels(models, this.scales, this.options);
     }
 
-    Line.prototype.update = function(){
-	var models = this.model.selectAll("path");
+    Line.prototype.updateData = function(){
+	this.df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.value), options);
+	var models = this.model.selectAll("path").datum(data);
 	this.updateModels(models,  this.scales, this.options);
     }
 
@@ -2248,11 +2268,88 @@ define('view/diagrams/line',[
     return Line;
 });
 
+define('utils/simplex',['underscore'], function(_){
+    // constant values
+    var l_1 = 0.7, l_2 = 1.5;
+    var EPS = 1.0e-20;
+    var count = 0, COUNT_LIMIT=1e3;
+
+    function calcCenter(vector){
+	center = [];
+	_.each(_.zip.apply(null, vector), function(arr, i){
+            center[i] = 0
+            _.each(arr, function(val){
+		center[i] += val;
+            });
+            center[i] = center[i]/arr.length;
+	});
+	return center;
+    }
+
+    function rec(params, func){
+	params = _.sortBy(params, function(p){return func(p);});
+	var n = params.length;
+	var val_num = params[0].length;
+	var p_h = params[n-1];
+	var p_g = params[n-2];
+	var p_l = params[0];
+	var p_c = calcCenter(params.concat().splice(0, n-1));
+	var p_r = [];
+	for(var i=0; i<val_num; i++)p_r[i]=2*p_c[i] - p_h[i];
+
+	if(func(p_r) >= func(p_h)){
+            // reduction
+            for(var i=0;i<val_num;i++)
+		params[n-1][i] = (1 - l_1)*p_h[i] + l_1 * p_r[i];
+	}else if(func(p_r) < (func(p_l)+(l_2 - 1)*func(p_h))/l_2){
+            // expand
+            p_e = [];
+            for(var i=0;i<val_num;i++)p_e[i] = l_2*p_r[i] - (l_2 -1)*p_h[i];
+            if(func(p_e) <= func(p_r))params[n-1] = p_e;
+            else params[n-1] = p_r;
+	}else{
+            params[n-1] = p_r;
+	}
+
+	if(func(params[n-1]) >=  func(p_g)){
+            // reduction all
+	    _.each(params, function(p, i){
+		for(var j=0;j<val_num;j++){
+		    params[i][j] = 0.5*(p[j] + p_l[j]);
+		}
+	    });
+	}
+	var sum = 0;
+	_.each(params, function(p){sum += Math.pow(func(p) - func(p_l),2)});
+
+	if(sum < EPS)return params[n-1];
+	else{
+	    if(count > COUNT_LIMIT)return params[n-1];
+	    return rec(params, func);
+	}
+    }
+
+    function simplex(params, func){
+	var k = 1;
+	var n = params.length;
+	var p_default = [params];
+	_.each(_.range(n), function(i){
+            var p = params.concat();
+            p[i] += k;
+            p_default.push(p);
+	});
+	return rec(p_default, func);
+    }
+
+    return simplex;
+});
+
 define('view/diagrams/venn',[
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'utils/simplex'
+],function(_, Manager, Filter, simplex){
     function Venn(parent, scales, df_id, _options){
 	var options = {
 	    category: null,
@@ -2289,7 +2386,16 @@ define('view/diagrams/venn',[
     }
 
     Venn.prototype.proceedData = function(category, count, options){
-	return ['hoge', 'fuga', 'nyaa'];
+	var func_count = function(arr){
+	    var hash;
+	    _.each(arr,function(val){hash[val]=true});
+	    return _.keys(hash);
+	}
+	var items = func_count(count);
+	_.each(_.zip(category, count), function(arr){
+	    hash[arr[0]] |= {};
+	    hash[arr[0]][arr[1]] = true;
+	});
     }
 
     Venn.prototype.updateModels = function(selector, scales, options){
@@ -2664,6 +2770,12 @@ define('view/pane',[
 	funcs[this.options.scale]();
     }
 
+    Pane.prototype.update = function(){
+	_.each(this.diagrams, function(diagram){
+	    diagram.updateData();
+	});
+    }
+
     return Pane;
 });
 
@@ -2671,7 +2783,15 @@ define('utils/dataframe',[
     'underscore'
 ],function(_){
     function Dataframe(name, data){
-	this.raw = data;
+	if(data instanceof String && /url(.+)/g.test(data)){
+	    var url = data.match(/url\((.+)\)/)[1];
+	    var df = this;
+	    d3.json(url, function(error, json){
+		df.raw = JSON.parse(json);
+	    });
+	    this.raw = {};
+	}
+	else this.raw = data;
 	return this;
     }
     
@@ -2716,6 +2836,7 @@ define('core/parse',[
 
 	_.each(model.data, function(value, name){
 	    Manager.addData(name, new Dataframe(name, value));
+	    Manager.update();
 	});
 
 	_.each(model.panes, function(pane_model){

@@ -2,7 +2,15 @@ define([
     'underscore'
 ],function(_){
     function Dataframe(name, data){
-	this.raw = data;
+	if(data instanceof String && /url(.+)/g.test(data)){
+	    var url = data.match(/url\((.+)\)/)[1];
+	    var df = this;
+	    d3.json(url, function(error, json){
+		df.raw = JSON.parse(json);
+	    });
+	    this.raw = {};
+	}
+	else this.raw = data;
 	return this;
     }
     
