@@ -1,5 +1,5 @@
 require.config({
-    paths: {underscore: '../lib/underscore/underscore'}
+    paths: {underscore: '../contrib/underscore/underscore'}
 });
 
     

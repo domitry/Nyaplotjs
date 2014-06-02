@@ -424,7 +424,7 @@ var requirejs, require, define;
     };
 }());
 
-define("../lib/almond/almond", function(){});
+define("../contrib/almond/almond", function(){});
 
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
