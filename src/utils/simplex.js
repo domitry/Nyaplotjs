@@ -23,8 +23,6 @@ define(['underscore'], function(_){
 	var p_h = params[n-1];
 	var p_g = params[n-2];
 	var p_l = params[0];
-
-	// calc the center of gravity
 	var p_c = calcCenter(params.concat().splice(0, n-1));
 	var p_r = [];
 	for(var i=0; i<val_num; i++)p_r[i]=2*p_c[i] - p_h[i];
