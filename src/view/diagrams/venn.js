@@ -45,11 +45,17 @@ define([
 	    _.each(arr,function(val){hash[val]=true});
 	    return _.keys(hash);
 	}
-	var items = func_count(count);
+	var hash = {}, items = func_count(count);
 	_.each(_.zip(category, count), function(arr){
-	    hash[arr[0]] |= {};
-	    hash[arr[0]][arr[1]] = true;
+	    hash[arr[1]] |= {}; //count
+	    hash[arr[1]][arr[0]] = true;
 	});
+	var data = [];
+	_.each(hash, function(item, key){
+	    hash[key] |= 0;
+	    hash[key]++;
+	});
+	
     }
 
     Venn.prototype.updateModels = function(selector, scales, options){
