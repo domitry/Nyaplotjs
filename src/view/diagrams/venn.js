@@ -39,23 +39,52 @@ define([
 	return this;
     }
 
-    Venn.prototype.proceedData = function(category, count, options){
-	var func_count = function(arr){
-	    var hash;
-	    _.each(arr,function(val){hash[val]=true});
-	    return _.keys(hash);
+    Venn.prototype.proceedData = function(category_column, count_column, options){
+	var counted_items = (function(){
+	    var hash={};
+	    _.each(_.zip(category_column, count_column), function(arr){
+		hash[arr[1]] |= {};
+		hash[arr[1]][arr[0]] = true;
+	    });
+	    return _.items(hash);
+	})();
+
+	var count_common = function(items){
+	    var cnt=0;
+	    _.each(hash, function(values, key){
+		if(!_.some(items, function(item){return if(!(item in values))}))
+		    cnt++;
+	    });
+	    return cnt;
 	}
-	var hash = {}, items = func_count(count);
-	_.each(_.zip(category, count), function(arr){
-	    hash[arr[1]] |= {}; //count
-	    hash[arr[1]][arr[0]] = true;
-	});
-	var data = [];
-	_.each(hash, function(item, key){
-	    hash[key] |= 0;
-	    hash[key]++;
-	});
 	
+	var category_list = _.uniq(category_column);
+	var table = [], r=[];
+	for(var i = 0; i<categories; i++){
+	    table[i] = [];
+	    table[i][i] = count_common([categories[i]]);
+	    r[i] = Math.sqrt(table[i][i]/(2*Math.Pi));
+	    for(var j=i+1; j<categories; j++){
+		var num = count_common([categories[i], categories[j]]);
+		table[i][j] = num;
+	    }
+	}
+
+	// function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
+	var evaluation = function(values){
+	    var loss = 0;
+	    for(var i=0;i<values.length;i+=2){
+		
+	    }
+	}
+
+	// decide default values
+
+
+	// decide values
+	simplex(def_params, evaluation);
+
+	return data;
     }
 
     Venn.prototype.updateModels = function(selector, scales, options){
@@ -76,8 +105,8 @@ define([
 	var w4 = d3.max(scales.x.range())/4;
 	var h1 = (d3.max(scales.y.range()) - w4*Math.sqrt(3))/2;
 	var h2 = h1 + w4*Math.sqrt(3);
-	var x_scale = d3.scale.ordinal().domain(['hoge', 'fuga', 'nyaa']).range([w4*2, w4+40, w4*3-40]);
-	var y_scale = d3.scale.ordinal().domain(['hoge', 'fuga', 'nyaa']).range([h1,h2-40,h2-40]);
+	var x_scale = d3.scale.ordinal().domain().range([w4*2, w4+40, w4*3-40]);
+	var y_scale = d3.scale.ordinal().domain().range([h1,h2-40,h2-40]);
 
 	selector
 	    .attr("r", 100)
