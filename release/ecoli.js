@@ -2272,7 +2272,7 @@ define('utils/simplex',['underscore'], function(_){
     // constant values
     var l_1 = 0.7, l_2 = 1.5;
     var EPS = 1.0e-20;
-    var count = 0, COUNT_LIMIT=1000;
+    var count = 0, COUNT_LIMIT=2000;
 
     function calcCenter(vector){
 	center = [];
@@ -2495,10 +2495,10 @@ define('view/diagrams/venn',[
 	    var center_i = set_num - max_area.length;
 	    params[center_i*2] = 0; // x
 	    params[center_i*2+1] = 0; // y
-	    var rad=0, rad_interval=Math.PI*2/(set_num-1);
+	    var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
 	    for(var i=0;i<set_num;i++){
 		if(i!=center_i){
-		    var d = r[center_i] + r[i];
+		    var d = r[center_i] + r[i]/2;
 		    params[i*2] = d*Math.sin(rad);
 		    params[i*2+1] = d*Math.cos(rad);
 		    rad += rad_interval;
