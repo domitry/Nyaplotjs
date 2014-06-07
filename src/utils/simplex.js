@@ -2,7 +2,7 @@ define(['underscore'], function(_){
     // constant values
     var l_1 = 0.7, l_2 = 1.5;
     var EPS = 1.0e-20;
-    var count = 0, COUNT_LIMIT=10;
+    var count = 0, COUNT_LIMIT=1000;
 
     function calcCenter(vector){
 	center = [];
@@ -54,6 +54,7 @@ define(['underscore'], function(_){
 
 	if(sum < EPS)return params[n-1];
 	else{
+	    count++;
 	    if(count > COUNT_LIMIT)return params[n-1];
 	    return rec(params, func);
 	}
