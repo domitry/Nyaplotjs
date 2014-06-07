@@ -17,7 +17,41 @@ define([
 
 	this.scales = scales;
 	var df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.category), df.column(options.count), options);
+	var data = this.proceedData(df.column(options.category), df.column(options.count));
+
+	scales = (function(){
+	    var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
+	    var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
+	    var d_x = {
+		min: _.min(data, function(d){return d.x - d.r}),
+		max: _.max(data, function(d){return d.x + d.r})
+	    };
+	    var d_y = {
+		min: _.min(data, function(d){return d.y - d.r}),
+		max: _.max(data, function(d){return d.y + d.r})
+	    };
+	    var d_w = d_x.max-d_x.min;
+	    var d_h = d_y.max-d_y.min;
+
+	    var scale = 0;
+	    if(r_w/r_h > d_w/d_h){
+		scale = d_h/r_h;
+		var new_d_w = scale*r_w;
+		d_x.min -= (new_d_w - d_w)/2;
+		d_x.max += (new_d_w - d_w)/2;
+	    }
+	    else{
+		scale = d_w/r_w;
+		var new_d_h = scale*r_h;
+		d_h.min -= (new_d_h - d_h)/2;
+		d_h.max += (new_d_h - d_h)/2;
+	    }
+	    var new_scales = {};
+	    new_scales.x = d3.scale.linear().range(scales.x.range()).domain();
+	    new_scales.y = d3.scale.linear().range(scales.y.range()).domain();
+	    new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
+	    return new_scales;
+	})();
 
 	var model = parent.append("g");
 	var circles = model
@@ -39,50 +73,94 @@ define([
 	return this;
     }
 
-    Venn.prototype.proceedData = function(category_column, count_column, options){
-	var counted_items = (function(){
-	    var hash={};
-	    _.each(_.zip(category_column, count_column), function(arr){
-		hash[arr[1]] |= {};
-		hash[arr[1]][arr[0]] = true;
-	    });
-	    return _.items(hash);
-	})();
+    Venn.prototype.proceedData = function(category_column, count_column){
+	// decide overlapping areas
+	var table = (function(){
+	    var table = [];
+	    var counted_items = (function(){
+		var hash={};
+		_.each(_.zip(category_column, count_column), function(arr){
+		    hash[arr[1]] |= {};
+		    hash[arr[1]][arr[0]] = true;
+		});
+		return _.items(hash);
+	    })();
 
-	var count_common = function(items){
-	    var cnt=0;
-	    _.each(hash, function(values, key){
-		if(!_.some(items, function(item){return if(!(item in values))}))
-		    cnt++;
-	    });
-	    return cnt;
-	}
-	
-	var category_list = _.uniq(category_column);
-	var table = [], r=[];
-	for(var i = 0; i<categories; i++){
-	    table[i] = [];
-	    table[i][i] = count_common([categories[i]]);
-	    r[i] = Math.sqrt(table[i][i]/(2*Math.Pi));
-	    for(var j=i+1; j<categories; j++){
-		var num = count_common([categories[i], categories[j]]);
-		table[i][j] = num;
+	    var count_common = function(items){
+		var cnt=0;
+		_.each(counted_items, function(values, key){
+		    if(!_.some(items, function(item){return !(item in values)}))cnt++;
+		});
+		return cnt;
 	    }
-	}
+	    
+	    var categories = _.uniq(category_column);
+	    for(var i = 0; i<categories.length; i++){
+		table[i] = [];
+		table[i][i] = count_common([categories[i]]);
+		for(var j=i+1; j<categories; j++){
+		    var num = count_common([categories[i], categories[j]]);
+		    table[i][j] = num;
+		}
+	    }
+	    return table;
+	});
+
+	// calc radius of each circle
+	var r = _.each(table, function(row, i){
+	    return Math.sqrt(table[i][i]/(2*Math.Pi));
+	});
 
 	// function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
 	var evaluation = function(values){
 	    var loss = 0;
 	    for(var i=0;i<values.length;i+=2){
-		
+		for(var j=i;j<values.length;j+=2){
+		    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
+		    var r1=r[i], r2=r[j];
+		    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
+		    var S = 0;
+		    _.each([[r1, r2],[r2, r1]], function(r_arr){
+			var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
+			var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.cos(theta*2);
+			S += s;
+		    });
+		    loss += Math.pow(table[i/2][j/2]-S,2);
+		}
 	    }
+	    return loss;
 	}
 
-	// decide default values
+	// decide initial paramaters
+	var init_params = (function(){
+	    var params = [];
+	    var set_num = table[0][0].length;
+	    var max_area = _.max(table, function(arr, i){
+		// calc the sum of overlapping area
+		var result=0;
+		for(var j=0;j<i;j++)result+=table[j][i];
+		for(var j=i+1;j<arr.length;j++)result+=table[i][j];
+		return result;
+	    });
+	    var center_i = set_num - max_area.length;
+	    params[center_i*2] = 0; // x
+	    params[center_i*2+1] = 0; // y
+	    var rad=0, rad_interval=Math.pi*2/(set_num-1);
+	    for(var i=0;i<set_num;i++){
+		if(i!=center_i){
+		    var d = r[center_i] + r[i];
+		    params[i*2] = d*Math.sin(rad);
+		    params[i*2+1] = d*Math.cos(rad);
+		    rad += rad_interval;
+		}
+	    }
+	    return params;
+	})();
 
-
-	// decide values
-	simplex(def_params, evaluation);
+	// decide coordinates using Simplex method
+	var params = simplex(def_params, evaluation);
+	var data=[];
+	for(var i=0;i<params.length;i+=2)data.push({x:params[i] ,y:params[i+1], r:r[i]});
 
 	return data;
     }
@@ -101,17 +179,10 @@ define([
 		.attr("fill", function(d){return color_scale(d)});
 	}
 
-	// This is the *fake implementation*
-	var w4 = d3.max(scales.x.range())/4;
-	var h1 = (d3.max(scales.y.range()) - w4*Math.sqrt(3))/2;
-	var h2 = h1 + w4*Math.sqrt(3);
-	var x_scale = d3.scale.ordinal().domain().range([w4*2, w4+40, w4*3-40]);
-	var y_scale = d3.scale.ordinal().domain().range([h1,h2-40,h2-40]);
-
 	selector
-	    .attr("r", 100)
-	    .attr("cx", function(d){return x_scale(d)})
-	    .attr("cy", function(d){return y_scale(d)})
+	    .attr("r", function(d){return scales.r(d.r)})
+	    .attr("cx", function(d){return scales.x(d.x)})
+	    .attr("cy", function(d){return scales.y(d.y)})
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("fill", function(d){return color_scale(d)})
@@ -119,12 +190,12 @@ define([
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
 
-	selector
+/*	selector
 	    .append("text")
 	    .attr("x", function(d){return x_scale(d)})
 	    .attr("y", function(d){return y_scale(d)})
 	    .attr("text-anchor", "middle")
-	    .text(function(d){return d})
+	    .text(function(d){return d})*/
     }
 
     Venn.prototype.selected = function(data, row_nums){
