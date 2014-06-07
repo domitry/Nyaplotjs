@@ -2358,15 +2358,11 @@ define('view/diagrams/venn',[
 	    color:null,
 	    stroke_color:'#000',
 	    stroke_width: 1,
-	    opacity: 0.5
+	    opacity: 0.7
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
-	this.scales = scales;
-	var df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.category), df.column(options.count));
-
-	scales = (function(){
+	this.getScales = function(data, scales){
 	    var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
 	    var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
 	    var d_x = {
@@ -2398,7 +2394,11 @@ define('view/diagrams/venn',[
 	    new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
 	    new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
 	    return new_scales;
-	})();
+	};
+
+	var df = Manager.getData(df_id);
+	var data = this.proceedData(df.column(options.category), df.column(options.count));
+	var new_scales = this.getScales(data, scales);
 
 	var model = parent.append("g");
 
@@ -2418,14 +2418,15 @@ define('view/diagrams/venn',[
 	else this.color_scale = d3.scale.ordinal().range(options.color);
 	var color_scale = this.color_scale;
 
-	this.updateModels(circles, scales, options);
-	this.updateLabels(texts, scales, options);
+	this.updateModels(circles, new_scales, options);
+	this.updateLabels(texts, new_scales, options);
 	var legends = [];
 	_.each(data.pos, function(d){
 	    legends.push({label: d.name, color:color_scale(d.name), on:function(){}, off:function(){}})
 	});
 
 	this.legends = legends;
+	this.scales = scales;
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2468,7 +2469,7 @@ define('view/diagrams/venn',[
 	    return table;
 	})();
 
-	// calc radius of each circle
+	// decide radius of each circle
 	var r = _.map(table, function(row, i){
 	    return Math.sqrt(table[i][i]/(2*Math.PI));
 	});
@@ -2555,7 +2556,6 @@ define('view/diagrams/venn',[
 	}
 
 	selector
-	    .attr("r", function(d){return scales.r(d.r)})
 	    .attr("cx", function(d){return scales.x(d.x)})
 	    .attr("cy", function(d){return scales.y(d.y)})
 	    .attr("stroke", options.stroke_color)
@@ -2563,7 +2563,11 @@ define('view/diagrams/venn',[
 	    .attr("fill", function(d){return color_scale(d.name)})
 	    .attr("fill-opacity", options.opacity)
 	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+	    .on("mouseout", outMouse)
+	    .transition()
+	    .duration(500)
+	    .attr("r", function(d){return scales.r(d.r)})
+	;
     }
 
     Venn.prototype.updateLabels = function(selector, scales, options){
@@ -2575,28 +2579,21 @@ define('view/diagrams/venn',[
     }
 
     Venn.prototype.selected = function(data, row_nums){
-	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
-	var data = this.proceedData(selected_cells, this.options);
-	var models = this.model.selectAll("path").datum(data);
-	this.updateModels(models, this.scales, this.options);
+	var selected_count = this.df.pickUpCells(this.options.count, row_nums);
+	var selected_category = this.df.pickUpCells(this.options.category, row_nums);
+	var data = this.proceedData(selected_category, selected_count, this.options);
+	var scales = this.getScales(data, this.scales);
+
+	var circles = this.model.selectAll("circle").data(data.pos);
+	var texts = this.model.selectAll("text").data(data.labels);
+	this.updateModels(circles, scales, this.options);
+	this.updateLabels(texts, scales, this.options);
     }
 
     Venn.prototype.update = function(){
-	var models = this.model.selectAll("path");
-	this.updateModels(models,  this.scales, this.options);
     }
 
     Venn.prototype.checkSelectedData = function(ranges){
-	var rows = [];
-	var column = this.df.column(this.options.value);
-	_.each(column, function(val, i){
-	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
-	});
-	Manager.selected(this.df_id, rows);
-    }
-
-    Venn.prototype.legends = function(){
-	return [];
     }
 
     return Venn;
