@@ -2370,12 +2370,12 @@ define('view/diagrams/venn',[
 	    var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
 	    var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
 	    var d_x = {
-		min: (function(){var min_d = _.min(data, function(d){return d.x - d.r}); return min_d.x - min_d.r})(),
-		max: (function(){var max_d = _.max(data, function(d){return d.x + d.r}); return max_d.x + max_d.r})()
+		min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r}); return min_d.x - min_d.r})(),
+		max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r}); return max_d.x + max_d.r})()
 	    };
 	    var d_y = {
-		min: (function(){var min_d = _.min(data, function(d){return d.y - d.r}); return min_d.y - min_d.r})(),
-		max: (function(){var max_d = _.max(data, function(d){return d.y + d.r}); return max_d.y + max_d.r})()
+		min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r}); return min_d.y - min_d.r})(),
+		max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r}); return max_d.y + max_d.r})()
 	    };
 	    var d_w = d_x.max-d_x.min;
 	    var d_h = d_y.max-d_y.min;
@@ -2401,16 +2401,24 @@ define('view/diagrams/venn',[
 	})();
 
 	var model = parent.append("g");
+
 	var circles = model
 	    .selectAll("circle")
-	    .data(data)
+	    .data(data.pos)
 	    .enter()
 	    .append("circle");
+
+	var texts = model
+	    .selectAll("text")
+	    .data(data.labels)
+	    .enter()
+	    .append("text");
 
 	if(options.color == null)this.color_scale = d3.scale.category20b();
 	else this.color_scale = d3.scale.ordinal().range(options.color);
 
 	this.updateModels(circles, scales, options);
+	this.updateLabels(texts, scales, options);
 
 	this.options = options;
 	this.model = model;
@@ -2421,6 +2429,8 @@ define('view/diagrams/venn',[
     }
 
     Venn.prototype.proceedData = function(category_column, count_column){
+	var categories = _.uniq(category_column);
+
 	// decide overlapping areas
 	var table = (function(){
 	    var table = [];
@@ -2441,7 +2451,6 @@ define('view/diagrams/venn',[
 		return cnt;
 	    }
 	    
-	    var categories = _.uniq(category_column);
 	    for(var i = 0; i<categories.length; i++){
 		table[i] = [];
 		table[i][i] = count_common([categories[i]]);
@@ -2509,10 +2518,20 @@ define('view/diagrams/venn',[
 
 	// decide coordinates using Simplex method
 	var params = simplex(init_params, evaluation);
-	var data=[];
-	for(var i=0;i<params.length;i+=2)data.push({x:params[i] ,y:params[i+1], r:r[i/2]});
+	var pos=[], labels=[];
+	for(var i=0;i<params.length;i+=2)
+	    pos.push({x:params[i] ,y:params[i+1], r:r[i/2], name:categories[i/2]});
 
-	return data;
+	for(var i=0;i<categories.length;i++){
+	    labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
+	    for(var j=i+1;j<categories.length;j++){
+		var x = (params[i*2] + params[j*2])/2;
+		var y = (params[i*2+1] + params[j*2+1])/2;
+		labels.push({x: x, y: y, val: table[i][j]});
+	    }
+	}
+
+	return {pos:pos, labels:labels};
     }
 
     Venn.prototype.updateModels = function(selector, scales, options){
@@ -2520,13 +2539,13 @@ define('view/diagrams/venn',[
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", function(d){return d3.rgb(color_scale(d)).darker(1)});
+		.attr("fill", function(d){return d3.rgb(color_scale(d.name)).darker(1)});
 	}
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", function(d){return color_scale(d)});
+		.attr("fill", function(d){return color_scale(d.name)});
 	}
 
 	selector
@@ -2535,17 +2554,18 @@ define('view/diagrams/venn',[
 	    .attr("cy", function(d){return scales.y(d.y)})
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
-	    .attr("fill", function(d){return color_scale(d)})
+	    .attr("fill", function(d){return color_scale(d.name)})
 	    .attr("fill-opacity", options.opacity)
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
+    }
 
-/*	selector
-	    .append("text")
-	    .attr("x", function(d){return x_scale(d)})
-	    .attr("y", function(d){return y_scale(d)})
+    Venn.prototype.updateLabels = function(selector, scales, options){
+	selector
+	    .attr("x", function(d){return scales.x(d.x)})
+	    .attr("y", function(d){return scales.y(d.y)})
 	    .attr("text-anchor", "middle")
-	    .text(function(d){return d})*/
+	    .text(function(d){return String(d.val)})
     }
 
     Venn.prototype.selected = function(data, row_nums){
