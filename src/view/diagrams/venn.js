@@ -67,12 +67,18 @@ define([
 	    .enter()
 	    .append("text");
 
-	if(options.color == null)this.color_scale = d3.scale.category20b();
+	if(options.color == null)this.color_scale = d3.scale.category20();
 	else this.color_scale = d3.scale.ordinal().range(options.color);
+	var color_scale = this.color_scale;
 
 	this.updateModels(circles, scales, options);
 	this.updateLabels(texts, scales, options);
+	var legends = [];
+	_.each(data.pos, function(d){
+	    legends.push({label: d.name, color:color_scale(d.name), on:function(){}, off:function(){}})
+	});
 
+	this.legends = legends;
 	this.options = options;
 	this.model = model;
 	this.df = df;
