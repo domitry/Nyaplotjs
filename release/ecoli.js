@@ -2272,7 +2272,7 @@ define('utils/simplex',['underscore'], function(_){
     // constant values
     var l_1 = 0.7, l_2 = 1.5;
     var EPS = 1.0e-20;
-    var count = 0, COUNT_LIMIT=1e3;
+    var count = 0, COUNT_LIMIT=10;
 
     function calcCenter(vector){
 	center = [];
@@ -2369,12 +2369,12 @@ define('view/diagrams/venn',[
 	    var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
 	    var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
 	    var d_x = {
-		min: _.min(data, function(d){return d.x - d.r}),
-		max: _.max(data, function(d){return d.x + d.r})
+		min: (function(){var min_d = _.min(data, function(d){return d.x - d.r}); return min_d.x - min_d.r})(),
+		max: (function(){var max_d = _.max(data, function(d){return d.x + d.r}); return max_d.x + max_d.r})()
 	    };
 	    var d_y = {
-		min: _.min(data, function(d){return d.y - d.r}),
-		max: _.max(data, function(d){return d.y + d.r})
+		min: (function(){var min_d = _.min(data, function(d){return d.y - d.r}); return min_d.y - min_d.r})(),
+		max: (function(){var max_d = _.max(data, function(d){return d.y + d.r}); return max_d.y + max_d.r})()
 	    };
 	    var d_w = d_x.max-d_x.min;
 	    var d_h = d_y.max-d_y.min;
@@ -2393,8 +2393,8 @@ define('view/diagrams/venn',[
 		d_h.max += (new_d_h - d_h)/2;
 	    }
 	    var new_scales = {};
-	    new_scales.x = d3.scale.linear().range(scales.x.range()).domain();
-	    new_scales.y = d3.scale.linear().range(scales.y.range()).domain();
+	    new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
+	    new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
 	    new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
 	    return new_scales;
 	})();
@@ -2426,10 +2426,10 @@ define('view/diagrams/venn',[
 	    var counted_items = (function(){
 		var hash={};
 		_.each(_.zip(category_column, count_column), function(arr){
-		    hash[arr[1]] |= {};
+		    if(hash[arr[1]]==undefined)hash[arr[1]]={};
 		    hash[arr[1]][arr[0]] = true;
 		});
-		return _.items(hash);
+		return _.values(hash);
 	    })();
 
 	    var count_common = function(items){
@@ -2444,33 +2444,36 @@ define('view/diagrams/venn',[
 	    for(var i = 0; i<categories.length; i++){
 		table[i] = [];
 		table[i][i] = count_common([categories[i]]);
-		for(var j=i+1; j<categories; j++){
+		for(var j=i+1; j<categories.length; j++){
 		    var num = count_common([categories[i], categories[j]]);
 		    table[i][j] = num;
 		}
 	    }
 	    return table;
-	});
+	})();
 
 	// calc radius of each circle
-	var r = _.each(table, function(row, i){
-	    return Math.sqrt(table[i][i]/(2*Math.Pi));
+	var r = _.map(table, function(row, i){
+	    return Math.sqrt(table[i][i]/(2*Math.PI));
 	});
 
 	// function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
 	var evaluation = function(values){
 	    var loss = 0;
 	    for(var i=0;i<values.length;i+=2){
-		for(var j=i;j<values.length;j+=2){
+		for(var j=i+2;j<values.length;j+=2){
 		    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
-		    var r1=r[i], r2=r[j];
+		    var r1=r[i/2], r2=r[j/2];
 		    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
 		    var S = 0;
-		    _.each([[r1, r2],[r2, r1]], function(r_arr){
-			var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
-			var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.cos(theta*2);
-			S += s;
-		    });
+		    if(d > r1+r2)S = 0;
+		    else{
+			_.each([[r1, r2],[r2, r1]], function(r_arr){
+			    var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
+			    var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
+			    S += s;
+			});
+		    }
 		    loss += Math.pow(table[i/2][j/2]-S,2);
 		}
 	    }
@@ -2480,7 +2483,7 @@ define('view/diagrams/venn',[
 	// decide initial paramaters
 	var init_params = (function(){
 	    var params = [];
-	    var set_num = table[0][0].length;
+	    var set_num = table[0].length;
 	    var max_area = _.max(table, function(arr, i){
 		// calc the sum of overlapping area
 		var result=0;
@@ -2491,7 +2494,7 @@ define('view/diagrams/venn',[
 	    var center_i = set_num - max_area.length;
 	    params[center_i*2] = 0; // x
 	    params[center_i*2+1] = 0; // y
-	    var rad=0, rad_interval=Math.pi*2/(set_num-1);
+	    var rad=0, rad_interval=Math.PI*2/(set_num-1);
 	    for(var i=0;i<set_num;i++){
 		if(i!=center_i){
 		    var d = r[center_i] + r[i];
@@ -2504,9 +2507,9 @@ define('view/diagrams/venn',[
 	})();
 
 	// decide coordinates using Simplex method
-	var params = simplex(def_params, evaluation);
+	var params = simplex(init_params, evaluation);
 	var data=[];
-	for(var i=0;i<params.length;i+=2)data.push({x:params[i] ,y:params[i+1], r:r[i]});
+	for(var i=0;i<params.length;i+=2)data.push({x:params[i] ,y:params[i+1], r:r[i/2]});
 
 	return data;
     }

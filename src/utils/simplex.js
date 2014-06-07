@@ -2,7 +2,7 @@ define(['underscore'], function(_){
     // constant values
     var l_1 = 0.7, l_2 = 1.5;
     var EPS = 1.0e-20;
-    var count = 0, COUNT_LIMIT=1e3;
+    var count = 0, COUNT_LIMIT=10;
 
     function calcCenter(vector){
 	center = [];
