@@ -11,7 +11,8 @@ define([
 	    color:null,
 	    stroke_color:'#000',
 	    stroke_width: 1,
-	    opacity: 0.7
+	    opacity: 0.7,
+	    hover: false
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -215,12 +216,13 @@ define([
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("fill", function(d){return color_scale(d.name)})
 	    .attr("fill-opacity", options.opacity)
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition()
 	    .duration(500)
-	    .attr("r", function(d){return scales.r(d.r)})
-	;
+	    .attr("r", function(d){return scales.r(d.r)});
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Venn.prototype.updateLabels = function(selector, scales, options){

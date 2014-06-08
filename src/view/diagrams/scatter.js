@@ -12,7 +12,8 @@ define([
 	    shape:'circle',
 	    color:'steelblue',
 	    stroke_color: 'black',
-	    stroke_width: 1
+	    stroke_width: 1,
+	    hover: true
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -62,10 +63,12 @@ define([
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("clip-path","url(#clip_context)")
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition().duration(200)
-	    .attr("r", options.r)
+	    .attr("r", options.r);
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Scatter.prototype.selected = function(data, row_nums){

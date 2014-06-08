@@ -8,7 +8,8 @@ define([
 	    x: null,
 	    y: null,
 	    width: 0.9,
-	    color: null
+	    color: null,
+	    hover: true
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -91,12 +92,13 @@ define([
 	    .attr("x",function(d){return scales.x(d.x) + padding})
 	    .attr("width", width)
 	    .attr("fill", function(d){return color_scale(d.x)})
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y)})
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
-	;
+	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Bar.prototype.selected = function(df_id, row_nums){

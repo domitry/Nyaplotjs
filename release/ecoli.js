@@ -1818,7 +1818,8 @@ define('view/diagrams/bar',[
 	    x: null,
 	    y: null,
 	    width: 0.9,
-	    color: null
+	    color: null,
+	    hover: true
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -1901,12 +1902,13 @@ define('view/diagrams/bar',[
 	    .attr("x",function(d){return scales.x(d.x) + padding})
 	    .attr("width", width)
 	    .attr("fill", function(d){return color_scale(d.x)})
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y)})
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
-	;
+	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Bar.prototype.selected = function(df_id, row_nums){
@@ -1999,7 +2001,8 @@ define('view/diagrams/histogram',[
 	    width: 0.9,
 	    color:'steelblue',
 	    stroke_color: 'black',
-	    stroke_width: 1
+	    stroke_width: 1,
+	    hover: false
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -2051,11 +2054,13 @@ define('view/diagrams/histogram',[
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("clip-path","url(#clip_context)")
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Histogram.prototype.selected = function(data, row_nums){
@@ -2098,7 +2103,8 @@ define('view/diagrams/scatter',[
 	    shape:'circle',
 	    color:'steelblue',
 	    stroke_color: 'black',
-	    stroke_width: 1
+	    stroke_width: 1,
+	    hover: true
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -2148,10 +2154,12 @@ define('view/diagrams/scatter',[
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("clip-path","url(#clip_context)")
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition().duration(200)
-	    .attr("r", options.r)
+	    .attr("r", options.r);
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Scatter.prototype.selected = function(data, row_nums){
@@ -2358,7 +2366,8 @@ define('view/diagrams/venn',[
 	    color:null,
 	    stroke_color:'#000',
 	    stroke_width: 1,
-	    opacity: 0.7
+	    opacity: 0.7,
+	    hover: false
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -2562,12 +2571,13 @@ define('view/diagrams/venn',[
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("fill", function(d){return color_scale(d.name)})
 	    .attr("fill-opacity", options.opacity)
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition()
 	    .duration(500)
-	    .attr("r", function(d){return scales.r(d.r)})
-	;
+	    .attr("r", function(d){return scales.r(d.r)});
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Venn.prototype.updateLabels = function(selector, scales, options){

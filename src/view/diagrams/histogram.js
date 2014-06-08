@@ -11,7 +11,8 @@ define([
 	    width: 0.9,
 	    color:'steelblue',
 	    stroke_color: 'black',
-	    stroke_width: 1
+	    stroke_width: 1,
+	    hover: false
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -63,11 +64,13 @@ define([
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("clip-path","url(#clip_context)")
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse)
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+
+	if(options.hover)selector
+	    .on("mouseover", onMouse)
+	    .on("mouseout", outMouse);
     }
 
     Histogram.prototype.selected = function(data, row_nums){
