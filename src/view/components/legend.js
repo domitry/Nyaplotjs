@@ -31,7 +31,7 @@ define([
 	model.append("text")
 	    .attr("x", 0)
 	    .attr("y", 0)
-	    .text(options.title)
+	    .text(options.title);
 
 	this.model = model;
 	this.options = options;
@@ -40,16 +40,16 @@ define([
 	return this;
     }
 
-    Legend.prototype.add = function(label, color, callback_on, callback_off){
+    Legend.prototype.add = function(label, color, callback_on, callback_off, mode){
 	this.data.push({label:label, color:color, on:callback_on, off:callback_off});
 
 	var new_entry = this.model.selectAll("g")
 	    .data(this.data)
 	    .enter()
-	    .append("g")
+	    .append("g");
 
 	var padding = this.options.title_height;
-	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")"});
+	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")";});
 
 	if(color!==undefined){
 	    var circle = new_entry
@@ -57,9 +57,12 @@ define([
 	    .attr("cx","8")
 	    .attr("cy","8")
 	    .attr("r","6")
-	    .attr("stroke", function(d){return d.color})
+	    .attr("stroke", function(d){return d.color;})
 	    .attr("stroke-width","2")
-	    .attr("fill",function(d){return d.color})
+	    .attr("fill",function(d){return d.color;});
+
+	    if(mode == 'off')circle.attr("fill-opacity",0);
+	    else circle.attr("fill-opacity",1);
 
 	    if(callback_on !== undefined && callback_off !== undefined){
 		circle
@@ -81,13 +84,13 @@ define([
 	    .attr("x","18")
 	    .attr("y","12")
 	    .attr("font-size","12")
-	    .text(function(d){return d.label});
+	    .text(function(d){return d.label;});
 
 	if(this.options.middle){
 	    var height = padding + this.data.length * 25;
 	    this.model.attr("transform", "translate(" + this.options.margin.left + "," + (this.options.height - height)/2 + ")");
 	}
-    }
+    };
 
     return Legend;
 });

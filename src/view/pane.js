@@ -99,7 +99,7 @@ define([
 	var legend = this.legend;
 	if(this.options.legend){
 	    _.each(diagram.legends, function(l){
-		legend.add(l.label, l.color, l.on, l.off);
+		legend.add(l['label'], l['color'], l['on'], l['off'], l['mode']);
 	    });
 	}
 	this.diagrams.push(diagram);
@@ -109,11 +109,11 @@ define([
 	var diagrams = this.diagrams;
 	var callback = function(ranges){
 	    _.each(diagrams, function(diagram){
-		diagram.checkSelectedData(ranges)
+		diagram.checkSelectedData(ranges);
 	    });
-	}
+	};
 	this.filter = new Filter(this.context, this.scales, callback, options);
-    }
+    };
 
     Pane.prototype.selected = function(df_id, rows){
 	var diagrams = this.diagrams;
@@ -126,13 +126,13 @@ define([
 	    }
 	};
 	funcs[this.options.scale]();
-    }
+    };
 
     Pane.prototype.update = function(){
 	_.each(this.diagrams, function(diagram){
 	    diagram.updateData();
 	});
-    }
+    };
 
     return Pane;
 });
