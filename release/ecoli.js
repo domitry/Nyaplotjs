@@ -2396,7 +2396,7 @@ define('view/diagrams/venn',[
 		var on = function(){
 		    selected_category[venn_id].push(category);
 		    update.call(thisObj);
-		    tellUpdate(thisObj);
+		    tellUpdate.call(thisObj);
 		};
 		var off = function(){
 		    var pos = selected_category[venn_id].indexOf(category);
