@@ -51,13 +51,7 @@ define([
 	};
 
 	var df = Manager.getData(df_id);
-
-	var column_category = df.column(options.category);
-	var column_count = df.column(options.count);
-	var categories = _.uniq(column_category);
-	var selected_category = [categories[0], categories[1], categories[2]];
-
-	var data = this.proceedData(column_category, column_count);
+	var data = this.proceedData(df.column(options.category), df.column(options.count));
 	var new_scales = this.getScales(data, scales);
 
 	var model = parent.append("g");
@@ -74,36 +68,17 @@ define([
 	    .enter()
 	    .append("text");
 
-	if(options.color == null)this.color_scale = d3.scale.category20().domain(categories);
-	else this.color_scale = d3.scale.ordinal().range(options.color).domain(categories);
+	if(options.color == null)this.color_scale = d3.scale.category20();
+	else this.color_scale = d3.scale.ordinal().range(options.color);
 	var color_scale = this.color_scale;
 
 	this.updateModels(circles, new_scales, options);
 	this.updateLabels(texts, new_scales, options);
 
 	var legends = [];
-	for(var i=1;i<=3;i++){
-	    legends.push({label: 'VENN' + String(i)});
-	    _.each(categories, function(category, j){
-		var mode = (i == j ? 'on' : 'off');
-		var on = function(){
-		    selected_category.push();
-		    // update
-		};
-		var off = function(){
-		    var len = selected_category.length;
-		    for(var i=0;i<len;i++){
-			if(selected_category[i]==category){
-			    for(var j=i;j<len-1;j++)
-				selected_category[j] = selected_category[j+1];
-			    break;
-			}
-		    }
-		    // update
-		};
-		legends.push({label: category, color:color_scale(category), mode:mode});
-	    });
-	}
+	_.each(data.pos, function(d){
+	    legends.push({label: d.name, color:color_scale(d.name)});
+	});
 
 	this.legends = legends;
 	this.scales = scales;

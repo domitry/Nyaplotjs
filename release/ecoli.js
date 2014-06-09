@@ -2429,9 +2429,10 @@ define('view/diagrams/venn',[
 
 	this.updateModels(circles, new_scales, options);
 	this.updateLabels(texts, new_scales, options);
+
 	var legends = [];
 	_.each(data.pos, function(d){
-	    legends.push({label: d.name, color:color_scale(d.name), on:function(){}, off:function(){}})
+	    legends.push({label: d.name, color:color_scale(d.name)});
 	});
 
 	this.legends = legends;
@@ -2748,7 +2749,10 @@ define('view/components/legend',[
 	    .append("g")
 
 	var padding = this.options.title_height;
-	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")"})
+	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")"});
+
+	if(color!==undefined){
+	    var circle = new_entry
 	    .append("circle")
 	    .attr("cx","8")
 	    .attr("cy","8")
@@ -2756,17 +2760,22 @@ define('view/components/legend',[
 	    .attr("stroke", function(d){return d.color})
 	    .attr("stroke-width","2")
 	    .attr("fill",function(d){return d.color})
-	    .on("click", function(d){
-		var el = d3.select(this);
-		if(el.attr("fill-opacity")==1){
-		    el.attr("fill-opacity", 0);
-		    d.off();
-		}else{
-		    el.attr("fill-opacity", 1);
-		    d.on();
-		};
-	    })
-	    .style("cursor","pointer");
+
+	    if(callback_on !== undefined && callback_off !== undefined){
+		circle
+		    .on("click", function(d){
+		    var el = d3.select(this);
+		    if(el.attr("fill-opacity")==1){
+			el.attr("fill-opacity", 0);
+			d.off();
+		    }else{
+			el.attr("fill-opacity", 1);
+			d.on();
+		    };
+		})
+		    .style("cursor","pointer");
+	    }
+	}
 
 	new_entry.append("text")
 	    .attr("x","18")

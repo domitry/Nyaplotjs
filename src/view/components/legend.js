@@ -49,7 +49,10 @@ define([
 	    .append("g")
 
 	var padding = this.options.title_height;
-	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")"})
+	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")"});
+
+	if(color!==undefined){
+	    var circle = new_entry
 	    .append("circle")
 	    .attr("cx","8")
 	    .attr("cy","8")
@@ -57,17 +60,22 @@ define([
 	    .attr("stroke", function(d){return d.color})
 	    .attr("stroke-width","2")
 	    .attr("fill",function(d){return d.color})
-	    .on("click", function(d){
-		var el = d3.select(this);
-		if(el.attr("fill-opacity")==1){
-		    el.attr("fill-opacity", 0);
-		    d.off();
-		}else{
-		    el.attr("fill-opacity", 1);
-		    d.on();
-		};
-	    })
-	    .style("cursor","pointer");
+
+	    if(callback_on !== undefined && callback_off !== undefined){
+		circle
+		    .on("click", function(d){
+		    var el = d3.select(this);
+		    if(el.attr("fill-opacity")==1){
+			el.attr("fill-opacity", 0);
+			d.off();
+		    }else{
+			el.attr("fill-opacity", 1);
+			d.on();
+		    };
+		})
+		    .style("cursor","pointer");
+	    }
+	}
 
 	new_entry.append("text")
 	    .attr("x","18")
