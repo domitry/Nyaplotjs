@@ -37,9 +37,7 @@ define([
 	
 	var legends = [];
 	_.each(data, function(d){
-	    var on = function(){};
-	    var off = function(){};
-	    legends.push({label: d.x, color:color_scale(d.x), on:on, off:off})
+	    legends.push({label: d.x, color:color_scale(d.x)});
 	});
 
 	this.updateModels(rects, scales, options);
@@ -55,20 +53,20 @@ define([
     }
 
     Bar.prototype.countData = function(values){
-	var hash = {}
+	var hash = {};
 	_.each(values, function(val){
 	    hash[val] = hash[val] || 0;
 	    hash[val] += 1;
 	});
 	return {x: _.keys(hash), y: _.values(hash)};
-    }
+    };
     
     Bar.prototype.proceedData = function(x, y, options){
 	return _.map(
 	    _.zip(x,y),
 	    function(d, i){return {x:d[0], y:d[1]};}
 	);
-    }
+    };
 
     Bar.prototype.updateModels = function(selector, scales, options){
 	var color_scale = this.color_scale;
@@ -76,30 +74,30 @@ define([
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1)});
-	}
+		.attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
+	};
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", function(d){return color_scale(d.x)})
-	}
+		.attr("fill", function(d){return color_scale(d.x);});
+	};
 
 	var width = scales.x.rangeBand()*options.width;
 	var padding = scales.x.rangeBand()*((1-options.width)/2);
 
 	selector
-	    .attr("x",function(d){return scales.x(d.x) + padding})
+	    .attr("x",function(d){return scales.x(d.x) + padding;})
 	    .attr("width", width)
-	    .attr("fill", function(d){return color_scale(d.x)})
+	    .attr("fill", function(d){return color_scale(d.x);})
 	    .transition().duration(200)
-	    .attr("y", function(d){return scales.y(d.y)})
+	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
 
 	if(options.hover)selector
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
-    }
+    };
 
     Bar.prototype.selected = function(df_id, row_nums){
 	var data, df = this.df;
@@ -114,7 +112,7 @@ define([
 	}
 	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models, this.scales, this.options);
-    }
+    };
 
     Bar.prototype.updateData = function(){
 	this.df = Manager.getData(df_id);
@@ -127,11 +125,11 @@ define([
 	}
 	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
-    }
+    };
 
     Bar.prototype.checkSelectedData = function(ranges){
 	return;
-    }
+    };
 
     return Bar;
 });

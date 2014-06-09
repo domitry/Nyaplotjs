@@ -34,7 +34,7 @@ define([
 	var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
 
 	for(var i=0;i<3;i++){
-	    var update = this.update;
+	    var update = this.update, tellUpdate = this.tellUpdate;
 	    var thisObj = this;
 	    var name = 'VENN' + String(i+1);
 	    legends.push({label: name, color:color_scale(options.area_names[i])});
@@ -43,11 +43,13 @@ define([
 		var on = function(){
 		    selected_category[venn_id].push(category);
 		    update.call(thisObj);
+		    tellUpdate(thisObj);
 		};
 		var off = function(){
 		    var pos = selected_category[venn_id].indexOf(category);
 		    selected_category[venn_id].splice(pos, 1);
 		    update.call(thisObj);
+		    tellUpdate.call(thisObj);
 		};
 		var mode = (category == selected_category[i] ? 'on' : 'off');
 		legends.push({label: category, color:'black', mode:mode, on:on, off:off});
@@ -62,6 +64,7 @@ define([
 	this.options = options;
 	this.scales = scales;
 	this.model = model;
+	this.df_id = df_id;
 	this.df = df;
 
 	this.update();
@@ -257,6 +260,16 @@ define([
 	this.update();
     };
 
+    Venn.prototype.tellUpdate = function(){
+	var rows=[], column_category=this.column_category;
+	_.each(this.selected_category, function(category){
+	    _.each(column_category, function(cell, i){
+		if(category.indexOf(cell)!=-1)rows.push(i);
+	    });
+	});
+	Manager.selected(this.df_id, rows);
+    };
+
     Venn.prototype.update = function(){
 	var data = this.proceedData(this.column_category, this.column_count, this.selected_category);
 	var scales = this.getScales(data, this.scales);
@@ -267,7 +280,7 @@ define([
 	if(texts[0][0]==undefined)texts = texts.enter().append("text");
 
 	this.updateModels(circles, scales, this.options);
-	this.updateLabels(texts, scales, this.options);	
+	this.updateLabels(texts, scales, this.options);
     };
 
     Venn.prototype.checkSelectedData = function(ranges){

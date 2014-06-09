@@ -49,7 +49,11 @@ define([
 	    .append("g");
 
 	var padding = this.options.title_height;
-	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")";});
+	var height = this.options.height;
+
+	new_entry.attr("transform",function(d, i){
+	    return "translate(0," + (padding + 25*i) + ")";
+	});
 
 	if(color!==undefined){
 	    var circle = new_entry

@@ -1779,31 +1779,31 @@ define('core/manager',[
 	entry = {};
 	entry[name] = df;
 	_.extend(this.data_frames, entry);
-    }
+    };
 
     Manager.getData = function(name){
 	return this.data_frames[name];
-    }
+    };
 
     Manager.addPane = function(pane){
 	this.panes.push(pane);
-    }
+    };
 
     Manager.selected = function(data_id, rows){
 	_.each(this.panes, function(entry){
 	    entry.pane.selected(data_id, rows);
 	});
-    }
+    };
 
     Manager.update = function(){
 	_.each(this.panes, function(entry){
 	    entry.update();
 	});
-    }
+    };
 
     Manager.updateData = function(data_id, column_name, value){
 
-    }
+    };
 
     return Manager;
 });
@@ -1847,9 +1847,7 @@ define('view/diagrams/bar',[
 	
 	var legends = [];
 	_.each(data, function(d){
-	    var on = function(){};
-	    var off = function(){};
-	    legends.push({label: d.x, color:color_scale(d.x), on:on, off:off})
+	    legends.push({label: d.x, color:color_scale(d.x)});
 	});
 
 	this.updateModels(rects, scales, options);
@@ -1865,20 +1863,20 @@ define('view/diagrams/bar',[
     }
 
     Bar.prototype.countData = function(values){
-	var hash = {}
+	var hash = {};
 	_.each(values, function(val){
 	    hash[val] = hash[val] || 0;
 	    hash[val] += 1;
 	});
 	return {x: _.keys(hash), y: _.values(hash)};
-    }
+    };
     
     Bar.prototype.proceedData = function(x, y, options){
 	return _.map(
 	    _.zip(x,y),
 	    function(d, i){return {x:d[0], y:d[1]};}
 	);
-    }
+    };
 
     Bar.prototype.updateModels = function(selector, scales, options){
 	var color_scale = this.color_scale;
@@ -1886,30 +1884,30 @@ define('view/diagrams/bar',[
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1)});
-	}
+		.attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
+	};
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
-		.attr("fill", function(d){return color_scale(d.x)})
-	}
+		.attr("fill", function(d){return color_scale(d.x);});
+	};
 
 	var width = scales.x.rangeBand()*options.width;
 	var padding = scales.x.rangeBand()*((1-options.width)/2);
 
 	selector
-	    .attr("x",function(d){return scales.x(d.x) + padding})
+	    .attr("x",function(d){return scales.x(d.x) + padding;})
 	    .attr("width", width)
-	    .attr("fill", function(d){return color_scale(d.x)})
+	    .attr("fill", function(d){return color_scale(d.x);})
 	    .transition().duration(200)
-	    .attr("y", function(d){return scales.y(d.y)})
+	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
 
 	if(options.hover)selector
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
-    }
+    };
 
     Bar.prototype.selected = function(df_id, row_nums){
 	var data, df = this.df;
@@ -1924,7 +1922,7 @@ define('view/diagrams/bar',[
 	}
 	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models, this.scales, this.options);
-    }
+    };
 
     Bar.prototype.updateData = function(){
 	this.df = Manager.getData(df_id);
@@ -1937,11 +1935,11 @@ define('view/diagrams/bar',[
 	}
 	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
-    }
+    };
 
     Bar.prototype.checkSelectedData = function(ranges){
 	return;
-    }
+    };
 
     return Bar;
 });
@@ -1964,7 +1962,7 @@ define('view/components/filter',[
 		y: scales.y.domain()
 	    };
 	    callback(ranges);
-	}
+	};
 
 	var brush = d3.svg.brush()
 	    .x(scales.x)
@@ -2389,7 +2387,7 @@ define('view/diagrams/venn',[
 	var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
 
 	for(var i=0;i<3;i++){
-	    var update = this.update;
+	    var update = this.update, tellUpdate = this.tellUpdate;
 	    var thisObj = this;
 	    var name = 'VENN' + String(i+1);
 	    legends.push({label: name, color:color_scale(options.area_names[i])});
@@ -2398,11 +2396,13 @@ define('view/diagrams/venn',[
 		var on = function(){
 		    selected_category[venn_id].push(category);
 		    update.call(thisObj);
+		    tellUpdate(thisObj);
 		};
 		var off = function(){
 		    var pos = selected_category[venn_id].indexOf(category);
 		    selected_category[venn_id].splice(pos, 1);
 		    update.call(thisObj);
+		    tellUpdate.call(thisObj);
 		};
 		var mode = (category == selected_category[i] ? 'on' : 'off');
 		legends.push({label: category, color:'black', mode:mode, on:on, off:off});
@@ -2417,6 +2417,7 @@ define('view/diagrams/venn',[
 	this.options = options;
 	this.scales = scales;
 	this.model = model;
+	this.df_id = df_id;
 	this.df = df;
 
 	this.update();
@@ -2612,6 +2613,16 @@ define('view/diagrams/venn',[
 	this.update();
     };
 
+    Venn.prototype.tellUpdate = function(){
+	var rows=[], column_category=this.column_category;
+	_.each(this.selected_category, function(category){
+	    _.each(column_category, function(cell, i){
+		if(category.indexOf(cell)!=-1)rows.push(i);
+	    });
+	});
+	Manager.selected(this.df_id, rows);
+    };
+
     Venn.prototype.update = function(){
 	var data = this.proceedData(this.column_category, this.column_count, this.selected_category);
 	var scales = this.getScales(data, this.scales);
@@ -2622,7 +2633,7 @@ define('view/diagrams/venn',[
 	if(texts[0][0]==undefined)texts = texts.enter().append("text");
 
 	this.updateModels(circles, scales, this.options);
-	this.updateLabels(texts, scales, this.options);	
+	this.updateLabels(texts, scales, this.options);
     };
 
     Venn.prototype.checkSelectedData = function(ranges){
@@ -3028,7 +3039,11 @@ define('view/components/legend',[
 	    .append("g");
 
 	var padding = this.options.title_height;
-	new_entry.attr("transform",function(d, i){return "translate(0," + (padding + 25*i) + ")";});
+	var height = this.options.height;
+
+	new_entry.attr("transform",function(d, i){
+	    return "translate(0," + (padding + 25*i) + ")";
+	});
 
 	if(color!==undefined){
 	    var circle = new_entry

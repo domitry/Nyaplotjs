@@ -16,7 +16,7 @@ define([
 		y: scales.y.domain()
 	    };
 	    callback(ranges);
-	}
+	};
 
 	var brush = d3.svg.brush()
 	    .x(scales.x)
