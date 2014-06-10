@@ -3149,6 +3149,8 @@ define('view/pane',[
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height)
+	    .attr("stroke", "#000000")
+	    .attr("stroke_width", 2)
 	    .attr("fill", options.bg_color);
 
 	var axis = new Axis(model.select("g"), scales, {
