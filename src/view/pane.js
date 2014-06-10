@@ -38,7 +38,7 @@ define([
 	var scales = {};
 
 	_.each({x:'xrange',y:'yrange'},function(val, key){
-	    if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el)}))
+	    if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);}))
 		scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
 	    else
 		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
@@ -51,8 +51,6 @@ define([
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height)
-	    .attr("stroke", "#000000")
-	    .attr("stroke_width", 2)
 	    .attr("fill", options.bg_color);
 
 	var axis = new Axis(model.select("g"), scales, {
