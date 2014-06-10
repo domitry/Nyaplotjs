@@ -36,7 +36,6 @@ define([
 	for(var i=0;i<3;i++){
 	    var update = this.update, tellUpdate = this.tellUpdate;
 	    var thisObj = this;
-	    var name = 'VENN' + String(i+1);
 	    legends.push({label: name, color:color_scale(options.area_names[i])});
 	    _.each(categories, function(category){
 		var venn_id = i;
