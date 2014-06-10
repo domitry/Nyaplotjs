@@ -16,11 +16,11 @@ define([
 
 	var xAxis = d3.svg.axis()
 	    .scale(scales.x)
-	    .orient("bottom")
+	    .orient("bottom");
 
 	var yAxis = d3.svg.axis()
 	    .scale(scales.y)
-	    .orient("left")
+	    .orient("left");
 
 	if(options.grid){
 	    xAxis.tickSize((-1)*options.height);
@@ -30,17 +30,25 @@ define([
 	parent.append("g")
 	    .attr("class", "x_axis")
 	    .attr("transform", "translate(0," + options.height + ")")
-	    .call(xAxis)
+	    .call(xAxis);
 
 	parent.append("g")
 	    .attr("class", "y_axis")
-	    .call(yAxis)
+	    .call(yAxis);
 
 	parent.selectAll(".x_axis, .y_axis")
 	    .selectAll("path, line")
 	    .style("fill","none")
 	    .style("stroke",options.stroke_color)
 	    .style("stroke-width",options.stroke_width);
+
+	parent.selectAll(".x_axis")
+	    .selectAll("text")
+	    .attr("transform", "translate(0,4)");
+
+	parent.selectAll(".y_axis")
+	    .selectAll("text")
+	    .attr("transform", "translate(-4,0)");
 
 	parent.append("text")
 	    .attr("x", options.width/2)
@@ -69,7 +77,7 @@ define([
     Axis.prototype.update = function(){
 	this.model.selectAll(".x_axis").call(this.xAxis);
 	this.model.selectAll(".y_axis").call(this.yAxis);
-    }
+    };
 
     return Axis;
 });

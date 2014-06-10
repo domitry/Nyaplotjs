@@ -2389,7 +2389,6 @@ define('view/diagrams/venn',[
 	for(var i=0;i<3;i++){
 	    var update = this.update, tellUpdate = this.tellUpdate;
 	    var thisObj = this;
-	    var name = 'VENN' + String(i+1);
 	    legends.push({label: name, color:color_scale(options.area_names[i])});
 	    _.each(categories, function(category){
 		var venn_id = i;
@@ -2930,11 +2929,11 @@ define('view/components/axis',[
 
 	var xAxis = d3.svg.axis()
 	    .scale(scales.x)
-	    .orient("bottom")
+	    .orient("bottom");
 
 	var yAxis = d3.svg.axis()
 	    .scale(scales.y)
-	    .orient("left")
+	    .orient("left");
 
 	if(options.grid){
 	    xAxis.tickSize((-1)*options.height);
@@ -2944,17 +2943,25 @@ define('view/components/axis',[
 	parent.append("g")
 	    .attr("class", "x_axis")
 	    .attr("transform", "translate(0," + options.height + ")")
-	    .call(xAxis)
+	    .call(xAxis);
 
 	parent.append("g")
 	    .attr("class", "y_axis")
-	    .call(yAxis)
+	    .call(yAxis);
 
 	parent.selectAll(".x_axis, .y_axis")
 	    .selectAll("path, line")
 	    .style("fill","none")
 	    .style("stroke",options.stroke_color)
 	    .style("stroke-width",options.stroke_width);
+
+	parent.selectAll(".x_axis")
+	    .selectAll("text")
+	    .attr("transform", "translate(0,4)");
+
+	parent.selectAll(".y_axis")
+	    .selectAll("text")
+	    .attr("transform", "translate(-4,0)");
 
 	parent.append("text")
 	    .attr("x", options.width/2)
@@ -2983,7 +2990,7 @@ define('view/components/axis',[
     Axis.prototype.update = function(){
 	this.model.selectAll(".x_axis").call(this.xAxis);
 	this.model.selectAll(".y_axis").call(this.yAxis);
-    }
+    };
 
     return Axis;
 });
@@ -3129,7 +3136,7 @@ define('view/pane',[
 	var scales = {};
 
 	_.each({x:'xrange',y:'yrange'},function(val, key){
-	    if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el)}))
+	    if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);}))
 		scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
 	    else
 		scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
@@ -3142,8 +3149,6 @@ define('view/pane',[
 	    .attr("y", 0)
 	    .attr("width", inner_width)
 	    .attr("height", inner_height)
-	    .attr("stroke", "#000000")
-	    .attr("stroke_width", 2)
 	    .attr("fill", options.bg_color);
 
 	var axis = new Axis(model.select("g"), scales, {
