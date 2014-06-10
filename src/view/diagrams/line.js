@@ -19,7 +19,7 @@ define([
 
 	var model = parent.append("g");
 	var path = model.append("path")
-	    .datum(data)
+	    .datum(data);
 	
 	this.updateModels(path, scales, options);
 
@@ -33,21 +33,21 @@ define([
     }
 
     Line.prototype.proceedData = function(x_arr, y_arr, options){
-	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]}});
-    }
+	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+    };
 
     Line.prototype.updateModels = function(selector, scales, options){
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", d3.rgb(options.color).darker(1));
-	}
+	};
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", options.color);
-	}
+	};
 
 	var line = d3.svg.line()
 	    .x(function(d){return scales.x(d.x);})
@@ -58,21 +58,21 @@ define([
 	    .attr("stroke", options.color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("fill", "none");
-    }
+    };
 
     Line.prototype.selected = function(data, row_nums){
-	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
+	var selected_cells = this.df.pickUpCells(this.options.value, row_nums);
 	var data = this.proceedData(selected_cells, this.options);
 	var models = this.model.selectAll("path").datum(data);
 	this.updateModels(models, this.scales, this.options);
-    }
+    };
 
     Line.prototype.updateData = function(){
 	this.df = Manager.getData(df_id);
 	var data = this.proceedData(df.column(options.value), options);
 	var models = this.model.selectAll("path").datum(data);
 	this.updateModels(models,  this.scales, this.options);
-    }
+    };
 
     Line.prototype.checkSelectedData = function(ranges){
 	var rows = [];
@@ -81,7 +81,7 @@ define([
 	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
 	});
 	Manager.selected(this.df_id, rows);
-    }
+    };
 
     return Line;
 });
