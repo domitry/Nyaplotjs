@@ -30,7 +30,7 @@ define([
 
 	this.updateModels(rects, scales, options);
 
-	this.legends = [{label: options.title, color:options.color, on:function(){}, off:function(){}}];
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -81,8 +81,8 @@ define([
     };
 
     Histogram.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.value), options);
+	this.df = Manager.getData(this.df_id);
+	var data = this.proceedData(this.df.column(this.options.value), this.options);
 	var models = this.model.selectAll("rect").data(data);
 	this.updateModels(models,  this.scales, this.options);
     };
