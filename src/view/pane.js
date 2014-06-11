@@ -1,10 +1,11 @@
 define([
     'underscore',
+    'node-uuid',
     'view/diagrams/diagrams',
     'view/components/axis',
     'view/components/filter',
     'view/components/legend'
-],function(_, diagrams, Axis, Filter, Legend){
+],function(_, uuid, diagrams, Axis, Filter, Legend){
     function Pane(parent, _options){
 	var options = {
 	    width: 700,
@@ -95,6 +96,7 @@ define([
     }
 
     Pane.prototype.addDiagram = function(type, data, options){
+	_.extend(options, {uuid: uuid.v4()});
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
 	var legend = this.legend;
 	if(this.options.legend){
