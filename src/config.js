@@ -1,5 +1,8 @@
 require.config({
-    paths: {underscore: '../contrib/underscore/underscore'}
+    paths: {
+	'underscore': '../contrib/underscore/underscore',
+	'node-uuid':'../contrib/node-uuid/uuid'
+    }
 });
 
     
