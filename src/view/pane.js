@@ -117,15 +117,11 @@ define([
 
     Pane.prototype.selected = function(df_id, rows){
 	var diagrams = this.diagrams;
-	var funcs = {
-	    fixed:function(){return;},
-	    fluid:function(){
-		_.each(diagrams, function(diagram){
-		    if(diagram.df_id == df_id)diagram.selected(df_id, rows);
-		});
-	    }
-	};
-	funcs[this.options.scale]();
+	if(this.options.scale=='fluid'){
+	    _.each(diagrams, function(diagram){
+		if(diagram.df_id == df_id)diagram.selected(df_id, rows);
+	    });
+	}
     };
 
     Pane.prototype.update = function(){
