@@ -64,6 +64,7 @@ define([
 	this.uuid = options.uuid;
 
 	this.update();
+	this.tellUpdate();
 
 	return this;
     }
@@ -255,8 +256,9 @@ define([
 	var category_num = this.options.category;
 	var filter = function(row){
 	    // check if this row in in any area (VENN1, VENN2, VENN3,...)
-	    _.some(selected_category, function(categories){
-		return (row[category_num] in categories);
+	    return _.some(selected_category, function(categories){
+		if(categories.indexOf(row[category_num])!=-1)return true;
+		else return false;
 	    });
 	};
 	this.df.addFilter(this.uuid, filter, []);

@@ -1797,7 +1797,7 @@ define('core/manager',[
 
     Manager.update = function(){
 	_.each(this.panes, function(entry){
-	    entry.update();
+	    entry.pane.update();
 	});
     };
 
@@ -1807,6 +1807,252 @@ define('core/manager',[
 
     return Manager;
 });
+
+//     uuid.js
+//
+//     Copyright (c) 2010-2012 Robert Kieffer
+//     MIT License - http://opensource.org/licenses/mit-license.php
+
+(function() {
+  var _global = this;
+
+  // Unique ID creation requires a high quality random # generator.  We feature
+  // detect to determine the best RNG source, normalizing to a function that
+  // returns 128-bits of randomness, since that's what's usually required
+  var _rng;
+
+  // Node.js crypto-based RNG - http://nodejs.org/docs/v0.6.2/api/crypto.html
+  //
+  // Moderately fast, high quality
+  if (typeof(require) == 'function') {
+    try {
+      var _rb = require('crypto').randomBytes;
+      _rng = _rb && function() {return _rb(16);};
+    } catch(e) {}
+  }
+
+  if (!_rng && _global.crypto && crypto.getRandomValues) {
+    // WHATWG crypto-based RNG - http://wiki.whatwg.org/wiki/Crypto
+    //
+    // Moderately fast, high quality
+    var _rnds8 = new Uint8Array(16);
+    _rng = function whatwgRNG() {
+      crypto.getRandomValues(_rnds8);
+      return _rnds8;
+    };
+  }
+
+  if (!_rng) {
+    // Math.random()-based (RNG)
+    //
+    // If all else fails, use Math.random().  It's fast, but is of unspecified
+    // quality.
+    var  _rnds = new Array(16);
+    _rng = function() {
+      for (var i = 0, r; i < 16; i++) {
+        if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+        _rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+      }
+
+      return _rnds;
+    };
+  }
+
+  // Buffer class to use
+  var BufferClass = typeof(Buffer) == 'function' ? Buffer : Array;
+
+  // Maps for number <-> hex string conversion
+  var _byteToHex = [];
+  var _hexToByte = {};
+  for (var i = 0; i < 256; i++) {
+    _byteToHex[i] = (i + 0x100).toString(16).substr(1);
+    _hexToByte[_byteToHex[i]] = i;
+  }
+
+  // **`parse()` - Parse a UUID into it's component bytes**
+  function parse(s, buf, offset) {
+    var i = (buf && offset) || 0, ii = 0;
+
+    buf = buf || [];
+    s.toLowerCase().replace(/[0-9a-f]{2}/g, function(oct) {
+      if (ii < 16) { // Don't overflow!
+        buf[i + ii++] = _hexToByte[oct];
+      }
+    });
+
+    // Zero out remaining bytes if string was short
+    while (ii < 16) {
+      buf[i + ii++] = 0;
+    }
+
+    return buf;
+  }
+
+  // **`unparse()` - Convert UUID byte array (ala parse()) into a string**
+  function unparse(buf, offset) {
+    var i = offset || 0, bth = _byteToHex;
+    return  bth[buf[i++]] + bth[buf[i++]] +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] +
+            bth[buf[i++]] + bth[buf[i++]] +
+            bth[buf[i++]] + bth[buf[i++]];
+  }
+
+  // **`v1()` - Generate time-based UUID**
+  //
+  // Inspired by https://github.com/LiosK/UUID.js
+  // and http://docs.python.org/library/uuid.html
+
+  // random #'s we need to init node and clockseq
+  var _seedBytes = _rng();
+
+  // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+  var _nodeId = [
+    _seedBytes[0] | 0x01,
+    _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
+  ];
+
+  // Per 4.2.2, randomize (14 bit) clockseq
+  var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
+
+  // Previous uuid creation time
+  var _lastMSecs = 0, _lastNSecs = 0;
+
+  // See https://github.com/broofa/node-uuid for API details
+  function v1(options, buf, offset) {
+    var i = buf && offset || 0;
+    var b = buf || [];
+
+    options = options || {};
+
+    var clockseq = options.clockseq != null ? options.clockseq : _clockseq;
+
+    // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+    // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+    // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+    // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+    var msecs = options.msecs != null ? options.msecs : new Date().getTime();
+
+    // Per 4.2.1.2, use count of uuid's generated during the current clock
+    // cycle to simulate higher resolution clock
+    var nsecs = options.nsecs != null ? options.nsecs : _lastNSecs + 1;
+
+    // Time since last uuid creation (in msecs)
+    var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+    // Per 4.2.1.2, Bump clockseq on clock regression
+    if (dt < 0 && options.clockseq == null) {
+      clockseq = clockseq + 1 & 0x3fff;
+    }
+
+    // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+    // time interval
+    if ((dt < 0 || msecs > _lastMSecs) && options.nsecs == null) {
+      nsecs = 0;
+    }
+
+    // Per 4.2.1.2 Throw error if too many uuids are requested
+    if (nsecs >= 10000) {
+      throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+    }
+
+    _lastMSecs = msecs;
+    _lastNSecs = nsecs;
+    _clockseq = clockseq;
+
+    // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+    msecs += 12219292800000;
+
+    // `time_low`
+    var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+    b[i++] = tl >>> 24 & 0xff;
+    b[i++] = tl >>> 16 & 0xff;
+    b[i++] = tl >>> 8 & 0xff;
+    b[i++] = tl & 0xff;
+
+    // `time_mid`
+    var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+    b[i++] = tmh >>> 8 & 0xff;
+    b[i++] = tmh & 0xff;
+
+    // `time_high_and_version`
+    b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+    b[i++] = tmh >>> 16 & 0xff;
+
+    // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+    b[i++] = clockseq >>> 8 | 0x80;
+
+    // `clock_seq_low`
+    b[i++] = clockseq & 0xff;
+
+    // `node`
+    var node = options.node || _nodeId;
+    for (var n = 0; n < 6; n++) {
+      b[i + n] = node[n];
+    }
+
+    return buf ? buf : unparse(b);
+  }
+
+  // **`v4()` - Generate random UUID**
+
+  // See https://github.com/broofa/node-uuid for API details
+  function v4(options, buf, offset) {
+    // Deprecated - 'format' argument, as supported in v1.2
+    var i = buf && offset || 0;
+
+    if (typeof(options) == 'string') {
+      buf = options == 'binary' ? new BufferClass(16) : null;
+      options = null;
+    }
+    options = options || {};
+
+    var rnds = options.random || (options.rng || _rng)();
+
+    // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+    rnds[6] = (rnds[6] & 0x0f) | 0x40;
+    rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+    // Copy bytes to buffer, if provided
+    if (buf) {
+      for (var ii = 0; ii < 16; ii++) {
+        buf[i + ii] = rnds[ii];
+      }
+    }
+
+    return buf || unparse(rnds);
+  }
+
+  // Export public API
+  var uuid = v4;
+  uuid.v1 = v1;
+  uuid.v4 = v4;
+  uuid.parse = parse;
+  uuid.unparse = unparse;
+  uuid.BufferClass = BufferClass;
+
+  if (typeof define === 'function' && define.amd) {
+    // Publish as AMD module
+    define('node-uuid',[],function() {return uuid;});
+  } else if (typeof(module) != 'undefined' && module.exports) {
+    // Publish as node.js module
+    module.exports = uuid;
+  } else {
+    // Publish as global (in browsers)
+    var _previousRoot = _global.uuid;
+
+    // **`noConflict()` - (browser only) to reset global 'uuid' var**
+    uuid.noConflict = function() {
+      _global.uuid = _previousRoot;
+      return uuid;
+    };
+
+    _global.uuid = uuid;
+  }
+}).call(this);
 
 define('view/diagrams/bar',[
     'underscore',
@@ -1824,33 +2070,25 @@ define('view/diagrams/bar',[
 	if(arguments.length>3)_.extend(options, _options);
 
 	var df = Manager.getData(df_id);
-	var data;
-	if(options.value !== null){
-	    var raw = this.countData(df.column(options.value));
-	    data = this.proceedData(raw.x, raw.y, options);
-	}else{
-	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
-	}
 
 	var color_scale;
-	if(options.color == null)color_scale = d3.scale.category20b();
+	if(options.color == null) color_scale = d3.scale.category20b();
 	else color_scale = d3.scale.ordinal().range(options.color);
 	this.color_scale = color_scale;
 
 	var model = parent.append("g");
-	var rects = model.selectAll("rect")
-	    .data(data)
-	    .enter()
-	    .append("rect")
-	    .attr("height", 0)
-	    .attr("y", scales.y(0));
-	
-	var legends = [];
-	_.each(data, function(d){
-	    legends.push({label: d.x, color:color_scale(d.x)});
-	});
 
-	this.updateModels(rects, scales, options);
+	var legends = [], labels;
+
+	if(options.value !== null){
+	    var column_value = df.column(options.value);
+	    labels = _.uniq(column_value);
+	}else
+	    labels = df.column(options.value);
+	
+	_.each(labels, function(label){
+	    legends.push({label: label, color:color_scale(label)});
+	});
 
 	this.model = model;
 	this.scales = scales;
@@ -1858,24 +2096,34 @@ define('view/diagrams/bar',[
 	this.legends = legends;
 	this.df = df;
 	this.df_id = df_id;
+	this.uuid = options.uuid;
+
+	this.update();
 
 	return this;
     }
 
-    Bar.prototype.countData = function(values){
-	var hash = {};
-	_.each(values, function(val){
-	    hash[val] = hash[val] || 0;
-	    hash[val] += 1;
-	});
-	return {x: _.keys(hash), y: _.values(hash)};
-    };
-    
-    Bar.prototype.proceedData = function(x, y, options){
-	return _.map(
-	    _.zip(x,y),
-	    function(d, i){return {x:d[0], y:d[1]};}
-	);
+    Bar.prototype.update = function(){
+	var data;
+	if(this.options.value !== null){
+	    var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
+	    var raw = this.countData(column_value);
+	    data = this.proceedData(raw.x, raw.y, this.options);
+	}else{
+	    var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
+	    var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
+	    data = this.proceedData(column_x, column_y, this.options);
+	}
+
+	var rects = this.model.selectAll("rect").data(data);
+	if(rects[0][0]==undefined){
+	    rects.enter()
+		.append("rect")
+		.attr("height", 0)
+		.attr("y", this.scales.y(0));
+	}
+
+	this.updateModels(rects, this.scales, this.options);
     };
 
     Bar.prototype.updateModels = function(selector, scales, options){
@@ -1909,32 +2157,20 @@ define('view/diagrams/bar',[
 	    .on("mouseout", outMouse);
     };
 
-    Bar.prototype.selected = function(df_id, row_nums){
-	var data, df = this.df;
-	if(this.options.value !== null){
-	    var selected_values = df.pickUpCells(this.options.value, row_nums);
-	    var raw = this.countData(selected_values);
-	    data = this.proceedData(raw.x, raw.y, this.options);
-	}else{
-	    var selected_x = df.pickUpCells(this.options.x, row_nums);
-	    var selected_y = df.pickUpCells(this.options.y, row_nums);
-	    data = this.proceedData(selected_x, selected_y, this.options);
-	}
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models, this.scales, this.options);
+    Bar.prototype.countData = function(values){
+	var hash = {};
+	_.each(values, function(val){
+	    hash[val] = hash[val] || 0;
+	    hash[val] += 1;
+	});
+	return {x: _.keys(hash), y: _.values(hash)};
     };
-
-    Bar.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data;
-	if(options.value !== null){
-	    var raw = this.countData(df.column(options.value));
-	    data = this.proceedData(raw.x, raw.y, options);
-	}else{
-	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
-	}
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models,  this.scales, this.options);
+    
+    Bar.prototype.proceedData = function(x, y, options){
+	return _.map(
+	    _.zip(x,y),
+	    function(d, i){return {x:d[0], y:d[1]};}
+	);
     };
 
     Bar.prototype.checkSelectedData = function(ranges){
@@ -2004,50 +2240,58 @@ define('view/diagrams/histogram',[
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
-	this.scales = scales;
 	var df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.value), options);
-
 	var model = parent.append("g");
-	var rects = model.selectAll("rect")
-	    .data(data)
-	    .enter()
-	    .append("rect")
-	    .attr("height", 0)
-	    .attr("y", scales.y(0));
 
-	this.updateModels(rects, scales, options);
-
-	this.legends = [{label: options.title, color:options.color, on:function(){}, off:function(){}}];
+	this.scales = scales;
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
 	this.df_id = df_id;
+	this.uuid = options.uuid;
 
+	this.update();
+	
 	return this;
     }
 
-    Histogram.prototype.proceedData = function(raw_data, options){
+    Histogram.prototype.update = function(){
+	var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
+	var data = this.proceedData(column_value, this.options);
+
+	var models = this.model.selectAll("rect").data(data);
+	if(models[0][0]==undefined){
+	    models = models.enter()
+		.append("rect")
+		.attr("height", 0)
+		.attr("y", this.scales.y(0));
+	}
+
+	this.updateModels(models,  this.scales, this.options);
+    };
+
+    Histogram.prototype.proceedData = function(column, options){
 	return d3.layout.histogram()
-	    .bins(this.scales.x.ticks(options.bin_num))(raw_data);
-    }
+	    .bins(this.scales.x.ticks(options.bin_num))(column);
+    };
 
     Histogram.prototype.updateModels = function(selector, scales, options){
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", d3.rgb(options.color).darker(1));
-	}
+	};
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", options.color);
-	}
+	};
 
 	selector
-	    .attr("x",function(d){return scales.x(d.x)})
-	    .attr("width", function(d){return scales.x(d.dx) - scales.x(0)})
+	    .attr("x",function(d){return scales.x(d.x);})
+	    .attr("width", function(d){return scales.x(d.dx) - scales.x(0);})
 	    .attr("fill", options.color)
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
@@ -2059,30 +2303,18 @@ define('view/diagrams/histogram',[
 	if(options.hover)selector
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
-    }
-
-    Histogram.prototype.selected = function(data, row_nums){
-	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
-	var data = this.proceedData(selected_cells, this.options);
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models, this.scales, this.options);
-    }
-
-    Histogram.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.value), options);
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models,  this.scales, this.options);
-    }
+    };
 
     Histogram.prototype.checkSelectedData = function(ranges){
-	var rows = [];
-	var column = this.df.column(this.options.value);
-	_.each(column, function(val, i){
-	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
-	});
-	Manager.selected(this.df_id, rows);
-    }
+	var label_value = this.options.value;
+	var filter = function(row){
+	    var val = row[label_value];
+	    if(val > ranges.x[0] && val < ranges.x[1])return true;
+	    else return false;
+	};
+	this.df.addFilter(this.uuid, filter, ['self']);
+	Manager.update();
+    };
 
     return Histogram;
 });
@@ -2207,7 +2439,7 @@ define('view/diagrams/line',[
 
 	var model = parent.append("g");
 	var path = model.append("path")
-	    .datum(data)
+	    .datum(data);
 	
 	this.updateModels(path, scales, options);
 
@@ -2221,21 +2453,21 @@ define('view/diagrams/line',[
     }
 
     Line.prototype.proceedData = function(x_arr, y_arr, options){
-	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]}});
-    }
+	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+    };
 
     Line.prototype.updateModels = function(selector, scales, options){
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", d3.rgb(options.color).darker(1));
-	}
+	};
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", options.color);
-	}
+	};
 
 	var line = d3.svg.line()
 	    .x(function(d){return scales.x(d.x);})
@@ -2246,21 +2478,21 @@ define('view/diagrams/line',[
 	    .attr("stroke", options.color)
 	    .attr("stroke-width", options.stroke_width)
 	    .attr("fill", "none");
-    }
+    };
 
     Line.prototype.selected = function(data, row_nums){
-	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
+	var selected_cells = this.df.pickUpCells(this.options.value, row_nums);
 	var data = this.proceedData(selected_cells, this.options);
 	var models = this.model.selectAll("path").datum(data);
 	this.updateModels(models, this.scales, this.options);
-    }
+    };
 
     Line.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.value), options);
+	this.df = Manager.getData(this.df_id);
+	var data = this.proceedData(this.df.column(this.options.value), this.options);
 	var models = this.model.selectAll("path").datum(data);
 	this.updateModels(models,  this.scales, this.options);
-    }
+    };
 
     Line.prototype.checkSelectedData = function(ranges){
 	var rows = [];
@@ -2269,7 +2501,7 @@ define('view/diagrams/line',[
 	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
 	});
 	Manager.selected(this.df_id, rows);
-    }
+    };
 
     return Line;
 });
@@ -2371,11 +2603,9 @@ define('view/diagrams/venn',[
 	if(arguments.length>3)_.extend(options, _options);
 
 	var df = Manager.getData(df_id);
-	var column_category = df.column(options.category);
-	var column_count = df.column(options.count);
-
 	var model = parent.append("g");
 
+	var column_category = df.column(options.category);
 	var categories = _.uniq(column_category);
 	var color_scale;
 
@@ -2410,16 +2640,16 @@ define('view/diagrams/venn',[
 	}
 
 	this.selected_category = selected_category;
-	this.column_category = column_category;
-	this.column_count = column_count;
 	this.legends = legends;
 	this.options = options;
 	this.scales = scales;
 	this.model = model;
 	this.df_id = df_id;
 	this.df = df;
+	this.uuid = options.uuid;
 
 	this.update();
+	this.tellUpdate();
 
 	return this;
     }
@@ -2606,24 +2836,25 @@ define('view/diagrams/venn',[
 	    .text(function(d){return String(d.val);});
     };
 
-    Venn.prototype.selected = function(data, row_nums){
-	this.column_count = this.df.pickUpCells(this.options.count, row_nums);
-	this.column_category = this.df.pickUpCells(this.options.category, row_nums);
-	this.update();
-    };
-
     Venn.prototype.tellUpdate = function(){
-	var rows=[], column_category=this.column_category;
-	_.each(this.selected_category, function(category){
-	    _.each(column_category, function(cell, i){
-		if(category.indexOf(cell)!=-1)rows.push(i);
+	var rows=[], selected_category = this.selected_category;
+	var category_num = this.options.category;
+	var filter = function(row){
+	    // check if this row in in any area (VENN1, VENN2, VENN3,...)
+	    return _.some(selected_category, function(categories){
+		if(categories.indexOf(row[category_num])!=-1)return true;
+		else return false;
 	    });
-	});
-	Manager.selected(this.df_id, rows);
+	};
+	this.df.addFilter(this.uuid, filter, []);
+	Manager.update();
     };
 
     Venn.prototype.update = function(){
-	var data = this.proceedData(this.column_category, this.column_count, this.selected_category);
+	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
+	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
+
+	var data = this.proceedData(column_category, column_count, this.selected_category);
 	var scales = this.getScales(data, this.scales);
 	var circles = this.model.selectAll("circle").data(data.pos);
 	var texts = this.model.selectAll("text").data(data.labels);
@@ -2633,9 +2864,6 @@ define('view/diagrams/venn',[
 
 	this.updateModels(circles, scales, this.options);
 	this.updateLabels(texts, scales, this.options);
-    };
-
-    Venn.prototype.checkSelectedData = function(ranges){
     };
 
     return Venn;
@@ -3098,11 +3326,12 @@ define('view/components/legend',[
 
 define('view/pane',[
     'underscore',
+    'node-uuid',
     'view/diagrams/diagrams',
     'view/components/axis',
     'view/components/filter',
     'view/components/legend'
-],function(_, diagrams, Axis, Filter, Legend){
+],function(_, uuid, diagrams, Axis, Filter, Legend){
     function Pane(parent, _options){
 	var options = {
 	    width: 700,
@@ -3193,6 +3422,7 @@ define('view/pane',[
     }
 
     Pane.prototype.addDiagram = function(type, data, options){
+	_.extend(options, {uuid: uuid.v4()});
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
 	var legend = this.legend;
 	if(this.options.legend){
@@ -3215,20 +3445,16 @@ define('view/pane',[
 
     Pane.prototype.selected = function(df_id, rows){
 	var diagrams = this.diagrams;
-	var funcs = {
-	    fixed:function(){return;},
-	    fluid:function(){
-		_.each(diagrams, function(diagram){
-		    if(diagram.df_id == df_id)diagram.selected(df_id, rows);
-		});
-	    }
-	};
-	funcs[this.options.scale]();
+	if(this.options.scale=='fluid'){
+	    _.each(diagrams, function(diagram){
+		if(diagram.df_id == df_id)diagram.selected(df_id, rows);
+	    });
+	}
     };
 
     Pane.prototype.update = function(){
 	_.each(this.diagrams, function(diagram){
-	    diagram.updateData();
+	    diagram.update();
 	});
     };
 
@@ -3248,34 +3474,49 @@ define('utils/dataframe',[
 	    this.raw = {};
 	}
 	else this.raw = data;
+	this.filters = {};
 	return this;
     }
     
     Dataframe.prototype.row = function(row_num){
 	return this.raw[row_num];
-    }
+    };
 
     Dataframe.prototype.column = function(label){
 	var arr = [];
 	var raw = this.raw;
 	_.each(raw, function(row){arr.push(row[label]);});
 	return arr;
-    }
+    };
+
+    Dataframe.prototype.addFilter = function(self_uuid, func, excepts){
+	this.filters[self_uuid] = {func:func, excepts:excepts};
+    };
+
+    Dataframe.prototype.columnWithFilters = function(self_uuid, label){
+	var raw = this.raw.concat();
+	_.each(this.filters, function(filter, uuid){
+	    if(filter.excepts.indexOf('self') != -1 && uuid==self_uuid)return;
+	    if(!(self_uuid in filter.excepts))
+		raw = _.filter(raw, filter.func);
+	});
+	return _.map(raw, function(row){return row[label];});
+    };
 
     Dataframe.prototype.pickUpCells = function(label, row_nums){
 	var column = this.column(label);
 	return _.map(row_nums, function(i){
 	    return column[i];
 	});
-    }
+    };
 
     Dataframe.prototype.columnRange = function(label){
 	var column = this.column(label);
 	return {
 	    max: d3.max(column, function(val){return val;}),
 	    min: d3.min(column, function(val){return val;})
-	}
-    }
+	};
+    };
 
     return Dataframe;
 });

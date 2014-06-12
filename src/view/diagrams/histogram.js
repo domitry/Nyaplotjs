@@ -38,7 +38,7 @@ define([
 
 	var models = this.model.selectAll("rect").data(data);
 	if(models[0][0]==undefined){
-	    models = models.enter
+	    models = models.enter()
 		.append("rect")
 		.attr("height", 0)
 		.attr("y", this.scales.y(0));
@@ -88,7 +88,7 @@ define([
 	    if(val > ranges.x[0] && val < ranges.x[1])return true;
 	    else return false;
 	};
-	this.df.addFilter({func:filter, excepts:['self']});
+	this.df.addFilter(this.uuid, filter, ['self']);
 	Manager.update();
     };
 

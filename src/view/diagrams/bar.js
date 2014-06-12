@@ -24,7 +24,7 @@ define([
 
 	var legends = [], labels;
 
-	if(this.options.value !== null){
+	if(options.value !== null){
 	    var column_value = df.column(options.value);
 	    labels = _.uniq(column_value);
 	}else
