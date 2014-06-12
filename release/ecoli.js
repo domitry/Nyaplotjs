@@ -2125,6 +2125,13 @@ define('view/diagrams/bar',[
 
 	this.updateModels(rects, this.scales, this.options);
     };
+    
+    Bar.prototype.proceedData = function(x, y, options){
+	return _.map(
+	    _.zip(x,y),
+	    function(d, i){return {x:d[0], y:d[1]};}
+	);
+    };
 
     Bar.prototype.updateModels = function(selector, scales, options){
 	var color_scale = this.color_scale;
@@ -2164,13 +2171,6 @@ define('view/diagrams/bar',[
 	    hash[val] += 1;
 	});
 	return {x: _.keys(hash), y: _.values(hash)};
-    };
-    
-    Bar.prototype.proceedData = function(x, y, options){
-	return _.map(
-	    _.zip(x,y),
-	    function(d, i){return {x:d[0], y:d[1]};}
-	);
     };
 
     Bar.prototype.checkSelectedData = function(ranges){
@@ -2688,6 +2688,22 @@ define('view/diagrams/venn',[
 	return new_scales;
     };
 
+    Venn.prototype.update = function(){
+	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
+	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
+
+	var data = this.proceedData(column_category, column_count, this.selected_category);
+	var scales = this.getScales(data, this.scales);
+	var circles = this.model.selectAll("circle").data(data.pos);
+	var texts = this.model.selectAll("text").data(data.labels);
+
+	if(circles[0][0]==undefined)circles = circles.enter().append("circle");
+	if(texts[0][0]==undefined)texts = texts.enter().append("text");
+
+	this.updateModels(circles, scales, this.options);
+	this.updateLabels(texts, scales, this.options);
+    };
+
     Venn.prototype.proceedData = function(category_column, count_column, selected_category){
 	// decide overlapping areas
 	var table = (function(){
@@ -2848,22 +2864,6 @@ define('view/diagrams/venn',[
 	};
 	this.df.addFilter(this.uuid, filter, []);
 	Manager.update();
-    };
-
-    Venn.prototype.update = function(){
-	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
-	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
-
-	var data = this.proceedData(column_category, column_count, this.selected_category);
-	var scales = this.getScales(data, this.scales);
-	var circles = this.model.selectAll("circle").data(data.pos);
-	var texts = this.model.selectAll("text").data(data.labels);
-
-	if(circles[0][0]==undefined)circles = circles.enter().append("circle");
-	if(texts[0][0]==undefined)texts = texts.enter().append("text");
-
-	this.updateModels(circles, scales, this.options);
-	this.updateLabels(texts, scales, this.options);
     };
 
     return Venn;

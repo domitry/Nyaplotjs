@@ -103,6 +103,22 @@ define([
 	return new_scales;
     };
 
+    Venn.prototype.update = function(){
+	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
+	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
+
+	var data = this.proceedData(column_category, column_count, this.selected_category);
+	var scales = this.getScales(data, this.scales);
+	var circles = this.model.selectAll("circle").data(data.pos);
+	var texts = this.model.selectAll("text").data(data.labels);
+
+	if(circles[0][0]==undefined)circles = circles.enter().append("circle");
+	if(texts[0][0]==undefined)texts = texts.enter().append("text");
+
+	this.updateModels(circles, scales, this.options);
+	this.updateLabels(texts, scales, this.options);
+    };
+
     Venn.prototype.proceedData = function(category_column, count_column, selected_category){
 	// decide overlapping areas
 	var table = (function(){
@@ -263,22 +279,6 @@ define([
 	};
 	this.df.addFilter(this.uuid, filter, []);
 	Manager.update();
-    };
-
-    Venn.prototype.update = function(){
-	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
-	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
-
-	var data = this.proceedData(column_category, column_count, this.selected_category);
-	var scales = this.getScales(data, this.scales);
-	var circles = this.model.selectAll("circle").data(data.pos);
-	var texts = this.model.selectAll("text").data(data.labels);
-
-	if(circles[0][0]==undefined)circles = circles.enter().append("circle");
-	if(texts[0][0]==undefined)texts = texts.enter().append("text");
-
-	this.updateModels(circles, scales, this.options);
-	this.updateLabels(texts, scales, this.options);
     };
 
     return Venn;

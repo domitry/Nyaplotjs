@@ -69,6 +69,13 @@ define([
 
 	this.updateModels(rects, this.scales, this.options);
     };
+    
+    Bar.prototype.proceedData = function(x, y, options){
+	return _.map(
+	    _.zip(x,y),
+	    function(d, i){return {x:d[0], y:d[1]};}
+	);
+    };
 
     Bar.prototype.updateModels = function(selector, scales, options){
 	var color_scale = this.color_scale;
@@ -108,13 +115,6 @@ define([
 	    hash[val] += 1;
 	});
 	return {x: _.keys(hash), y: _.values(hash)};
-    };
-    
-    Bar.prototype.proceedData = function(x, y, options){
-	return _.map(
-	    _.zip(x,y),
-	    function(d, i){return {x:d[0], y:d[1]};}
-	);
     };
 
     Bar.prototype.checkSelectedData = function(ranges){
