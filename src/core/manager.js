@@ -25,7 +25,7 @@ define([
 
     Manager.update = function(){
 	_.each(this.panes, function(entry){
-	    entry.update();
+	    entry.pane.update();
 	});
     };
 

@@ -32,11 +32,12 @@ define([
 
     Dataframe.prototype.columnWithFilters = function(self_uuid, label){
 	var raw = this.raw.concat();
-	_.each(this.filters, function(filter){
+	_.each(this.filters, function(filter, uuid){
+	    if(filter.excepts.indexOf('self') != -1 && uuid==self_uuid)return;
 	    if(!(self_uuid in filter.excepts))
 		raw = _.filter(raw, filter.func);
 	});
-	return;
+	return _.map(raw, function(row){return row[label];});
     };
 
     Dataframe.prototype.pickUpCells = function(label, row_nums){

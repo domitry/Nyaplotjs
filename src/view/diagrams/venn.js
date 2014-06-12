@@ -18,11 +18,9 @@ define([
 	if(arguments.length>3)_.extend(options, _options);
 
 	var df = Manager.getData(df_id);
-	var column_category = df.column(options.category);
-	var column_count = df.column(options.count);
-
 	var model = parent.append("g");
 
+	var column_category = df.column(options.category);
 	var categories = _.uniq(column_category);
 	var color_scale;
 
@@ -57,14 +55,13 @@ define([
 	}
 
 	this.selected_category = selected_category;
-	this.column_category = column_category;
-	this.column_count = column_count;
 	this.legends = legends;
 	this.options = options;
 	this.scales = scales;
 	this.model = model;
 	this.df_id = df_id;
 	this.df = df;
+	this.uuid = options.uuid;
 
 	this.update();
 
@@ -253,24 +250,24 @@ define([
 	    .text(function(d){return String(d.val);});
     };
 
-    Venn.prototype.selected = function(data, row_nums){
-	this.column_count = this.df.pickUpCells(this.options.count, row_nums);
-	this.column_category = this.df.pickUpCells(this.options.category, row_nums);
-	this.update();
-    };
-
     Venn.prototype.tellUpdate = function(){
-	var rows=[], column_category=this.column_category;
-	_.each(this.selected_category, function(category){
-	    _.each(column_category, function(cell, i){
-		if(category.indexOf(cell)!=-1)rows.push(i);
+	var rows=[], selected_category = this.selected_category;
+	var category_num = this.options.category;
+	var filter = function(row){
+	    // check if this row in in any area (VENN1, VENN2, VENN3,...)
+	    _.some(selected_category, function(categories){
+		return (row[category_num] in categories);
 	    });
-	});
-	Manager.selected(this.df_id, rows);
+	};
+	this.df.addFilter(this.uuid, filter, []);
+	Manager.update();
     };
 
     Venn.prototype.update = function(){
-	var data = this.proceedData(this.column_category, this.column_count, this.selected_category);
+	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
+	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
+
+	var data = this.proceedData(column_category, column_count, this.selected_category);
 	var scales = this.getScales(data, this.scales);
 	var circles = this.model.selectAll("circle").data(data.pos);
 	var texts = this.model.selectAll("text").data(data.labels);
@@ -280,9 +277,6 @@ define([
 
 	this.updateModels(circles, scales, this.options);
 	this.updateLabels(texts, scales, this.options);
-    };
-
-    Venn.prototype.checkSelectedData = function(ranges){
     };
 
     return Venn;

@@ -128,7 +128,7 @@ define([
 
     Pane.prototype.update = function(){
 	_.each(this.diagrams, function(diagram){
-	    diagram.updateData();
+	    diagram.update();
 	});
     };
 

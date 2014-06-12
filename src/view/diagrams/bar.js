@@ -14,33 +14,25 @@ define([
 	if(arguments.length>3)_.extend(options, _options);
 
 	var df = Manager.getData(df_id);
-	var data;
-	if(options.value !== null){
-	    var raw = this.countData(df.column(options.value));
-	    data = this.proceedData(raw.x, raw.y, options);
-	}else{
-	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
-	}
 
 	var color_scale;
-	if(options.color == null)color_scale = d3.scale.category20b();
+	if(options.color == null) color_scale = d3.scale.category20b();
 	else color_scale = d3.scale.ordinal().range(options.color);
 	this.color_scale = color_scale;
 
 	var model = parent.append("g");
-	var rects = model.selectAll("rect")
-	    .data(data)
-	    .enter()
-	    .append("rect")
-	    .attr("height", 0)
-	    .attr("y", scales.y(0));
-	
-	var legends = [];
-	_.each(data, function(d){
-	    legends.push({label: d.x, color:color_scale(d.x)});
-	});
 
-	this.updateModels(rects, scales, options);
+	var legends = [], labels;
+
+	if(this.options.value !== null){
+	    var column_value = df.column(options.value);
+	    labels = _.uniq(column_value);
+	}else
+	    labels = df.column(options.value);
+	
+	_.each(labels, function(label){
+	    legends.push({label: label, color:color_scale(label)});
+	});
 
 	this.model = model;
 	this.scales = scales;
@@ -48,24 +40,34 @@ define([
 	this.legends = legends;
 	this.df = df;
 	this.df_id = df_id;
+	this.uuid = options.uuid;
+
+	this.update();
 
 	return this;
     }
 
-    Bar.prototype.countData = function(values){
-	var hash = {};
-	_.each(values, function(val){
-	    hash[val] = hash[val] || 0;
-	    hash[val] += 1;
-	});
-	return {x: _.keys(hash), y: _.values(hash)};
-    };
-    
-    Bar.prototype.proceedData = function(x, y, options){
-	return _.map(
-	    _.zip(x,y),
-	    function(d, i){return {x:d[0], y:d[1]};}
-	);
+    Bar.prototype.update = function(){
+	var data;
+	if(this.options.value !== null){
+	    var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
+	    var raw = this.countData(column_value);
+	    data = this.proceedData(raw.x, raw.y, this.options);
+	}else{
+	    var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
+	    var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
+	    data = this.proceedData(column_x, column_y, this.options);
+	}
+
+	var rects = this.model.selectAll("rect").data(data);
+	if(rects[0][0]==undefined){
+	    rects.enter()
+		.append("rect")
+		.attr("height", 0)
+		.attr("y", this.scales.y(0));
+	}
+
+	this.updateModels(rects, this.scales, this.options);
     };
 
     Bar.prototype.updateModels = function(selector, scales, options){
@@ -99,32 +101,20 @@ define([
 	    .on("mouseout", outMouse);
     };
 
-    Bar.prototype.selected = function(df_id, row_nums){
-	var data, df = this.df;
-	if(this.options.value !== null){
-	    var selected_values = df.pickUpCells(this.options.value, row_nums);
-	    var raw = this.countData(selected_values);
-	    data = this.proceedData(raw.x, raw.y, this.options);
-	}else{
-	    var selected_x = df.pickUpCells(this.options.x, row_nums);
-	    var selected_y = df.pickUpCells(this.options.y, row_nums);
-	    data = this.proceedData(selected_x, selected_y, this.options);
-	}
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models, this.scales, this.options);
+    Bar.prototype.countData = function(values){
+	var hash = {};
+	_.each(values, function(val){
+	    hash[val] = hash[val] || 0;
+	    hash[val] += 1;
+	});
+	return {x: _.keys(hash), y: _.values(hash)};
     };
-
-    Bar.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data;
-	if(options.value !== null){
-	    var raw = this.countData(df.column(options.value));
-	    data = this.proceedData(raw.x, raw.y, options);
-	}else{
-	    data = this.proceedData(df.column(options.x), df.column(options.y), options);
-	}
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models,  this.scales, this.options);
+    
+    Bar.prototype.proceedData = function(x, y, options){
+	return _.map(
+	    _.zip(x,y),
+	    function(d, i){return {x:d[0], y:d[1]};}
+	);
     };
 
     Bar.prototype.checkSelectedData = function(ranges){
