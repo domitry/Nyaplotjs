@@ -2619,7 +2619,7 @@ define('view/diagrams/venn',[
 	for(var i=0;i<3;i++){
 	    var update = this.update, tellUpdate = this.tellUpdate;
 	    var thisObj = this;
-	    legends.push({label: name, color:color_scale(options.area_names[i])});
+	    legends.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
 	    _.each(categories, function(category){
 		var venn_id = i;
 		var on = function(){
