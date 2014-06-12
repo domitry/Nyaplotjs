@@ -83,6 +83,7 @@ define([
 		.attr("transform", "translate(" + inner_width + ",0)");
 
 	    options.legend_options['height'] = inner_height;
+	    options.legend_options['width'] = options.legend_width;
 	    this.legend = new Legend(legend_space, options.legend_options);
 	}
 

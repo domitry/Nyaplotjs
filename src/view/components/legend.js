@@ -51,9 +51,15 @@ define([
 	var padding = this.options.title_height;
 	var height = this.options.height;
 
-	new_entry.attr("transform",function(d, i){
-	    return "translate(0," + (padding + 25*i) + ")";
-	});
+	if(this.options.width/100>2){
+	    new_entry.attr("transform",function(d, i){
+		return "translate("+ ((Math.floor(i/8))*100) +"," + (padding + 25*(i%8)) + ")";
+	    });
+	}else{
+	    new_entry.attr("transform",function(d, i){
+		return "translate(0," + (padding + 25*i) + ")";
+	    });
+	}
 
 	if(color!==undefined){
 	    var circle = new_entry
