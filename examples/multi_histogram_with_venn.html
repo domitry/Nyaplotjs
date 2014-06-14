@@ -32,7 +32,7 @@ window.onload = function(){
 
 	var model1 = {data:{data1: new_data},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'pnr'}}], filter: {target: 'x'}, options:{width:500, height:500, xrange: [0,1], yrange: [0,1000], scale:'fluid',grid:true, x_label:'PNR', y_label:'Frequency', legend:false}}]};
 	var model2 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'bar', data: 'data1', options: {value:'mutation'}}],options:{width:800, height:500, xrange:['A>T','A>G','A>C','T>A','T>G','T>C','G>A','G>T','G>C','C>A','C>T','C>G'], yrange: [0,1000], scale:'fluid', grid:true, x_label:'individual 1', y_label:'Relative Conditions', legend_options:{title: 'mutations'}}}]};
-	var model3 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'venn', data: 'data1', options: {category:'group',count:'name'}}],options:{width:800, height:500, xrange:[0,1], yrange: [0,1], scale:'fluid', grid:true, x_label:'', y_label:'',legend_width:300, legend_options:{width:200, height:800}}}]};
+	var model3 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'venn', data: 'data1', options: {category:'group',count:'name',filter_control:true}}],options:{width:1000, height:500, xrange:[0,1], yrange: [0,1], scale:'fluid', grid:true, x_label:'', y_label:'',legend_width:400, legend_options:{width:600, height:800}}}]};
     
 	Ecoli.core.parse(model1, '#vis1');
 	Ecoli.core.parse(model2, '#vis2');
