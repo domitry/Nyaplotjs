@@ -2598,7 +2598,8 @@ define('view/diagrams/venn',[
 	    stroke_width: 1,
 	    opacity: 0.7,
 	    hover: false,
-	    area_names:['VENN1','VENN2','VENN3']
+	    area_names:['VENN1','VENN2','VENN3'],
+	    filter_control:false
 	};
 	if(arguments.length>3)_.extend(options, _options);
 
@@ -2639,7 +2640,16 @@ define('view/diagrams/venn',[
 	    legends.push({label:''});
 	}
 
+	if(options.filter_control){
+	    legends.push({label:'Filter', color:'gray'});
+	    var controls = ['all', 'overlapping', 'non-overlapping'];
+	    _.each(controls, function(mode, i){
+		legends.push({label:mode, color:'black'});
+	    });
+	}
+
 	this.selected_category = selected_category;
+	this.filter_mode = 'All';
 	this.legends = legends;
 	this.options = options;
 	this.scales = scales;
@@ -2854,14 +2864,28 @@ define('view/diagrams/venn',[
 
     Venn.prototype.tellUpdate = function(){
 	var rows=[], selected_category = this.selected_category;
+	var filter_mode = this.filter_mode;
 	var category_num = this.options.category;
-	var filter = function(row){
-	    // check if this row in in any area (VENN1, VENN2, VENN3,...)
-	    return _.some(selected_category, function(categories){
-		if(categories.indexOf(row[category_num])!=-1)return true;
-		else return false;
-	    });
-	};
+	var filter = {
+	    'All':function(row){
+		// check if this row in in any area (VENN1, VENN2, VENN3,...)
+		return _.some(selected_category, function(categories){
+		    if(categories.indexOf(row[category_num])!=-1)return true;
+		    else return false;
+		});
+	    },
+	    'overlapping':function(row){
+		for(var i=0;i<3;i++){
+		    for(var j=i+1;j<3;j++){
+			
+		    }
+		}
+		return true;
+	    },
+	    'non_ovelapping':function(){
+		return true;
+	    }
+	}[filter_mode];
 	this.df.addFilter(this.uuid, filter, []);
 	Manager.update();
     };
