@@ -2617,9 +2617,10 @@ define('view/diagrams/venn',[
 	var legends = [];
 	var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
 
+	var update = this.update, tellUpdate = this.tellUpdate;
+	var thisObj = this;
+
 	for(var i=0;i<3;i++){
-	    var update = this.update, tellUpdate = this.tellUpdate;
-	    var thisObj = this;
 	    legends.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
 	    _.each(categories, function(category){
 		var venn_id = i;
@@ -2640,16 +2641,24 @@ define('view/diagrams/venn',[
 	    legends.push({label:''});
 	}
 
+	var filter_mode = 'all';
 	if(options.filter_control){
 	    legends.push({label:'Filter', color:'gray'});
-	    var controls = ['all', 'overlapping', 'non-overlapping'];
-	    _.each(controls, function(mode, i){
-		legends.push({label:mode, color:'black'});
+	    var modes = ['all', 'overlapping', 'non-overlapping'];
+	    var default_mode = filter_mode;
+	    _.each(modes, function(mode){
+		var on = function(){
+		    thisObj.filter_mode = mode;
+		    update.call(thisObj);
+		    tellUpdate.call(thisObj);
+		};
+		var on_off = (mode==default_mode?'on':'off');
+		legends.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
 	    });
 	}
 
 	this.selected_category = selected_category;
-	this.filter_mode = 'All';
+	this.filter_mode = filter_mode;
 	this.legends = legends;
 	this.options = options;
 	this.scales = scales;
@@ -2710,13 +2719,14 @@ define('view/diagrams/venn',[
 	if(circles[0][0]==undefined)circles = circles.enter().append("circle");
 	if(texts[0][0]==undefined)texts = texts.enter().append("text");
 
+	this.counted_items = data.counted_items;
 	this.updateModels(circles, scales, this.options);
 	this.updateLabels(texts, scales, this.options);
     };
 
     Venn.prototype.proceedData = function(category_column, count_column, selected_category){
 	// decide overlapping areas
-	var table = (function(){
+	var items = (function(){
 	    var table = [];
 	    var counted_items = (function(){
 		var hash={};
@@ -2726,12 +2736,12 @@ define('view/diagrams/venn',[
 			if(category.indexOf(arr[0])!=-1)hash[arr[1]][i] = true;
 		    });
 		});
-		return _.values(hash);
+		return hash;
 	    })();
 
 	    var count_common = function(items){
 		var cnt=0;
-		_.each(counted_items, function(values, key){
+		_.each(_.values(counted_items), function(values, key){
 		    if(!_.some(items, function(item){return !(item in values);}))cnt++;
 		});
 		return cnt;
@@ -2745,8 +2755,10 @@ define('view/diagrams/venn',[
 		    table[i][j] = num;
 		}
 	    }
-	    return table;
+	    return {table:table,counted_items:counted_items};
 	})();
+	var table=items.table;
+	var counted_items=items.counted_items;
 
 	// decide radius of each circle
 	var r = _.map(table, function(row, i){
@@ -2817,7 +2829,7 @@ define('view/diagrams/venn',[
 	    }
 	}
 
-	return {pos:pos, labels:labels};
+	return {pos:pos, labels:labels, counted_items:counted_items};
     };
 
     Venn.prototype.updateModels = function(selector, scales, options){
@@ -2864,10 +2876,12 @@ define('view/diagrams/venn',[
 
     Venn.prototype.tellUpdate = function(){
 	var rows=[], selected_category = this.selected_category;
+	var counted_items = this.counted_items;
 	var filter_mode = this.filter_mode;
 	var category_num = this.options.category;
+	var count_num = this.options.count;
 	var filter = {
-	    'All':function(row){
+	    'all':function(row){
 		// check if this row in in any area (VENN1, VENN2, VENN3,...)
 		return _.some(selected_category, function(categories){
 		    if(categories.indexOf(row[category_num])!=-1)return true;
@@ -2875,18 +2889,38 @@ define('view/diagrams/venn',[
 		});
 	    },
 	    'overlapping':function(row){
+		if(!_.some(selected_category, function(categories){
+		     if(categories.indexOf(row[category_num])!=-1)return true;
+		     else return false;
+		 }))return false;
+
 		for(var i=0;i<3;i++){
 		    for(var j=i+1;j<3;j++){
-			
+			if( 
+			    counted_items[row[count_num]][i]
+			   && counted_items[row[count_num]][j]
+			  )return true;
+		    }
+		}
+		return false;
+	    },
+	    'non-overlapping':function(row){
+		if(!_.some(selected_category, function(categories){
+		     if(categories.indexOf(row[category_num])!=-1)return true;
+		     else return false;
+		 }))return false;
+
+		for(var i=0;i<3;i++){
+		    for(var j=i+1;j<3;j++){
+			if(counted_items[row[count_num]][i]
+			   && counted_items[row[count_num]][j]
+			  )return false;
 		    }
 		}
 		return true;
-	    },
-	    'non_ovelapping':function(){
-		return true;
 	    }
 	}[filter_mode];
-	this.df.addFilter(this.uuid, filter, []);
+	this.df.addFilter(this.uuid, filter, ['self']);
 	Manager.update();
     };
 
