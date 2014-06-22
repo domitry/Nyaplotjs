@@ -26,7 +26,7 @@ First, prepare an array as a data source.
 var data = [{name:'type1',val:48}, {name:'type2',val:20}, {name:'type3',val:4}, {name:'type4',val:12}, {name:'type5',val:22}];
 ```
 
-Next create models. 
+Next create plot. 
 
 ```javascript
 var models = {data:data},panes: [{diagrams:[{type: 'bar', data: 'data1', options: {x:'name', y:'val1'}}],options:{width:500, height:500, xrange: ['type1','type2','type3','type4','type5'], yrange: [0,50]}}]};
@@ -38,7 +38,7 @@ Then load models into Ecolijs and it will begin to parse them and generate plot.
 Ecoli.core.parse(models, '#vis');
 ```
 
-Please click [here](http://bl.ocks.org/domitry/2f53781449025f772676) to see the result.
+Click [here](http://bl.ocks.org/domitry/2f53781449025f772676) to see the result.
 
 ### Interactivity among panes
 In order to enable this types of interactivity, you do not have to add any special attributes or lines. Creating multiple diagrams from one data source is enough.
@@ -63,7 +63,7 @@ If you want to filter data based on values mapped into x axis, add 'filter' attr
 var model1 = {data:{data1: values},panes: [{diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}], filter: {target: 'x'}, options:{xrange: [0,1], yrange: [0,30]}}]};
 ```
 
-Please click [here](http://www.domitry.com/gsoc/multi_pane2.html) to see the result.
+Click [here](http://www.domitry.com/gsoc/multi_pane2.html) to see the result.
 
 ## Building
 You need to install npm before building Ecolijs.
