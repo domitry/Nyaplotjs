@@ -1,8 +1,8 @@
 <html lang='en'>
 <head>
-  <title>Ecolijs example -- Scatter</title>
+  <title>Nyaplotjs example -- Scatter</title>
   <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/ecoli.js'></script>
+  <script src='../release/nyaplot.js'></script>
 </head>
 <body>
 <div id='vis'></div>
@@ -10,7 +10,7 @@
 var data1 = [], MAX=50, MIN=0;
 for(var i=0;i<50;i++)data1.push({x: Math.random()*MAX, y: Math.random()*MAX})
 models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'scatter', data: 'data1', options: {x:'x', y:'y'}}],options:{width:500, height:500, xrange: [MIN-5, MAX+5], yrange: [MIN-5, MAX+5]}}]};
-window.onload = function(){Ecoli.core.parse(models, '#vis');};
+window.onload = function(){Nyaplot.core.parse(models, '#vis');};
 </script>
 </body>
 </html>

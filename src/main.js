@@ -1,8 +1,8 @@
 define(function(require, exports, module){
-    Ecoli = {};
+    var Nyaplot = {};
 
-    Ecoli.core = {};
-    Ecoli.core.parse = require('core/parse');
+    Nyaplot.core = {};
+    Nyaplot.core.parse = require('core/parse');
 
-    return Ecoli;
+    return Nyaplot;
 });

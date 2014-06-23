@@ -1,13 +1,13 @@
-Ecolijs
+Nyaplotjs
 =======
 
 ![alt text](https://dl.dropboxusercontent.com/u/47978121/gsoc/top.png)
 
-Ecolijs is a back-end library for [ecolirb](https://github.com/domitry/ecolirb). Its goal is to allow Ruby and other language users to create interactive plots in their favorite styles. Ecolijs provides useful interface to generate plots based on JSON object.
+Nyaplotjs is a back-end library for [Nyaplot](https://github.com/domitry/nyaplotrb). Its goal is to allow Ruby and other language users to create interactive plots in their favorite styles. Nyaplotjs provides useful interface to generate plots based on JSON object.
 
 This software has been developed as a product in Google Summer of Code 2014 (GSoC2014). Please visit a website of [SciRuby project](http://sciruby.com/blog/) to see the progress of this project.
 
-Ecolijs and Ecolirb will be merged into one library before the end of GSoC 2014 term. 
+Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 2014 term. 
 
 ## Demos
 * [Interactive 3-pane plot](http://www.domitry.com/gsoc/multi_pane2.html)
@@ -32,10 +32,10 @@ Next create plot.
 var models = {data:data},panes: [{diagrams:[{type: 'bar', data: 'data1', options: {x:'name', y:'val1'}}],options:{width:500, height:500, xrange: ['type1','type2','type3','type4','type5'], yrange: [0,50]}}]};
 ```
 
-Then load models into Ecolijs and it will begin to parse them and generate plot.
+Then load models into Nyaplotjs and it will begin to parse them and generate plot.
 
 ```javascript
-Ecoli.core.parse(models, '#vis');
+Nyaplot.core.parse(models, '#vis');
 ```
 
 Click [here](http://bl.ocks.org/domitry/2f53781449025f772676) to see the result.
@@ -66,10 +66,10 @@ var model1 = {data:{data1: values},panes: [{diagrams:[{type: 'histogram', data: 
 Click [here](http://www.domitry.com/gsoc/multi_pane2.html) to see the result.
 
 ## Building
-You need to install npm before building Ecolijs.
+You need to install npm before building Nyaplotjs.
 
 ```shell:
-cd Ecolijs
+cd Nyaplotjs
 npm install
 grunt release
 ```
@@ -79,4 +79,4 @@ grunt release
 
 ## License
 Copyright (C) 2014 by Naoki Nishida  
-This version of Ecolijs is licensed under the MIT license.
+This version of Nyaplotjs is licensed under the MIT license.

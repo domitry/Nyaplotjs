@@ -1,8 +1,8 @@
 <html lang='en'>
 <head>
-  <title>Ecolijs example -- Multiple Panes</title>
+  <title>Nyaplotjs example -- Multiple Panes</title>
   <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/ecoli.js'></script>
+  <script src='../release/nyaplot.js'></script>
 </head>
 <body>
 <div id='vis1' style='float:left'></div>
@@ -16,9 +16,9 @@ var model2 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'bar', data: 
 var model3 = {data:{}, panes:[{type:'rectangular', diagrams:[{type:'venn', data: 'data1', options: {category:'group',count:'mutation_type'}}],options:{width:600, height:500, xrange:[0,1], yrange: [0,1], scale:'fluid', grid:true, x_label:'', y_label:''}}]};
 
 window.onload = function(){
-    Ecoli.core.parse(model1, '#vis1');
-    Ecoli.core.parse(model2, '#vis2');
-    Ecoli.core.parse(model3, '#vis3');
+    Nyaplot.core.parse(model1, '#vis1');
+    Nyaplot.core.parse(model2, '#vis2');
+    Nyaplot.core.parse(model3, '#vis3');
 };
 </script>
 </body>

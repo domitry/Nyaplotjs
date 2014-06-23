@@ -1,4 +1,4 @@
 (function (root, initialize){
-    root.Ecoli = initialize();
+    root.Nyaplot = initialize();
 }(this, function(){
     //modules here

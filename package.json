@@ -1,5 +1,5 @@
 {
-  "name": "Ecolijs",
+  "name": "Nyaplotjs",
   "version": "0.0.0",
   "description": "JavaScript plotting library",
   "main": "src/main.js",

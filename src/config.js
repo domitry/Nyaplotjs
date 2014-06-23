@@ -4,5 +4,3 @@ require.config({
 	'node-uuid':'../contrib/node-uuid/uuid'
     }
 });
-
-    

@@ -1,15 +1,15 @@
 <html lang='en'>
 <head>
-  <title>Ecolijs example -- Histogram</title>
+  <title>Nyaplotjs example -- Histogram</title>
   <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/ecoli.js'></script>
+  <script src='../release/nyaplot.js'></script>
 </head>
 <body>
 <div id='vis'></div>
 <script>
 var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(val)};});
 models = {data:{data1: values},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}], filter: {target: 'x'}, options:{width:500, height:500, xrange: [0,1], yrange: [0,30]}}]};
-window.onload = function(){Ecoli.core.parse(models, '#vis');};
+window.onload = function(){Nyaplot.core.parse(models, '#vis');};
 </script>
 </body>
 </html>

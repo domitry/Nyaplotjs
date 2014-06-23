@@ -15,13 +15,13 @@ module.exports = function(grunt){
                 options: {
 		    optimizeAllPluginResources: true,
 		    optimize: 'uglify2',
-		    out: "release/ecoli.min.js"
+		    out: "release/nyaplot.min.js"
 		}
 	    },
             development: {
 		options: {
                     optimize: "none",
-                    out: "release/ecoli.js"
+                    out: "release/nyaplot.js"
 		}
 	    }
 	}

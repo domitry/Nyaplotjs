@@ -1,5 +1,5 @@
 (function (root, initialize){
-    root.Ecoli = initialize();
+    root.Nyaplot = initialize();
 }(this, function(){
     //modules here
 /**
@@ -3623,12 +3623,12 @@ define('core/parse',[
 });
 
 define('main',['require','exports','module','core/parse'],function(require, exports, module){
-    Ecoli = {};
+    var Nyaplot = {};
 
-    Ecoli.core = {};
-    Ecoli.core.parse = require('core/parse');
+    Nyaplot.core = {};
+    Nyaplot.core.parse = require('core/parse');
 
-    return Ecoli;
+    return Nyaplot;
 });
 
 return require('main');

@@ -1,8 +1,8 @@
 <html lang='en'>
 <head>
-  <title>Ecolijs example -- Venn plot</title>
+  <title>Nyaplotjs example -- Venn plot</title>
   <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/ecoli.js'></script>
+  <script src='../release/nyaplot.js'></script>
 </head>
 <body>
 <div id='vis'></div>
@@ -20,7 +20,7 @@ for(var i=0;i<50;i++){
 }
 console.log(log);
 models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'venn', data: 'data1', options: {category:'favorite', count:'name'}}],options:{width:600, height:500, xrange: [-100, 100], yrange: [-100, 100]}}]};
-window.onload = function(){Ecoli.core.parse(models, '#vis');};
+window.onload = function(){Nyaplot.core.parse(models, '#vis');};
 </script>
 </body>
 </html>
