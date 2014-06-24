@@ -2080,7 +2080,7 @@ define('view/diagrams/bar',[
 
 	var legends = [], labels;
 
-	if(options.value !== null){
+	if(options.value == null){
 	    var column_value = df.column(options.value);
 	    labels = _.uniq(column_value);
 	}else
@@ -3410,7 +3410,7 @@ define('view/pane',[
 	    scale: 'fixed',
 	    bg_color: '#eee',
 	    grid_color: '#fff',
-	    legend: true,
+	    legend: false,
 	    legend_width: 100,
 	    legend_options: {}
 	};
