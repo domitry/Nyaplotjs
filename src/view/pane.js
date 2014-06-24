@@ -20,7 +20,7 @@ define([
 	    scale: 'fixed',
 	    bg_color: '#eee',
 	    grid_color: '#fff',
-	    legend: true,
+	    legend: false,
 	    legend_width: 100,
 	    legend_options: {}
 	};
