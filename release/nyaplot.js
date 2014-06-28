@@ -3185,8 +3185,9 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
 });
 
 define('view/components/axis',[
-    'underscore'
-],function(_){
+    'underscore',
+    'core/manager'
+],function(_, Manager){
     function Axis(parent, scales, _options){
 	var options = {
 	    width:0,
@@ -3224,6 +3225,7 @@ define('view/components/axis',[
 
 	parent.selectAll(".x_axis, .y_axis")
 	    .selectAll("path, line")
+	    .style("z-index", 100)
 	    .style("fill","none")
 	    .style("stroke",options.stroke_color)
 	    .style("stroke-width",options.stroke_width);
@@ -3252,6 +3254,27 @@ define('view/components/axis',[
 	    .attr("font-size", 22)
 	    .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
 	    .text(options.y_label);
+
+	var zoomed = function(){
+	    parent.select(".x_axis").call(xAxis);
+	    parent.select(".y_axis").call(yAxis);
+	    parent.selectAll(".x_axis, .y_axis")
+		.selectAll("path, line")
+		.style("z-index", 100)
+		.style("fill","none")
+		.style("stroke",options.stroke_color)
+		.style("stroke-width",options.stroke_width);
+
+	    Manager.update();
+	};
+
+	var zoom = d3.behavior.zoom()
+		.x(scales.x)
+		.y(scales.y)
+		.scaleExtent([1, 5])
+		.on("zoom", zoomed);
+
+	parent.call(zoom);
 
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;
@@ -3392,7 +3415,7 @@ define('view/pane',[
 	    yrange: [0,0],
 	    x_label:'X',
 	    y_label:'Y',
-	    zoom: true,
+	    zoom: false,
 	    grid: true,
 	    scale: 'fixed',
 	    bg_color: '#eee',
@@ -3431,7 +3454,8 @@ define('view/pane',[
 	    .attr("height", inner_height)
 	    .attr("stroke", "#000000")
 	    .attr("stroke_width", 2)
-	    .attr("fill", options.bg_color);
+	    .attr("fill", options.bg_color)
+	    .style("z-index",1);
 
 	var axis = new Axis(model.select("g"), scales, {
 	    width:inner_width, 

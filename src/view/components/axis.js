@@ -1,6 +1,7 @@
 define([
-    'underscore'
-],function(_){
+    'underscore',
+    'core/manager'
+],function(_, Manager){
     function Axis(parent, scales, _options){
 	var options = {
 	    width:0,
@@ -38,6 +39,7 @@ define([
 
 	parent.selectAll(".x_axis, .y_axis")
 	    .selectAll("path, line")
+	    .style("z-index", 100)
 	    .style("fill","none")
 	    .style("stroke",options.stroke_color)
 	    .style("stroke-width",options.stroke_width);
@@ -66,6 +68,27 @@ define([
 	    .attr("font-size", 22)
 	    .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
 	    .text(options.y_label);
+
+	var zoomed = function(){
+	    parent.select(".x_axis").call(xAxis);
+	    parent.select(".y_axis").call(yAxis);
+	    parent.selectAll(".x_axis, .y_axis")
+		.selectAll("path, line")
+		.style("z-index", 100)
+		.style("fill","none")
+		.style("stroke",options.stroke_color)
+		.style("stroke-width",options.stroke_width);
+
+	    Manager.update();
+	};
+
+	var zoom = d3.behavior.zoom()
+		.x(scales.x)
+		.y(scales.y)
+		.scaleExtent([1, 5])
+		.on("zoom", zoomed);
+
+	parent.call(zoom);
 
 	this.xAxis = xAxis;
 	this.yAxis = yAxis;

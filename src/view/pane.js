@@ -15,7 +15,7 @@ define([
 	    yrange: [0,0],
 	    x_label:'X',
 	    y_label:'Y',
-	    zoom: true,
+	    zoom: false,
 	    grid: true,
 	    scale: 'fixed',
 	    bg_color: '#eee',
@@ -54,7 +54,8 @@ define([
 	    .attr("height", inner_height)
 	    .attr("stroke", "#000000")
 	    .attr("stroke_width", 2)
-	    .attr("fill", options.bg_color);
+	    .attr("fill", options.bg_color)
+	    .style("z-index",1);
 
 	var axis = new Axis(model.select("g"), scales, {
 	    width:inner_width, 
