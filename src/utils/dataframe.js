@@ -1,7 +1,14 @@
+/*
+ * Dataframe loads (JSON) data or through a URI and allows
+ * a plot to query that data
+ */
+
 define([
-    'underscore'
+    'underscore'  // module
 ],function(_){
     function Dataframe(name, data){
+        // load data from a String containing a URL or
+        // use the (raw) data
 	if(data instanceof String && /url(.+)/g.test(data)){
 	    var url = data.match(/url\((.+)\)/)[1];
 	    var df = this;
@@ -15,10 +22,12 @@ define([
 	return this;
     }
     
+    // Get a row by index
     Dataframe.prototype.row = function(row_num){
 	return this.raw[row_num];
     };
 
+    // Get a column by label
     Dataframe.prototype.column = function(label){
 	var arr = [];
 	var raw = this.raw;
@@ -26,10 +35,12 @@ define([
 	return arr;
     };
 
+    // Add a filter function to the list
     Dataframe.prototype.addFilter = function(self_uuid, func, excepts){
 	this.filters[self_uuid] = {func:func, excepts:excepts};
     };
 
+    // Iterate a column using filters
     Dataframe.prototype.columnWithFilters = function(self_uuid, label){
 	var raw = this.raw.concat();
 	_.each(this.filters, function(filter, uuid){
@@ -40,6 +51,7 @@ define([
 	return _.map(raw, function(row){return row[label];});
     };
 
+    // Fetch a value using column label and row number
     Dataframe.prototype.pickUpCells = function(label, row_nums){
 	var column = this.column(label);
 	return _.map(row_nums, function(i){
