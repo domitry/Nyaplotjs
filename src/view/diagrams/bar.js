@@ -24,11 +24,11 @@ define([
 
 	var legends = [], labels;
 
-	if(options.value == null){
+	if(options.value != null){
 	    var column_value = df.column(options.value);
 	    labels = _.uniq(column_value);
 	}else
-	    labels = df.column(options.value);
+	    labels = df.column(options.x);
 	
 	_.each(labels, function(label){
 	    legends.push({label: label, color:color_scale(label)});

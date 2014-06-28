@@ -2080,11 +2080,11 @@ define('view/diagrams/bar',[
 
 	var legends = [], labels;
 
-	if(options.value == null){
+	if(options.value != null){
 	    var column_value = df.column(options.value);
 	    labels = _.uniq(column_value);
 	}else
-	    labels = df.column(options.value);
+	    labels = df.column(options.x);
 	
 	_.each(labels, function(label){
 	    legends.push({label: label, color:color_scale(label)});
@@ -2340,46 +2340,53 @@ define('view/diagrams/scatter',[
 
 	this.scales = scales;
 	var df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.x), df.column(options.y), options);
-
 	var model = parent.append("g");
-	var circles = model.selectAll("circle")
-	    .data(data)
-	    .enter()
-	    .append("circle")
-	    .attr("r", 0)
 
-	this.updateModels(circles, scales, options);
-
-	this.legends = [{label: options.title, color:options.color,on:function(){}, off:function(){}}];
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
 	this.df_id = df_id;
 
+	this.update();
+	
 	return this;
     }
 
+    Scatter.prototype.update = function(){
+	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+
+	var circles = this.model.selectAll("circle")
+	    .data(data);
+	if(circles[0][0]==undefined){
+	    circles.enter()
+	    .append("circle")
+	    .attr("r", 0);
+	}
+
+	this.updateModels(circles, this.scales, this.options);
+    };
+
     Scatter.prototype.proceedData = function(x_arr, y_arr, options){
-	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]}});
-    }
+	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+    };
 
     Scatter.prototype.updateModels = function(selector, scales, options){
 	var onMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", d3.rgb(options.color).darker(1));
-	}
+	};
 
 	var outMouse = function(){
 	    d3.select(this).transition()
 		.duration(200)
 		.attr("fill", options.color);
-	}
+	};
 
 	selector
-	    .attr("cx",function(d){return scales.x(d.x)})
-	    .attr("cy", function(d){return scales.y(d.y)})
+	    .attr("cx",function(d){return scales.x(d.x);})
+	    .attr("cy", function(d){return scales.y(d.y);})
 	    .attr("fill", options.color)
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
@@ -2390,30 +2397,18 @@ define('view/diagrams/scatter',[
 	if(options.hover)selector
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
-    }
-
-    Scatter.prototype.selected = function(data, row_nums){
-	var selected_cells = this.df.pickUpCells(this.options.value, row_nums)
-	var data = this.proceedData(selected_cells, this.options);
-	var models = this.model.selectAll("rect").data(data);
-	this.updateModels(models, this.scales, this.options);
-    }
+    };
 
     Scatter.prototype.updateData = function(){
 	this.df = Manager.getData(df_id);
 	var data = this.proceedData(df.column(options.value), options);
 	var models = this.model.selectAll("circle").data(data);
 	this.updateModels(models,  this.scales, this.options);
-    }
+    };
 
     Scatter.prototype.checkSelectedData = function(ranges){
-	var rows = [];
-	var column = this.df.column(this.options.value);
-	_.each(column, function(val, i){
-	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
-	});
-	Manager.selected(this.df_id, rows);
-    }
+	return;
+    };
 
     return Scatter;
 });
@@ -2435,22 +2430,26 @@ define('view/diagrams/line',[
 
 	this.scales = scales;
 	var df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.x), df.column(options.y), options);
-
 	var model = parent.append("g");
-	var path = model.append("path")
-	    .datum(data);
-	
-	this.updateModels(path, scales, options);
 
-	this.legends = [{label: options.title, color:options.color, on:function(){}, off:function(){}}];
+	this.legends = [{label: options.title, color:options.color}];
 	this.options = options;
 	this.model = model;
 	this.df = df;
 	this.df_id = df_id;
 
+	this.update();
+
 	return this;
     }
+
+    Line.prototype.update = function(){
+	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+	var path = this.model.append("path")
+	    .datum(data);
+	
+	this.updateModels(path, this.scales, this.options);
+    };
 
     Line.prototype.proceedData = function(x_arr, y_arr, options){
 	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
@@ -2480,13 +2479,6 @@ define('view/diagrams/line',[
 	    .attr("fill", "none");
     };
 
-    Line.prototype.selected = function(data, row_nums){
-	var selected_cells = this.df.pickUpCells(this.options.value, row_nums);
-	var data = this.proceedData(selected_cells, this.options);
-	var models = this.model.selectAll("path").datum(data);
-	this.updateModels(models, this.scales, this.options);
-    };
-
     Line.prototype.updateData = function(){
 	this.df = Manager.getData(this.df_id);
 	var data = this.proceedData(this.df.column(this.options.value), this.options);
@@ -2495,12 +2487,7 @@ define('view/diagrams/line',[
     };
 
     Line.prototype.checkSelectedData = function(ranges){
-	var rows = [];
-	var column = this.df.column(this.options.value);
-	_.each(column, function(val, i){
-	    if(val > ranges.x[0] && val < ranges.x[1])rows.push(i);
-	});
-	Manager.selected(this.df_id, rows);
+	return;
     };
 
     return Line;
