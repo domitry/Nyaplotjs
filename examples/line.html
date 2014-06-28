@@ -9,7 +9,7 @@
 <script>
 var data1 = [], MAX=10, MIN=0;
 for(var x=MIN;x<MAX;x+=0.1)data1.push({x: x, y1: Math.sin(x), y2: Math.cos(x)});
-models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'line', data: 'data1', options: {x:'x', y:'y1', stroke_width:2}},{type: 'line', data: 'data1', options: {x:'x', y:'y2', stroke_width:2, color:'#000000'}}],options:{width:600, height:500, xrange: [MIN, MAX], yrange: [-2, 2]}}]};
+models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type:'line', data: 'data1', options: {title: 'sin(x)', x:'x', y:'y1', stroke_width:2}},{type: 'line', data: 'data1', options: {title: 'cos(y)', x:'x', y:'y2', stroke_width:2, color:'#000000'}}],options:{width:600, height:500, xrange: [MIN, MAX], yrange: [-2, 2], legend:true}}]};
 window.onload = function(){Nyaplot.core.parse(models, '#vis');};
 </script>
 </body>
