@@ -17,7 +17,20 @@ define([
 	var df = Manager.getData(df_id);
 	var model = parent.append("g");
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = (function(thisObj){
+	    var on = function(){
+		thisObj.render = true;
+		thisObj.update();
+	    };
+
+	    var off = function(){
+		thisObj.render = false;
+		thisObj.update();
+	    };
+	    return [{label: options.title, color:options.color, on:on, off:off}];
+	})(this);
+
+	this.render = true;
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -29,14 +42,18 @@ define([
     }
 
     Line.prototype.update = function(){
-	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-	this.model.selectAll("path").remove();
-	var path =this.model
-		.append("path")
-		.attr("clip-path","url(#" + this.options.clip_id + ")")
-		.datum(data);
-	
-	this.updateModels(path, this.scales, this.options);
+	if(this.render){
+	    var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+	    this.model.selectAll("path").remove();
+	    var path =this.model
+		    .append("path")
+		    .attr("clip-path","url(#" + this.options.clip_id + ")")
+		    .datum(data);
+	    
+	    this.updateModels(path, this.scales, this.options);
+	}else{
+	    this.model.selectAll("path").remove();
+	}
     };
 
     Line.prototype.proceedData = function(x_arr, y_arr, options){

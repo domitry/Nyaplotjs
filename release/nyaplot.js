@@ -2353,7 +2353,20 @@ define('view/diagrams/scatter',[
 	var df = Manager.getData(df_id);
 	var model = parent.append("g");
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = (function(thisObj){
+	    var on = function(){
+		thisObj.render = true;
+		thisObj.update();
+	    };
+
+	    var off = function(){
+		thisObj.render = false;
+		thisObj.update();
+	    };
+	    return [{label: options.title, color:options.color, on:on, off:off}];
+	})(this);
+
+	this.render = true;
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2366,13 +2379,16 @@ define('view/diagrams/scatter',[
 
     Scatter.prototype.update = function(){
 	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-
-	var circles = this.model.selectAll("circle")
-	    .data(data);
-	if(circles[0][0]==undefined){
-	    circles.enter()
-	    .append("circle")
-	    .attr("r", 0);
+	if(this.render){
+	    var circles = this.model.selectAll("circle")
+		    .data(data);
+	    if(circles[0][0]==undefined){
+		circles.enter()
+		    .append("circle")
+		    .attr("r", 0);
+	    }
+	}else{
+	    this.model.selectAll("circle").remove();
 	}
 
 	this.updateModels(circles, this.scales, this.options);
@@ -2443,7 +2459,20 @@ define('view/diagrams/line',[
 	var df = Manager.getData(df_id);
 	var model = parent.append("g");
 
-	this.legends = [{label: options.title, color:options.color}];
+	this.legends = (function(thisObj){
+	    var on = function(){
+		thisObj.render = true;
+		thisObj.update();
+	    };
+
+	    var off = function(){
+		thisObj.render = false;
+		thisObj.update();
+	    };
+	    return [{label: options.title, color:options.color, on:on, off:off}];
+	})(this);
+
+	this.render = true;
 	this.options = options;
 	this.model = model;
 	this.df = df;
@@ -2455,14 +2484,18 @@ define('view/diagrams/line',[
     }
 
     Line.prototype.update = function(){
-	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-	this.model.selectAll("path").remove();
-	var path =this.model
-		.append("path")
-		.attr("clip-path","url(#" + this.options.clip_id + ")")
-		.datum(data);
-	
-	this.updateModels(path, this.scales, this.options);
+	if(this.render){
+	    var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+	    this.model.selectAll("path").remove();
+	    var path =this.model
+		    .append("path")
+		    .attr("clip-path","url(#" + this.options.clip_id + ")")
+		    .datum(data);
+	    
+	    this.updateModels(path, this.scales, this.options);
+	}else{
+	    this.model.selectAll("path").remove();
+	}
     };
 
     Line.prototype.proceedData = function(x_arr, y_arr, options){
