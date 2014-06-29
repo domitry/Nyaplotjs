@@ -83,8 +83,8 @@ define([
 		    .y(scales.y)
 		    .scaleExtent([1, 5])
 		    .on("zoom", update);
-
 	    parent.call(zoom);
+	    parent.on("dblclick.zoom", null);
 	}
 
 	update();
