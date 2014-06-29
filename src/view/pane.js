@@ -26,6 +26,8 @@ define([
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
+	this.uuid = uuid.v4();
+
 	var model = parent.append("svg")
 	    .attr("width", options.width)
 	    .attr("height", options.height);
@@ -72,7 +74,7 @@ define([
 	    .append("g")
 	    .attr("class", "context")
 	    .append("clipPath")
-	    .attr("id", "clip_context")
+	    .attr("id", this.uuid + "clip_context")
 	    .append("rect")
 	    .attr("x", 0)
 	    .attr("y", 0)
@@ -99,7 +101,7 @@ define([
     }
 
     Pane.prototype.addDiagram = function(type, data, options){
-	_.extend(options, {uuid: uuid.v4()});
+	_.extend(options, {uuid: uuid.v4(), clip_id: this.uuid + 'clip_context'});
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
 	var legend = this.legend;
 	if(this.options.legend){

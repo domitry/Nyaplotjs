@@ -33,7 +33,7 @@ define([
 	this.model.selectAll("path").remove();
 	var path =this.model
 		.append("path")
-		.attr("clip-path","url(#clip_context)")
+		.attr("clip-path","url(#" + this.options.clip_id + ")")
 		.datum(data);
 	
 	this.updateModels(path, this.scales, this.options);

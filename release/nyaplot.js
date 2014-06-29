@@ -1770,37 +1770,48 @@ define("../contrib/almond/almond", function(){});
   }
 }).call(this);
 
+/*
+ * Manager is the overall frame manager that holds plots and data
+ * sources (DataFrame).
+ */
+
 define('core/manager',[
     "underscore"
 ], function(_){
     var Manager = {data_frames: {}, panes: []};
 
+    // add a data source (DataFrame) by name
     Manager.addData = function(name, df){
 	entry = {};
 	entry[name] = df;
 	_.extend(this.data_frames, entry);
     };
 
+    // Fetch a data source by name
     Manager.getData = function(name){
 	return this.data_frames[name];
     };
 
+    // Add a pane to the manager
     Manager.addPane = function(pane){
 	this.panes.push(pane);
     };
 
+    // Tell the manager that data has been selected
     Manager.selected = function(data_id, rows){
 	_.each(this.panes, function(entry){
 	    entry.pane.selected(data_id, rows);
 	});
     };
 
+    // Update and redraw the panes
     Manager.update = function(){
 	_.each(this.panes, function(entry){
 	    entry.pane.update();
 	});
     };
 
+    // Update data (nyi)
     Manager.updateData = function(data_id, column_name, value){
 
     };
@@ -2295,7 +2306,7 @@ define('view/diagrams/histogram',[
 	    .attr("fill", options.color)
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
-	    .attr("clip-path","url(#clip_context)")
+	    .attr("clip-path","url(#" + this.options.clip_id + ")")
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
@@ -2390,7 +2401,7 @@ define('view/diagrams/scatter',[
 	    .attr("fill", options.color)
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
-	    .attr("clip-path","url(#clip_context)")
+	    .attr("clip-path","url(#" + this.options.clip_id + ")")
 	    .transition().duration(200)
 	    .attr("r", options.r);
 
@@ -2448,7 +2459,7 @@ define('view/diagrams/line',[
 	this.model.selectAll("path").remove();
 	var path =this.model
 		.append("path")
-		.attr("clip-path","url(#clip_context)")
+		.attr("clip-path","url(#" + this.options.clip_id + ")")
 		.datum(data);
 	
 	this.updateModels(path, this.scales, this.options);
@@ -3421,6 +3432,8 @@ define('view/pane',[
 	};
 	if(arguments.length>1)_.extend(options, _options);
 
+	this.uuid = uuid.v4();
+
 	var model = parent.append("svg")
 	    .attr("width", options.width)
 	    .attr("height", options.height);
@@ -3467,7 +3480,7 @@ define('view/pane',[
 	    .append("g")
 	    .attr("class", "context")
 	    .append("clipPath")
-	    .attr("id", "clip_context")
+	    .attr("id", this.uuid + "clip_context")
 	    .append("rect")
 	    .attr("x", 0)
 	    .attr("y", 0)
@@ -3494,7 +3507,7 @@ define('view/pane',[
     }
 
     Pane.prototype.addDiagram = function(type, data, options){
-	_.extend(options, {uuid: uuid.v4()});
+	_.extend(options, {uuid: uuid.v4(), clip_id: this.uuid + 'clip_context'});
 	var diagram = new diagrams[type](this.context, this.scales, data, options);
 	var legend = this.legend;
 	if(this.options.legend){
@@ -3533,10 +3546,17 @@ define('view/pane',[
     return Pane;
 });
 
+/*
+ * Dataframe loads (JSON) data or through a URI and allows
+ * a plot to query that data
+ */
+
 define('utils/dataframe',[
-    'underscore'
+    'underscore'  // module
 ],function(_){
     function Dataframe(name, data){
+        // load data from a String containing a URL or
+        // use the (raw) data
 	if(data instanceof String && /url(.+)/g.test(data)){
 	    var url = data.match(/url\((.+)\)/)[1];
 	    var df = this;
@@ -3550,10 +3570,12 @@ define('utils/dataframe',[
 	return this;
     }
     
+    // Get a row by index
     Dataframe.prototype.row = function(row_num){
 	return this.raw[row_num];
     };
 
+    // Get a column by label
     Dataframe.prototype.column = function(label){
 	var arr = [];
 	var raw = this.raw;
@@ -3561,10 +3583,12 @@ define('utils/dataframe',[
 	return arr;
     };
 
+    // Add a filter function to the list
     Dataframe.prototype.addFilter = function(self_uuid, func, excepts){
 	this.filters[self_uuid] = {func:func, excepts:excepts};
     };
 
+    // Iterate a column using filters
     Dataframe.prototype.columnWithFilters = function(self_uuid, label){
 	var raw = this.raw.concat();
 	_.each(this.filters, function(filter, uuid){
@@ -3575,6 +3599,7 @@ define('utils/dataframe',[
 	return _.map(raw, function(row){return row[label];});
     };
 
+    // Fetch a value using column label and row number
     Dataframe.prototype.pickUpCells = function(label, row_nums){
 	var column = this.column(label);
 	return _.map(row_nums, function(i){

@@ -69,7 +69,7 @@ define([
 	    .attr("fill", options.color)
 	    .attr("stroke", options.stroke_color)
 	    .attr("stroke-width", options.stroke_width)
-	    .attr("clip-path","url(#clip_context)")
+	    .attr("clip-path","url(#" + this.options.clip_id + ")")
 	    .transition().duration(200)
 	    .attr("r", options.r);
 
