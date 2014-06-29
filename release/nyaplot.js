@@ -2387,11 +2387,10 @@ define('view/diagrams/scatter',[
 		    .append("circle")
 		    .attr("r", 0);
 	    }
+	    this.updateModels(circles, this.scales, this.options);
 	}else{
 	    this.model.selectAll("circle").remove();
 	}
-
-	this.updateModels(circles, this.scales, this.options);
     };
 
     Scatter.prototype.proceedData = function(x_arr, y_arr, options){
