@@ -79,8 +79,8 @@ define([
     };
 
     Scatter.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.value), options);
+	this.df = Manager.getData(this.df_id);
+	var data = this.proceedData(this.df.column(this.options.value), this.options);
 	var models = this.model.selectAll("circle").data(data);
 	this.updateModels(models,  this.scales, this.options);
     };

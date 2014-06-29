@@ -30,8 +30,11 @@ define([
 
     Line.prototype.update = function(){
 	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-	var path = this.model.append("path")
-	    .datum(data);
+	this.model.selectAll("path").remove();
+	var path =this.model
+		.append("path")
+		.attr("clip-path","url(#clip_context)")
+		.datum(data);
 	
 	this.updateModels(path, this.scales, this.options);
     };

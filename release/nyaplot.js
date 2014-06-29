@@ -2299,7 +2299,7 @@ define('view/diagrams/histogram',[
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
-
+	
 	if(options.hover)selector
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
@@ -2400,8 +2400,8 @@ define('view/diagrams/scatter',[
     };
 
     Scatter.prototype.updateData = function(){
-	this.df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.value), options);
+	this.df = Manager.getData(this.df_id);
+	var data = this.proceedData(this.df.column(this.options.value), this.options);
 	var models = this.model.selectAll("circle").data(data);
 	this.updateModels(models,  this.scales, this.options);
     };
@@ -2445,8 +2445,11 @@ define('view/diagrams/line',[
 
     Line.prototype.update = function(){
 	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-	var path = this.model.append("path")
-	    .datum(data);
+	this.model.selectAll("path").remove();
+	var path =this.model
+		.append("path")
+		.attr("clip-path","url(#clip_context)")
+		.datum(data);
 	
 	this.updateModels(path, this.scales, this.options);
     };
@@ -3209,55 +3212,34 @@ define('view/components/axis',[
 	    .scale(scales.y)
 	    .orient("left");
 
-	if(options.grid){
-	    xAxis.tickSize((-1)*options.height);
-	    yAxis.tickSize((-1)*options.width);
-	}
+	parent.append("g")
+	    .attr("class", "x_axis");
 
 	parent.append("g")
-	    .attr("class", "x_axis")
-	    .attr("transform", "translate(0," + options.height + ")")
-	    .call(xAxis);
-
-	parent.append("g")
-	    .attr("class", "y_axis")
-	    .call(yAxis);
-
-	parent.selectAll(".x_axis, .y_axis")
-	    .selectAll("path, line")
-	    .style("z-index", 100)
-	    .style("fill","none")
-	    .style("stroke",options.stroke_color)
-	    .style("stroke-width",options.stroke_width);
-
-	parent.selectAll(".x_axis")
-	    .selectAll("text")
-	    .attr("transform", "translate(0,4)");
-
-	parent.selectAll(".y_axis")
-	    .selectAll("text")
-	    .attr("transform", "translate(-4,0)");
+	    .attr("class", "y_axis");
 
 	parent.append("text")
 	    .attr("x", options.width/2)
 	    .attr("y", options.height + options.margin.bottom/1.5)
 	    .attr("text-anchor", "middle")
-	    .attr("fill", "black")
+	    .attr("fill", "rgb(50,50,50)")
 	    .attr("font-size", 22)
+	    .style("font-family", "sans-serif")
 	    .text(options.x_label);
 
 	parent.append("text")
 	    .attr("x", -options.margin.left/1.5)
 	    .attr("y", options.height/2)
 	    .attr("text-anchor", "middle")
-	    .attr("fill", "black")
+	    .attr("fill", "rgb(50,50,50)")
 	    .attr("font-size", 22)
 	    .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
 	    .text(options.y_label);
 
-	var zoomed = function(){
+	var update = function(){
 	    parent.select(".x_axis").call(xAxis);
 	    parent.select(".y_axis").call(yAxis);
+
 	    parent.selectAll(".x_axis, .y_axis")
 		.selectAll("path, line")
 		.style("z-index", 100)
@@ -3265,28 +3247,41 @@ define('view/components/axis',[
 		.style("stroke",options.stroke_color)
 		.style("stroke-width",options.stroke_width);
 
+	    parent.selectAll(".x_axis, .y_axis")
+		.selectAll("text")
+		.style("font-family", "sans-serif")
+		.attr("fill", "rgb(50,50,50)");
+
+	    parent.selectAll(".x_axis")
+		.attr("transform", "translate(0," + (options.height + 4) + ")");
+
+	    parent.selectAll(".y_axis")
+		.attr("transform", "translate(-4,0)");
+
 	    Manager.update();
 	};
 
-	var zoom = d3.behavior.zoom()
-		.x(scales.x)
-		.y(scales.y)
-		.scaleExtent([1, 5])
-		.on("zoom", zoomed);
+	if(options.grid){
+	    xAxis.tickSize((-1)*options.height);
+	    yAxis.tickSize((-1)*options.width);
+	}
 
-	parent.call(zoom);
+	if(options.zoom){
+	    var zoom = d3.behavior.zoom()
+		    .x(scales.x)
+		    .y(scales.y)
+		    .scaleExtent([1, 5])
+		    .on("zoom", update);
 
-	this.xAxis = xAxis;
-	this.yAxis = yAxis;
+	    parent.call(zoom);
+	}
+
+	update();
+
 	this.model = parent;
 
 	return this;
     }
-
-    Axis.prototype.update = function(){
-	this.model.selectAll(".x_axis").call(this.xAxis);
-	this.model.selectAll(".y_axis").call(this.yAxis);
-    };
 
     return Axis;
 });
@@ -3462,6 +3457,7 @@ define('view/pane',[
 	    height:inner_height,
 	    margin:options.margin,
 	    grid:options.grid,
+	    zoom:options.zoom,
 	    x_label:options.x_label,
 	    y_label:options.y_label,
 	    stroke_color: options.grid_color

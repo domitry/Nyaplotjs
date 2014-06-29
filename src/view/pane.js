@@ -62,6 +62,7 @@ define([
 	    height:inner_height,
 	    margin:options.margin,
 	    grid:options.grid,
+	    zoom:options.zoom,
 	    x_label:options.x_label,
 	    y_label:options.y_label,
 	    stroke_color: options.grid_color

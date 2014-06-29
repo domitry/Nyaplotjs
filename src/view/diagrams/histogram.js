@@ -75,7 +75,7 @@ define([
 	    .transition().duration(200)
 	    .attr("y", function(d){return scales.y(d.y);})
 	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
-
+	
 	if(options.hover)selector
 	    .on("mouseover", onMouse)
 	    .on("mouseout", outMouse);
