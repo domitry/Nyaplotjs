@@ -1782,33 +1782,33 @@ define('core/manager',[
 
     // add a data source (DataFrame) by name
     Manager.addData = function(name, df){
-	entry = {};
-	entry[name] = df;
-	_.extend(this.data_frames, entry);
+        var entry = {};
+        entry[name] = df;
+        _.extend(this.data_frames, entry);
     };
 
     // Fetch a data source by name
     Manager.getData = function(name){
-	return this.data_frames[name];
+        return this.data_frames[name];
     };
 
     // Add a pane to the manager
     Manager.addPane = function(pane){
-	this.panes.push(pane);
+        this.panes.push(pane);
     };
 
     // Tell the manager that data has been selected
     Manager.selected = function(data_id, rows){
-	_.each(this.panes, function(entry){
-	    entry.pane.selected(data_id, rows);
-	});
+        _.each(this.panes, function(entry){
+            entry.pane.selected(data_id, rows);
+        });
     };
 
     // Update and redraw the panes
     Manager.update = function(){
-	_.each(this.panes, function(entry){
-	    entry.pane.update();
-	});
+        _.each(this.panes, function(entry){
+            entry.pane.update();
+        });
     };
 
     // Update data (nyi)
@@ -2070,122 +2070,122 @@ define('view/diagrams/bar',[
     'core/manager'
 ],function(_, Manager){
     function Bar(parent, scales, df_id, _options){
-	var options = {
-	    value: null,
-	    x: null,
-	    y: null,
-	    width: 0.9,
-	    color: null,
-	    hover: true
-	};
-	if(arguments.length>3)_.extend(options, _options);
+        var options = {
+            value: null,
+            x: null,
+            y: null,
+            width: 0.9,
+            color: null,
+            hover: true
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-	var df = Manager.getData(df_id);
+        var df = Manager.getData(df_id);
 
-	var color_scale;
-	if(options.color == null) color_scale = d3.scale.category20b();
-	else color_scale = d3.scale.ordinal().range(options.color);
-	this.color_scale = color_scale;
+        var color_scale;
+        if(options.color == null) color_scale = d3.scale.category20b();
+        else color_scale = d3.scale.ordinal().range(options.color);
+        this.color_scale = color_scale;
 
-	var model = parent.append("g");
+        var model = parent.append("g");
 
-	var legends = [], labels;
+        var legends = [], labels;
 
-	if(options.value != null){
-	    var column_value = df.column(options.value);
-	    labels = _.uniq(column_value);
-	}else
-	    labels = df.column(options.x);
-	
-	_.each(labels, function(label){
-	    legends.push({label: label, color:color_scale(label)});
-	});
+        if(options.value != null){
+            var column_value = df.column(options.value);
+            labels = _.uniq(column_value);
+        }else
+            labels = df.column(options.x);
+        
+        _.each(labels, function(label){
+            legends.push({label: label, color:color_scale(label)});
+        });
 
-	this.model = model;
-	this.scales = scales;
-	this.options = options;
-	this.legends = legends;
-	this.df = df;
-	this.df_id = df_id;
-	this.uuid = options.uuid;
+        this.model = model;
+        this.scales = scales;
+        this.options = options;
+        this.legends = legends;
+        this.df = df;
+        this.df_id = df_id;
+        this.uuid = options.uuid;
 
-	this.update();
+        this.update();
 
-	return this;
+        return this;
     }
 
     Bar.prototype.update = function(){
-	var data;
-	if(this.options.value !== null){
-	    var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
-	    var raw = this.countData(column_value);
-	    data = this.proceedData(raw.x, raw.y, this.options);
-	}else{
-	    var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
-	    var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
-	    data = this.proceedData(column_x, column_y, this.options);
-	}
+        var data;
+        if(this.options.value !== null){
+            var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
+            var raw = this.countData(column_value);
+            data = this.proceedData(raw.x, raw.y, this.options);
+        }else{
+            var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
+            var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
+            data = this.proceedData(column_x, column_y, this.options);
+        }
 
-	var rects = this.model.selectAll("rect").data(data);
-	if(rects[0][0]==undefined){
-	    rects.enter()
-		.append("rect")
-		.attr("height", 0)
-		.attr("y", this.scales.y(0));
-	}
+        var rects = this.model.selectAll("rect").data(data);
+        if(rects[0][0]==undefined){
+            rects.enter()
+                .append("rect")
+                .attr("height", 0)
+                .attr("y", this.scales.y(0));
+        }
 
-	this.updateModels(rects, this.scales, this.options);
+        this.updateModels(rects, this.scales, this.options);
     };
     
     Bar.prototype.proceedData = function(x, y, options){
-	return _.map(
-	    _.zip(x,y),
-	    function(d, i){return {x:d[0], y:d[1]};}
-	);
+        return _.map(
+            _.zip(x,y),
+            function(d, i){return {x:d[0], y:d[1]};}
+        );
     };
 
     Bar.prototype.updateModels = function(selector, scales, options){
-	var color_scale = this.color_scale;
+        var color_scale = this.color_scale;
 
-	var onMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
-	};
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
+        };
 
-	var outMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", function(d){return color_scale(d.x);});
-	};
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return color_scale(d.x);});
+        };
 
-	var width = scales.x.rangeBand()*options.width;
-	var padding = scales.x.rangeBand()*((1-options.width)/2);
+        var width = scales.x.rangeBand()*options.width;
+        var padding = scales.x.rangeBand()*((1-options.width)/2);
 
-	selector
-	    .attr("x",function(d){return scales.x(d.x) + padding;})
-	    .attr("width", width)
-	    .attr("fill", function(d){return color_scale(d.x);})
-	    .transition().duration(200)
-	    .attr("y", function(d){return scales.y(d.y);})
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+        selector
+            .attr("x",function(d){return scales.x(d.x) + padding;})
+            .attr("width", width)
+            .attr("fill", function(d){return color_scale(d.x);})
+            .transition().duration(200)
+            .attr("y", function(d){return scales.y(d.y);})
+            .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
 
-	if(options.hover)selector
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+        if(options.hover)selector
+            .on("mouseover", onMouse)
+            .on("mouseout", outMouse);
     };
 
     Bar.prototype.countData = function(values){
-	var hash = {};
-	_.each(values, function(val){
-	    hash[val] = hash[val] || 0;
-	    hash[val] += 1;
-	});
-	return {x: _.keys(hash), y: _.values(hash)};
+        var hash = {};
+        _.each(values, function(val){
+            hash[val] = hash[val] || 0;
+            hash[val] += 1;
+        });
+        return {x: _.keys(hash), y: _.values(hash)};
     };
 
     Bar.prototype.checkSelectedData = function(ranges){
-	return;
+        return;
     };
 
     return Bar;
@@ -2197,37 +2197,37 @@ define('view/components/filter',[
 ],function(_, Manager){
 
     function Filter(parent, scales, callback, _options){
-	var options = {
-	    opacity: 0.125,
-	    color: 'gray'
-	};
-	if(arguments.length>2)_.extend(options, _options);
+        var options = {
+            opacity: 0.125,
+            color: 'gray'
+        };
+        if(arguments.length>2)_.extend(options, _options);
 
-	var brushed = function(){
-	    var ranges = {
-		x: (brush.empty() ? scales.x.domain() : brush.extent()),
-		y: scales.y.domain()
-	    };
-	    callback(ranges);
-	};
+        var brushed = function(){
+            var ranges = {
+                x: (brush.empty() ? scales.x.domain() : brush.extent()),
+                y: scales.y.domain()
+            };
+            callback(ranges);
+        };
 
-	var brush = d3.svg.brush()
-	    .x(scales.x)
-	    .on("brushend", brushed);
+        var brush = d3.svg.brush()
+                .x(scales.x)
+                .on("brushend", brushed);
 
-	var model = parent.append("g");
-	var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
-	var y = d3.min(scales.y.range());
+        var model = parent.append("g");
+        var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
+        var y = d3.min(scales.y.range());
 
-	model.call(brush)
-	    .selectAll("rect")
-	    .attr("y", y)
-	    .attr("height", height)
-	    .style("fill-opacity", options.opacity)
-	    .style("fill", options.color)
-	    .style("shape-rendering", "crispEdges");
-	
-	return this;
+        model.call(brush)
+            .selectAll("rect")
+            .attr("y", y)
+            .attr("height", height)
+            .style("fill-opacity", options.opacity)
+            .style("fill", options.color)
+            .style("shape-rendering", "crispEdges");
+        
+        return this;
     }
 
     return Filter;
@@ -2239,92 +2239,92 @@ define('view/diagrams/histogram',[
     'view/components/filter'
 ],function(_, Manager, Filter){
     function Histogram(parent, scales, df_id, _options){
-	var options = {
-	    title: 'histogram',
-	    value: null,
-	    bin_num: 20,
-	    width: 0.9,
-	    color:'steelblue',
-	    stroke_color: 'black',
-	    stroke_width: 1,
-	    hover: false
-	};
-	if(arguments.length>3)_.extend(options, _options);
+        var options = {
+            title: 'histogram',
+            value: null,
+            bin_num: 20,
+            width: 0.9,
+            color:'steelblue',
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: false
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-	var df = Manager.getData(df_id);
-	var model = parent.append("g");
+        var df = Manager.getData(df_id);
+        var model = parent.append("g");
 
-	this.scales = scales;
-	this.legends = [{label: options.title, color:options.color}];
-	this.options = options;
-	this.model = model;
-	this.df = df;
-	this.df_id = df_id;
-	this.uuid = options.uuid;
+        this.scales = scales;
+        this.legends = [{label: options.title, color:options.color}];
+        this.options = options;
+        this.model = model;
+        this.df = df;
+        this.df_id = df_id;
+        this.uuid = options.uuid;
 
-	this.update();
-	
-	return this;
+        this.update();
+        
+        return this;
     }
 
     Histogram.prototype.update = function(){
-	var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
-	var data = this.proceedData(column_value, this.options);
+        var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
+        var data = this.proceedData(column_value, this.options);
 
-	var models = this.model.selectAll("rect").data(data);
-	if(models[0][0]==undefined){
-	    models = models.enter()
-		.append("rect")
-		.attr("height", 0)
-		.attr("y", this.scales.y(0));
-	}
+        var models = this.model.selectAll("rect").data(data);
+        if(models[0][0]==undefined){
+            models = models.enter()
+                .append("rect")
+                .attr("height", 0)
+                .attr("y", this.scales.y(0));
+        }
 
-	this.updateModels(models,  this.scales, this.options);
+        this.updateModels(models,  this.scales, this.options);
     };
 
     Histogram.prototype.proceedData = function(column, options){
-	return d3.layout.histogram()
-	    .bins(this.scales.x.ticks(options.bin_num))(column);
+        return d3.layout.histogram()
+            .bins(this.scales.x.ticks(options.bin_num))(column);
     };
 
     Histogram.prototype.updateModels = function(selector, scales, options){
-	var onMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", d3.rgb(options.color).darker(1));
-	};
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", d3.rgb(options.color).darker(1));
+        };
 
-	var outMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", options.color);
-	};
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", options.color);
+        };
 
-	selector
-	    .attr("x",function(d){return scales.x(d.x);})
-	    .attr("width", function(d){return scales.x(d.dx) - scales.x(0);})
-	    .attr("fill", options.color)
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width)
-	    .attr("clip-path","url(#" + this.options.clip_id + ")")
-	    .transition().duration(200)
-	    .attr("y", function(d){return scales.y(d.y);})
-	    .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
-	
-	if(options.hover)selector
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+        selector
+            .attr("x",function(d){return scales.x(d.x);})
+            .attr("width", function(d){return scales.x(d.dx) - scales.x(0);})
+            .attr("fill", options.color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("clip-path","url(#" + this.options.clip_id + ")")
+            .transition().duration(200)
+            .attr("y", function(d){return scales.y(d.y);})
+            .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+        
+        if(options.hover)selector
+            .on("mouseover", onMouse)
+            .on("mouseout", outMouse);
     };
 
     Histogram.prototype.checkSelectedData = function(ranges){
-	var label_value = this.options.value;
-	var filter = function(row){
-	    var val = row[label_value];
-	    if(val > ranges.x[0] && val < ranges.x[1])return true;
-	    else return false;
-	};
-	this.df.addFilter(this.uuid, filter, ['self']);
-	Manager.update();
+        var label_value = this.options.value;
+        var filter = function(row){
+            var val = row[label_value];
+            if(val > ranges.x[0] && val < ranges.x[1])return true;
+            else return false;
+        };
+        this.df.addFilter(this.uuid, filter, ['self']);
+        Manager.update();
     };
 
     return Histogram;
@@ -2336,104 +2336,104 @@ define('view/diagrams/scatter',[
     'view/components/filter'
 ],function(_, Manager, Filter){
     function Scatter(parent, scales, df_id, _options){
-	var options = {
-	    title: 'scatter',
-	    x: null,
-	    y: null,
-	    r: 5,
-	    shape:'circle',
-	    color:'steelblue',
-	    stroke_color: 'black',
-	    stroke_width: 1,
-	    hover: true
-	};
-	if(arguments.length>3)_.extend(options, _options);
+        var options = {
+            title: 'scatter',
+            x: null,
+            y: null,
+            r: 5,
+            shape:'circle',
+            color:'steelblue',
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: true
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-	this.scales = scales;
-	var df = Manager.getData(df_id);
-	var model = parent.append("g");
+        this.scales = scales;
+        var df = Manager.getData(df_id);
+        var model = parent.append("g");
 
-	this.legends = (function(thisObj){
-	    var on = function(){
-		thisObj.render = true;
-		thisObj.update();
-	    };
+        this.legends = (function(thisObj){
+            var on = function(){
+                thisObj.render = true;
+                thisObj.update();
+            };
 
-	    var off = function(){
-		thisObj.render = false;
-		thisObj.update();
-	    };
-	    return [{label: options.title, color:options.color, on:on, off:off}];
-	})(this);
+            var off = function(){
+                thisObj.render = false;
+                thisObj.update();
+            };
+            return [{label: options.title, color:options.color, on:on, off:off}];
+        })(this);
 
-	this.render = true;
-	this.options = options;
-	this.model = model;
-	this.df = df;
-	this.df_id = df_id;
+        this.render = true;
+        this.options = options;
+        this.model = model;
+        this.df = df;
+        this.df_id = df_id;
 
-	this.update();
-	
-	return this;
+        this.update();
+        
+        return this;
     }
 
     Scatter.prototype.update = function(){
-	var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-	if(this.render){
-	    var circles = this.model.selectAll("circle")
-		    .data(data);
-	    if(circles[0][0]==undefined){
-		circles.enter()
-		    .append("circle")
-		    .attr("r", 0);
-	    }
-	    this.updateModels(circles, this.scales, this.options);
-	}else{
-	    this.model.selectAll("circle").remove();
-	}
+        var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+        if(this.render){
+            var circles = this.model.selectAll("circle")
+                    .data(data);
+            if(circles[0][0]==undefined){
+                circles.enter()
+                    .append("circle")
+                    .attr("r", 0);
+            }
+            this.updateModels(circles, this.scales, this.options);
+        }else{
+            this.model.selectAll("circle").remove();
+        }
     };
 
     Scatter.prototype.proceedData = function(x_arr, y_arr, options){
-	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+        return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
     Scatter.prototype.updateModels = function(selector, scales, options){
-	var onMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", d3.rgb(options.color).darker(1));
-	};
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", d3.rgb(options.color).darker(1));
+        };
 
-	var outMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", options.color);
-	};
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", options.color);
+        };
 
-	selector
-	    .attr("cx",function(d){return scales.x(d.x);})
-	    .attr("cy", function(d){return scales.y(d.y);})
-	    .attr("fill", options.color)
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width)
-	    .attr("clip-path","url(#" + this.options.clip_id + ")")
-	    .transition().duration(200)
-	    .attr("r", options.r);
+        selector
+            .attr("cx",function(d){return scales.x(d.x);})
+            .attr("cy", function(d){return scales.y(d.y);})
+            .attr("fill", options.color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("clip-path","url(#" + this.options.clip_id + ")")
+            .transition().duration(200)
+            .attr("r", options.r);
 
-	if(options.hover)selector
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+        if(options.hover)selector
+            .on("mouseover", onMouse)
+            .on("mouseout", outMouse);
     };
 
     Scatter.prototype.updateData = function(){
-	this.df = Manager.getData(this.df_id);
-	var data = this.proceedData(this.df.column(this.options.value), this.options);
-	var models = this.model.selectAll("circle").data(data);
-	this.updateModels(models,  this.scales, this.options);
+        this.df = Manager.getData(this.df_id);
+        var data = this.proceedData(this.df.column(this.options.value), this.options);
+        var models = this.model.selectAll("circle").data(data);
+        this.updateModels(models,  this.scales, this.options);
     };
 
     Scatter.prototype.checkSelectedData = function(ranges){
-	return;
+        return;
     };
 
     return Scatter;
@@ -2445,95 +2445,95 @@ define('view/diagrams/line',[
     'view/components/filter'
 ],function(_, Manager, Filter){
     function Line(parent, scales, df_id, _options){
-	var options = {
-	    x: null,
-	    y: null,
-	    title: 'line',
-	    color:'steelblue',
-	    stroke_width: 2
-	};
-	if(arguments.length>3)_.extend(options, _options);
+        var options = {
+            x: null,
+            y: null,
+            title: 'line',
+            color:'steelblue',
+            stroke_width: 2
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-	this.scales = scales;
-	var df = Manager.getData(df_id);
-	var model = parent.append("g");
+        this.scales = scales;
+        var df = Manager.getData(df_id);
+        var model = parent.append("g");
 
-	this.legends = (function(thisObj){
-	    var on = function(){
-		thisObj.render = true;
-		thisObj.update();
-	    };
+        this.legends = (function(thisObj){
+            var on = function(){
+                thisObj.render = true;
+                thisObj.update();
+            };
 
-	    var off = function(){
-		thisObj.render = false;
-		thisObj.update();
-	    };
-	    return [{label: options.title, color:options.color, on:on, off:off}];
-	})(this);
+            var off = function(){
+                thisObj.render = false;
+                thisObj.update();
+            };
+            return [{label: options.title, color:options.color, on:on, off:off}];
+        })(this);
 
-	this.render = true;
-	this.options = options;
-	this.model = model;
-	this.df = df;
-	this.df_id = df_id;
+        this.render = true;
+        this.options = options;
+        this.model = model;
+        this.df = df;
+        this.df_id = df_id;
 
-	this.update();
+        this.update();
 
-	return this;
+        return this;
     }
 
     Line.prototype.update = function(){
-	if(this.render){
-	    var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-	    this.model.selectAll("path").remove();
-	    var path =this.model
-		    .append("path")
-		    .attr("clip-path","url(#" + this.options.clip_id + ")")
-		    .datum(data);
-	    
-	    this.updateModels(path, this.scales, this.options);
-	}else{
-	    this.model.selectAll("path").remove();
-	}
+        if(this.render){
+            var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+            this.model.selectAll("path").remove();
+            var path =this.model
+                    .append("path")
+                    .attr("clip-path","url(#" + this.options.clip_id + ")")
+                    .datum(data);
+            
+            this.updateModels(path, this.scales, this.options);
+        }else{
+            this.model.selectAll("path").remove();
+        }
     };
 
     Line.prototype.proceedData = function(x_arr, y_arr, options){
-	return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+        return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
     Line.prototype.updateModels = function(selector, scales, options){
-	var onMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", d3.rgb(options.color).darker(1));
-	};
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", d3.rgb(options.color).darker(1));
+        };
 
-	var outMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", options.color);
-	};
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", options.color);
+        };
 
-	var line = d3.svg.line()
-	    .x(function(d){return scales.x(d.x);})
-	    .y(function(d){return scales.y(d.y);});
+        var line = d3.svg.line()
+                .x(function(d){return scales.x(d.x);})
+                .y(function(d){return scales.y(d.y);});
 
-	selector
-	    .attr("d", line)
-	    .attr("stroke", options.color)
-	    .attr("stroke-width", options.stroke_width)
-	    .attr("fill", "none");
+        selector
+            .attr("d", line)
+            .attr("stroke", options.color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("fill", "none");
     };
 
     Line.prototype.updateData = function(){
-	this.df = Manager.getData(this.df_id);
-	var data = this.proceedData(this.df.column(this.options.value), this.options);
-	var models = this.model.selectAll("path").datum(data);
-	this.updateModels(models,  this.scales, this.options);
+        this.df = Manager.getData(this.df_id);
+        var data = this.proceedData(this.df.column(this.options.value), this.options);
+        var models = this.model.selectAll("path").datum(data);
+        this.updateModels(models,  this.scales, this.options);
     };
 
     Line.prototype.checkSelectedData = function(ranges){
-	return;
+        return;
     };
 
     return Line;
@@ -2546,71 +2546,71 @@ define('utils/simplex',['underscore'], function(_){
     var count = 0, COUNT_LIMIT=2000;
 
     function calcCenter(vector){
-	center = [];
-	_.each(_.zip.apply(null, vector), function(arr, i){
-            center[i] = 0
+        var center = [];
+        _.each(_.zip.apply(null, vector), function(arr, i){
+            center[i] = 0;
             _.each(arr, function(val){
-		center[i] += val;
+                center[i] += val;
             });
             center[i] = center[i]/arr.length;
-	});
-	return center;
+        });
+        return center;
     }
 
     function rec(params, func){
-	params = _.sortBy(params, function(p){return func(p);});
-	var n = params.length;
-	var val_num = params[0].length;
-	var p_h = params[n-1];
-	var p_g = params[n-2];
-	var p_l = params[0];
-	var p_c = calcCenter(params.concat().splice(0, n-1));
-	var p_r = [];
-	for(var i=0; i<val_num; i++)p_r[i]=2*p_c[i] - p_h[i];
+        params = _.sortBy(params, function(p){return func(p);});
+        var n = params.length;
+        var val_num = params[0].length;
+        var p_h = params[n-1];
+        var p_g = params[n-2];
+        var p_l = params[0];
+        var p_c = calcCenter(params.concat().splice(0, n-1));
+        var p_r = [];
+        for(var i=0; i<val_num; i++)p_r[i]=2*p_c[i] - p_h[i];
 
-	if(func(p_r) >= func(p_h)){
+        if(func(p_r) >= func(p_h)){
             // reduction
             for(var i=0;i<val_num;i++)
-		params[n-1][i] = (1 - l_1)*p_h[i] + l_1 * p_r[i];
-	}else if(func(p_r) < (func(p_l)+(l_2 - 1)*func(p_h))/l_2){
+                params[n-1][i] = (1 - l_1)*p_h[i] + l_1 * p_r[i];
+        }else if(func(p_r) < (func(p_l)+(l_2 - 1)*func(p_h))/l_2){
             // expand
-            p_e = [];
+            var p_e = [];
             for(var i=0;i<val_num;i++)p_e[i] = l_2*p_r[i] - (l_2 -1)*p_h[i];
             if(func(p_e) <= func(p_r))params[n-1] = p_e;
             else params[n-1] = p_r;
-	}else{
+        }else{
             params[n-1] = p_r;
-	}
+        }
 
-	if(func(params[n-1]) >=  func(p_g)){
+        if(func(params[n-1]) >=  func(p_g)){
             // reduction all
-	    _.each(params, function(p, i){
-		for(var j=0;j<val_num;j++){
-		    params[i][j] = 0.5*(p[j] + p_l[j]);
-		}
-	    });
-	}
-	var sum = 0;
-	_.each(params, function(p){sum += Math.pow(func(p) - func(p_l),2)});
+            _.each(params, function(p, i){
+                for(var j=0;j<val_num;j++){
+                    params[i][j] = 0.5*(p[j] + p_l[j]);
+                }
+            });
+        }
+        var sum = 0;
+        _.each(params, function(p){sum += Math.pow(func(p) - func(p_l),2);});
 
-	if(sum < EPS)return params[n-1];
-	else{
-	    count++;
-	    if(count > COUNT_LIMIT)return params[n-1];
-	    return rec(params, func);
-	}
+        if(sum < EPS)return params[n-1];
+        else{
+            count++;
+            if(count > COUNT_LIMIT)return params[n-1];
+            return rec(params, func);
+        }
     }
 
     function simplex(params, func){
-	var k = 1;
-	var n = params.length;
-	var p_default = [params];
-	_.each(_.range(n), function(i){
+        var k = 1;
+        var n = params.length;
+        var p_default = [params];
+        _.each(_.range(n), function(i){
             var p = params.concat();
             p[i] += k;
             p_default.push(p);
-	});
-	return rec(p_default, func);
+        });
+        return rec(p_default, func);
     }
 
     return simplex;
@@ -2623,338 +2623,338 @@ define('view/diagrams/venn',[
     'utils/simplex'
 ],function(_, Manager, Filter, simplex){
     function Venn(parent, scales, df_id, _options){
-	var options = {
-	    category: null,
-	    count: null,
-	    color:null,
-	    stroke_color:'#000',
-	    stroke_width: 1,
-	    opacity: 0.7,
-	    hover: false,
-	    area_names:['VENN1','VENN2','VENN3'],
-	    filter_control:false
-	};
-	if(arguments.length>3)_.extend(options, _options);
+        var options = {
+            category: null,
+            count: null,
+            color:null,
+            stroke_color:'#000',
+            stroke_width: 1,
+            opacity: 0.7,
+            hover: false,
+            area_names:['VENN1','VENN2','VENN3'],
+            filter_control:false
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-	var df = Manager.getData(df_id);
-	var model = parent.append("g");
+        var df = Manager.getData(df_id);
+        var model = parent.append("g");
 
-	var column_category = df.column(options.category);
-	var categories = _.uniq(column_category);
-	var color_scale;
+        var column_category = df.column(options.category);
+        var categories = _.uniq(column_category);
+        var color_scale;
 
-	if(options.color == null)color_scale = d3.scale.category20().domain(options.area_names);
-	else color_scale = d3.scale.ordinal().range(options.color).domain(options.area_names);
-	this.color_scale = color_scale;
+        if(options.color == null)color_scale = d3.scale.category20().domain(options.area_names);
+        else color_scale = d3.scale.ordinal().range(options.color).domain(options.area_names);
+        this.color_scale = color_scale;
 
-	var legends = [];
-	var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
+        var legends = [];
+        var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
 
-	var update = this.update, tellUpdate = this.tellUpdate;
-	var thisObj = this;
+        var update = this.update, tellUpdate = this.tellUpdate;
+        var thisObj = this;
 
-	for(var i=0;i<3;i++){
-	    legends.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
-	    _.each(categories, function(category){
-		var venn_id = i;
-		var on = function(){
-		    selected_category[venn_id].push(category);
-		    update.call(thisObj);
-		    tellUpdate.call(thisObj);
-		};
-		var off = function(){
-		    var pos = selected_category[venn_id].indexOf(category);
-		    selected_category[venn_id].splice(pos, 1);
-		    update.call(thisObj);
-		    tellUpdate.call(thisObj);
-		};
-		var mode = (category == selected_category[i] ? 'on' : 'off');
-		legends.push({label: category, color:'black', mode:mode, on:on, off:off});
-	    });
-	    legends.push({label:''});
-	}
+        for(var i=0;i<3;i++){
+            legends.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
+            _.each(categories, function(category){
+                var venn_id = i;
+                var on = function(){
+                    selected_category[venn_id].push(category);
+                    update.call(thisObj);
+                    tellUpdate.call(thisObj);
+                };
+                var off = function(){
+                    var pos = selected_category[venn_id].indexOf(category);
+                    selected_category[venn_id].splice(pos, 1);
+                    update.call(thisObj);
+                    tellUpdate.call(thisObj);
+                };
+                var mode = (category == selected_category[i] ? 'on' : 'off');
+                legends.push({label: category, color:'black', mode:mode, on:on, off:off});
+            });
+            legends.push({label:''});
+        }
 
-	var filter_mode = 'all';
-	if(options.filter_control){
-	    legends.push({label:'Filter', color:'gray'});
-	    var modes = ['all', 'overlapping', 'non-overlapping'];
-	    var default_mode = filter_mode;
-	    _.each(modes, function(mode){
-		var on = function(){
-		    thisObj.filter_mode = mode;
-		    update.call(thisObj);
-		    tellUpdate.call(thisObj);
-		};
-		var on_off = (mode==default_mode?'on':'off');
-		legends.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
-	    });
-	}
+        var filter_mode = 'all';
+        if(options.filter_control){
+            legends.push({label:'Filter', color:'gray'});
+            var modes = ['all', 'overlapping', 'non-overlapping'];
+            var default_mode = filter_mode;
+            _.each(modes, function(mode){
+                var on = function(){
+                    thisObj.filter_mode = mode;
+                    update.call(thisObj);
+                    tellUpdate.call(thisObj);
+                };
+                var on_off = (mode==default_mode?'on':'off');
+                legends.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
+            });
+        }
 
-	this.selected_category = selected_category;
-	this.filter_mode = filter_mode;
-	this.legends = legends;
-	this.options = options;
-	this.scales = scales;
-	this.model = model;
-	this.df_id = df_id;
-	this.df = df;
-	this.uuid = options.uuid;
+        this.selected_category = selected_category;
+        this.filter_mode = filter_mode;
+        this.legends = legends;
+        this.options = options;
+        this.scales = scales;
+        this.model = model;
+        this.df_id = df_id;
+        this.df = df;
+        this.uuid = options.uuid;
 
-	this.update();
-	this.tellUpdate();
+        this.update();
+        this.tellUpdate();
 
-	return this;
+        return this;
     }
 
     Venn.prototype.getScales = function(data, scales){
-	var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
-	var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
-	var d_x = {
-	    min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
-	    max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
-	};
-	var d_y = {
-	    min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r;}); return min_d.y - min_d.r;})(),
-	    max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r;}); return max_d.y + max_d.r;})()
-	};
-	var d_w = d_x.max-d_x.min;
-	var d_h = d_y.max-d_y.min;
+        var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
+        var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
+        var d_x = {
+            min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
+            max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
+        };
+        var d_y = {
+            min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r;}); return min_d.y - min_d.r;})(),
+            max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r;}); return max_d.y + max_d.r;})()
+        };
+        var d_w = d_x.max-d_x.min;
+        var d_h = d_y.max-d_y.min;
 
-	var scale = 0;
-	if(r_w/r_h > d_w/d_h){
-	    scale = d_h/r_h;
-	    var new_d_w = scale*r_w;
-	    d_x.min -= (new_d_w - d_w)/2;
-	    d_x.max += (new_d_w - d_w)/2;
-	}
-	else{
-	    scale = d_w/r_w;
-	    var new_d_h = scale*r_h;
-	    d_h.min -= (new_d_h - d_h)/2;
-	    d_h.max += (new_d_h - d_h)/2;
-	}
-	var new_scales = {};
-	new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
-	new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
-	new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
-	return new_scales;
+        var scale = 0;
+        if(r_w/r_h > d_w/d_h){
+            scale = d_h/r_h;
+            var new_d_w = scale*r_w;
+            d_x.min -= (new_d_w - d_w)/2;
+            d_x.max += (new_d_w - d_w)/2;
+        }
+        else{
+            scale = d_w/r_w;
+            var new_d_h = scale*r_h;
+            d_h.min -= (new_d_h - d_h)/2;
+            d_h.max += (new_d_h - d_h)/2;
+        }
+        var new_scales = {};
+        new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
+        new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
+        new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
+        return new_scales;
     };
 
     Venn.prototype.update = function(){
-	var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
-	var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
+        var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
+        var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
 
-	var data = this.proceedData(column_category, column_count, this.selected_category);
-	var scales = this.getScales(data, this.scales);
-	var circles = this.model.selectAll("circle").data(data.pos);
-	var texts = this.model.selectAll("text").data(data.labels);
+        var data = this.proceedData(column_category, column_count, this.selected_category);
+        var scales = this.getScales(data, this.scales);
+        var circles = this.model.selectAll("circle").data(data.pos);
+        var texts = this.model.selectAll("text").data(data.labels);
 
-	if(circles[0][0]==undefined)circles = circles.enter().append("circle");
-	if(texts[0][0]==undefined)texts = texts.enter().append("text");
+        if(circles[0][0]==undefined)circles = circles.enter().append("circle");
+        if(texts[0][0]==undefined)texts = texts.enter().append("text");
 
-	this.counted_items = data.counted_items;
-	this.updateModels(circles, scales, this.options);
-	this.updateLabels(texts, scales, this.options);
+        this.counted_items = data.counted_items;
+        this.updateModels(circles, scales, this.options);
+        this.updateLabels(texts, scales, this.options);
     };
 
     Venn.prototype.proceedData = function(category_column, count_column, selected_category){
-	// decide overlapping areas
-	var items = (function(){
-	    var table = [];
-	    var counted_items = (function(){
-		var hash={};
-		_.each(_.zip(category_column, count_column), function(arr){
-		    if(hash[arr[1]]==undefined)hash[arr[1]]={};
-		    _.each(selected_category, function(category, i){
-			if(category.indexOf(arr[0])!=-1)hash[arr[1]][i] = true;
-		    });
-		});
-		return hash;
-	    })();
+        // decide overlapping areas
+        var items = (function(){
+            var table = [];
+            var counted_items = (function(){
+                var hash={};
+                _.each(_.zip(category_column, count_column), function(arr){
+                    if(hash[arr[1]]==undefined)hash[arr[1]]={};
+                    _.each(selected_category, function(category, i){
+                        if(category.indexOf(arr[0])!=-1)hash[arr[1]][i] = true;
+                    });
+                });
+                return hash;
+            })();
 
-	    var count_common = function(items){
-		var cnt=0;
-		_.each(_.values(counted_items), function(values, key){
-		    if(!_.some(items, function(item){return !(item in values);}))cnt++;
-		});
-		return cnt;
-	    };
-	    
-	    for(var i = 0; i<3; i++){
-		table[i] = [];
-		table[i][i] = count_common([i]);
-		for(var j=i+1; j<3; j++){
-		    var num = count_common([i, j]);
-		    table[i][j] = num;
-		}
-	    }
-	    return {table:table,counted_items:counted_items};
-	})();
-	var table=items.table;
-	var counted_items=items.counted_items;
+            var count_common = function(items){
+                var cnt=0;
+                _.each(_.values(counted_items), function(values, key){
+                    if(!_.some(items, function(item){return !(item in values);}))cnt++;
+                });
+                return cnt;
+            };
+            
+            for(var i = 0; i<3; i++){
+                table[i] = [];
+                table[i][i] = count_common([i]);
+                for(var j=i+1; j<3; j++){
+                    var num = count_common([i, j]);
+                    table[i][j] = num;
+                }
+            }
+            return {table:table,counted_items:counted_items};
+        })();
+        var table=items.table;
+        var counted_items=items.counted_items;
 
-	// decide radius of each circle
-	var r = _.map(table, function(row, i){
-	    return Math.sqrt(table[i][i]/(2*Math.PI));
-	});
+        // decide radius of each circle
+        var r = _.map(table, function(row, i){
+            return Math.sqrt(table[i][i]/(2*Math.PI));
+        });
 
-	// function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
-	var evaluation = function(values){
-	    var loss = 0;
-	    for(var i=0;i<values.length;i+=2){
-		for(var j=i+2;j<values.length;j+=2){
-		    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
-		    var r1=r[i/2], r2=r[j/2];
-		    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
-		    var S = 0;
-		    if(d > r1+r2)S = 0;
-		    else{
-			_.each([[r1, r2],[r2, r1]], function(r_arr){
-			    var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
-			    var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
-			    S += s;
-			});
-		    }
-		    loss += Math.pow(table[i/2][j/2]-S,2);
-		}
-	    }
-	    return loss;
-	};
+        // function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
+        var evaluation = function(values){
+            var loss = 0;
+            for(var i=0;i<values.length;i+=2){
+                for(var j=i+2;j<values.length;j+=2){
+                    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
+                    var r1=r[i/2], r2=r[j/2];
+                    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
+                    var S = 0;
+                    if(d > r1+r2)S = 0;
+                    else{
+                        _.each([[r1, r2],[r2, r1]], function(r_arr){
+                            var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
+                            var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
+                            S += s;
+                        });
+                    }
+                    loss += Math.pow(table[i/2][j/2]-S,2);
+                }
+            }
+            return loss;
+        };
 
-	// decide initial paramaters
-	var init_params = (function(){
-	    var params = [];
-	    var set_num = table[0].length;
-	    var max_area = _.max(table, function(arr, i){
-		// calc the sum of overlapping area
-		var result=0;
-		for(var j=0;j<i;j++)result+=table[j][i];
-		for(var j=i+1;j<arr.length;j++)result+=table[i][j];
-		return result;
-	    });
-	    var center_i = set_num - max_area.length;
-	    params[center_i*2] = 0; // x
-	    params[center_i*2+1] = 0; // y
-	    var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
-	    for(var i=0;i<set_num;i++){
-		if(i!=center_i){
-		    var d = r[center_i] + r[i]/2;
-		    params[i*2] = d*Math.sin(rad);
-		    params[i*2+1] = d*Math.cos(rad);
-		    rad += rad_interval;
-		}
-	    }
-	    return params;
-	})();
+        // decide initial paramaters
+        var init_params = (function(){
+            var params = [];
+            var set_num = table[0].length;
+            var max_area = _.max(table, function(arr, i){
+                // calc the sum of overlapping area
+                var result=0;
+                for(var j=0;j<i;j++)result+=table[j][i];
+                for(var j=i+1;j<arr.length;j++)result+=table[i][j];
+                return result;
+            });
+            var center_i = set_num - max_area.length;
+            params[center_i*2] = 0; // x
+            params[center_i*2+1] = 0; // y
+            var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
+            for(var i=0;i<set_num;i++){
+                if(i!=center_i){
+                    var d = r[center_i] + r[i]/2;
+                    params[i*2] = d*Math.sin(rad);
+                    params[i*2+1] = d*Math.cos(rad);
+                    rad += rad_interval;
+                }
+            }
+            return params;
+        })();
 
-	// decide coordinates using Simplex method
-	var params = simplex(init_params, evaluation);
-	var pos=[], labels=[];
-	for(var i=0;i<params.length;i+=2)
-	    pos.push({x:params[i] ,y:params[i+1], r:r[i/2], id:i});
+        // decide coordinates using Simplex method
+        var params = simplex(init_params, evaluation);
+        var pos=[], labels=[];
+        for(var i=0;i<params.length;i+=2)
+            pos.push({x:params[i] ,y:params[i+1], r:r[i/2], id:i});
 
-	for(var i=0;i<3;i++){
-	    labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
-	    for(var j=i+1;j<3;j++){
-		var x = (params[i*2] + params[j*2])/2;
-		var y = (params[i*2+1] + params[j*2+1])/2;
-		labels.push({x: x, y: y, val: table[i][j]});
-	    }
-	}
+        for(var i=0;i<3;i++){
+            labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
+            for(var j=i+1;j<3;j++){
+                var x = (params[i*2] + params[j*2])/2;
+                var y = (params[i*2+1] + params[j*2+1])/2;
+                labels.push({x: x, y: y, val: table[i][j]});
+            }
+        }
 
-	return {pos:pos, labels:labels, counted_items:counted_items};
+        return {pos:pos, labels:labels, counted_items:counted_items};
     };
 
     Venn.prototype.updateModels = function(selector, scales, options){
-	var color_scale = this.color_scale;
-	var area_names = this.options.area_names;
+        var color_scale = this.color_scale;
+        var area_names = this.options.area_names;
 
-	selector
-	    .attr("cx", function(d){return scales.x(d.x);})
-	    .attr("cy", function(d){return scales.y(d.y);})
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width)
-	    .attr("fill", function(d){return color_scale(area_names[d.id]);})
-	    .attr("fill-opacity", options.opacity)
-	    .transition()
-	    .duration(500)
-	    .attr("r", function(d){return scales.r(d.r);});
+        selector
+            .attr("cx", function(d){return scales.x(d.x);})
+            .attr("cy", function(d){return scales.y(d.y);})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("fill", function(d){return color_scale(area_names[d.id]);})
+            .attr("fill-opacity", options.opacity)
+            .transition()
+            .duration(500)
+            .attr("r", function(d){return scales.r(d.r);});
 
-	if(options.hover){
-	    var onMouse = function(){
-		d3.select(this).transition()
-		    .duration(200)
-		    .attr("fill", function(d){return d3.rgb(color_scale(area_names[d.id])).darker(1);});
-	    };
+        if(options.hover){
+            var onMouse = function(){
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("fill", function(d){return d3.rgb(color_scale(area_names[d.id])).darker(1);});
+            };
 
-	    var outMouse = function(){
-		d3.select(this).transition()
-		    .duration(200)
-		    .attr("fill", function(d){return color_scale(area_names[d.id]);});
-	    };
-	    
-	    selector
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
-	}
+            var outMouse = function(){
+                d3.select(this).transition()
+                    .duration(200)
+                    .attr("fill", function(d){return color_scale(area_names[d.id]);});
+            };
+            
+            selector
+                .on("mouseover", onMouse)
+                .on("mouseout", outMouse);
+        }
     };
 
     Venn.prototype.updateLabels = function(selector, scales, options){
-	selector
-	    .attr("x", function(d){return scales.x(d.x);})
-	    .attr("y", function(d){return scales.y(d.y);})
-	    .attr("text-anchor", "middle")
-	    .text(function(d){return String(d.val);});
+        selector
+            .attr("x", function(d){return scales.x(d.x);})
+            .attr("y", function(d){return scales.y(d.y);})
+            .attr("text-anchor", "middle")
+            .text(function(d){return String(d.val);});
     };
 
     Venn.prototype.tellUpdate = function(){
-	var rows=[], selected_category = this.selected_category;
-	var counted_items = this.counted_items;
-	var filter_mode = this.filter_mode;
-	var category_num = this.options.category;
-	var count_num = this.options.count;
-	var filter = {
-	    'all':function(row){
-		// check if this row in in any area (VENN1, VENN2, VENN3,...)
-		return _.some(selected_category, function(categories){
-		    if(categories.indexOf(row[category_num])!=-1)return true;
-		    else return false;
-		});
-	    },
-	    'overlapping':function(row){
-		if(!_.some(selected_category, function(categories){
-		     if(categories.indexOf(row[category_num])!=-1)return true;
-		     else return false;
-		 }))return false;
+        var rows=[], selected_category = this.selected_category;
+        var counted_items = this.counted_items;
+        var filter_mode = this.filter_mode;
+        var category_num = this.options.category;
+        var count_num = this.options.count;
+        var filter = {
+            'all':function(row){
+                // check if this row in in any area (VENN1, VENN2, VENN3,...)
+                return _.some(selected_category, function(categories){
+                    if(categories.indexOf(row[category_num])!=-1)return true;
+                    else return false;
+                });
+            },
+            'overlapping':function(row){
+                if(!_.some(selected_category, function(categories){
+                    if(categories.indexOf(row[category_num])!=-1)return true;
+                    else return false;
+                }))return false;
 
-		for(var i=0;i<3;i++){
-		    for(var j=i+1;j<3;j++){
-			if( 
-			    counted_items[row[count_num]][i]
-			   && counted_items[row[count_num]][j]
-			  )return true;
-		    }
-		}
-		return false;
-	    },
-	    'non-overlapping':function(row){
-		if(!_.some(selected_category, function(categories){
-		     if(categories.indexOf(row[category_num])!=-1)return true;
-		     else return false;
-		 }))return false;
+                for(var i=0;i<3;i++){
+                    for(var j=i+1;j<3;j++){
+                        if( 
+                            counted_items[row[count_num]][i]
+                                && counted_items[row[count_num]][j]
+                        )return true;
+                    }
+                }
+                return false;
+            },
+            'non-overlapping':function(row){
+                if(!_.some(selected_category, function(categories){
+                    if(categories.indexOf(row[category_num])!=-1)return true;
+                    else return false;
+                }))return false;
 
-		for(var i=0;i<3;i++){
-		    for(var j=i+1;j<3;j++){
-			if(counted_items[row[count_num]][i]
-			   && counted_items[row[count_num]][j]
-			  )return false;
-		    }
-		}
-		return true;
-	    }
-	}[filter_mode];
-	this.df.addFilter(this.uuid, filter, ['self']);
-	Manager.update();
+                for(var i=0;i<3;i++){
+                    for(var j=i+1;j<3;j++){
+                        if(counted_items[row[count_num]][i]
+                           && counted_items[row[count_num]][j]
+                          )return false;
+                    }
+                }
+                return true;
+            }
+        }[filter_mode];
+        this.df.addFilter(this.uuid, filter, ['self']);
+        Manager.update();
     };
 
     return Venn;
@@ -2967,245 +2967,245 @@ define('view/diagrams/multiple_venn',[
     'utils/simplex'
 ],function(_, Manager, Filter, simplex){
     function Venn(parent, scales, df_id, _options){
-	var options = {
-	    category: null,
-	    count: null,
-	    color:null,
-	    stroke_color:'#000',
-	    stroke_width: 1,
-	    opacity: 0.7,
-	    hover: false
-	};
-	if(arguments.length>3)_.extend(options, _options);
+        var options = {
+            category: null,
+            count: null,
+            color:null,
+            stroke_color:'#000',
+            stroke_width: 1,
+            opacity: 0.7,
+            hover: false
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-	this.getScales = function(data, scales){
-	    var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
-	    var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
-	    var d_x = {
-		min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r}); return min_d.x - min_d.r})(),
-		max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r}); return max_d.x + max_d.r})()
-	    };
-	    var d_y = {
-		min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r}); return min_d.y - min_d.r})(),
-		max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r}); return max_d.y + max_d.r})()
-	    };
-	    var d_w = d_x.max-d_x.min;
-	    var d_h = d_y.max-d_y.min;
+        this.getScales = function(data, scales){
+            var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
+            var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
+            var d_x = {
+                min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r}); return min_d.x - min_d.r})(),
+                max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r}); return max_d.x + max_d.r})()
+            };
+            var d_y = {
+                min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r}); return min_d.y - min_d.r})(),
+                max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r}); return max_d.y + max_d.r})()
+            };
+            var d_w = d_x.max-d_x.min;
+            var d_h = d_y.max-d_y.min;
 
-	    var scale = 0;
-	    if(r_w/r_h > d_w/d_h){
-		scale = d_h/r_h;
-		var new_d_w = scale*r_w;
-		d_x.min -= (new_d_w - d_w)/2;
-		d_x.max += (new_d_w - d_w)/2;
-	    }
-	    else{
-		scale = d_w/r_w;
-		var new_d_h = scale*r_h;
-		d_h.min -= (new_d_h - d_h)/2;
-		d_h.max += (new_d_h - d_h)/2;
-	    }
-	    var new_scales = {};
-	    new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
-	    new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
-	    new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
-	    return new_scales;
-	};
+            var scale = 0;
+            if(r_w/r_h > d_w/d_h){
+                scale = d_h/r_h;
+                var new_d_w = scale*r_w;
+                d_x.min -= (new_d_w - d_w)/2;
+                d_x.max += (new_d_w - d_w)/2;
+            }
+            else{
+                scale = d_w/r_w;
+                var new_d_h = scale*r_h;
+                d_h.min -= (new_d_h - d_h)/2;
+                d_h.max += (new_d_h - d_h)/2;
+            }
+            var new_scales = {};
+            new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
+            new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
+            new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
+            return new_scales;
+        };
 
-	var df = Manager.getData(df_id);
-	var data = this.proceedData(df.column(options.category), df.column(options.count));
-	var new_scales = this.getScales(data, scales);
+        var df = Manager.getData(df_id);
+        var data = this.proceedData(df.column(options.category), df.column(options.count));
+        var new_scales = this.getScales(data, scales);
 
-	var model = parent.append("g");
+        var model = parent.append("g");
 
-	var circles = model
-	    .selectAll("circle")
-	    .data(data.pos)
-	    .enter()
-	    .append("circle");
+        var circles = model
+                .selectAll("circle")
+                .data(data.pos)
+                .enter()
+                .append("circle");
 
-	var texts = model
-	    .selectAll("text")
-	    .data(data.labels)
-	    .enter()
-	    .append("text");
+        var texts = model
+                .selectAll("text")
+                .data(data.labels)
+                .enter()
+                .append("text");
 
-	if(options.color == null)this.color_scale = d3.scale.category20();
-	else this.color_scale = d3.scale.ordinal().range(options.color);
-	var color_scale = this.color_scale;
+        if(options.color == null)this.color_scale = d3.scale.category20();
+        else this.color_scale = d3.scale.ordinal().range(options.color);
+        var color_scale = this.color_scale;
 
-	this.updateModels(circles, new_scales, options);
-	this.updateLabels(texts, new_scales, options);
+        this.updateModels(circles, new_scales, options);
+        this.updateLabels(texts, new_scales, options);
 
-	var legends = [];
-	_.each(data.pos, function(d){
-	    legends.push({label: d.name, color:color_scale(d.name)});
-	});
+        var legends = [];
+        _.each(data.pos, function(d){
+            legends.push({label: d.name, color:color_scale(d.name)});
+        });
 
-	this.legends = legends;
-	this.scales = scales;
-	this.options = options;
-	this.model = model;
-	this.df = df;
-	this.df_id = df_id;
+        this.legends = legends;
+        this.scales = scales;
+        this.options = options;
+        this.model = model;
+        this.df = df;
+        this.df_id = df_id;
 
-	return this;
+        return this;
     }
 
     Venn.prototype.proceedData = function(category_column, count_column){
-	var categories = _.uniq(category_column);
+        var categories = _.uniq(category_column);
 
-	// decide overlapping areas
-	var table = (function(){
-	    var table = [];
-	    var counted_items = (function(){
-		var hash={};
-		_.each(_.zip(category_column, count_column), function(arr){
-		    if(hash[arr[1]]==undefined)hash[arr[1]]={};
-		    hash[arr[1]][arr[0]] = true;
-		});
-		return _.values(hash);
-	    })();
+        // decide overlapping areas
+        var table = (function(){
+            var table = [];
+            var counted_items = (function(){
+                var hash={};
+                _.each(_.zip(category_column, count_column), function(arr){
+                    if(hash[arr[1]]==undefined)hash[arr[1]]={};
+                    hash[arr[1]][arr[0]] = true;
+                });
+                return _.values(hash);
+            })();
 
-	    var count_common = function(items){
-		var cnt=0;
-		_.each(counted_items, function(values, key){
-		    if(!_.some(items, function(item){return !(item in values)}))cnt++;
-		});
-		return cnt;
-	    }
-	    
-	    for(var i = 0; i<categories.length; i++){
-		table[i] = [];
-		table[i][i] = count_common([categories[i]]);
-		for(var j=i+1; j<categories.length; j++){
-		    var num = count_common([categories[i], categories[j]]);
-		    table[i][j] = num;
-		}
-	    }
-	    return table;
-	})();
+            var count_common = function(items){
+                var cnt=0;
+                _.each(counted_items, function(values, key){
+                    if(!_.some(items, function(item){return !(item in values)}))cnt++;
+                });
+                return cnt;
+            }
+            
+            for(var i = 0; i<categories.length; i++){
+                table[i] = [];
+                table[i][i] = count_common([categories[i]]);
+                for(var j=i+1; j<categories.length; j++){
+                    var num = count_common([categories[i], categories[j]]);
+                    table[i][j] = num;
+                }
+            }
+            return table;
+        })();
 
-	// decide radius of each circle
-	var r = _.map(table, function(row, i){
-	    return Math.sqrt(table[i][i]/(2*Math.PI));
-	});
+        // decide radius of each circle
+        var r = _.map(table, function(row, i){
+            return Math.sqrt(table[i][i]/(2*Math.PI));
+        });
 
-	// function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
-	var evaluation = function(values){
-	    var loss = 0;
-	    for(var i=0;i<values.length;i+=2){
-		for(var j=i+2;j<values.length;j+=2){
-		    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
-		    var r1=r[i/2], r2=r[j/2];
-		    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
-		    var S = 0;
-		    if(d > r1+r2)S = 0;
-		    else{
-			_.each([[r1, r2],[r2, r1]], function(r_arr){
-			    var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
-			    var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
-			    S += s;
-			});
-		    }
-		    loss += Math.pow(table[i/2][j/2]-S,2);
-		}
-	    }
-	    return loss;
-	}
+        // function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
+        var evaluation = function(values){
+            var loss = 0;
+            for(var i=0;i<values.length;i+=2){
+                for(var j=i+2;j<values.length;j+=2){
+                    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
+                    var r1=r[i/2], r2=r[j/2];
+                    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
+                    var S = 0;
+                    if(d > r1+r2)S = 0;
+                    else{
+                        _.each([[r1, r2],[r2, r1]], function(r_arr){
+                            var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
+                            var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
+                            S += s;
+                        });
+                    }
+                    loss += Math.pow(table[i/2][j/2]-S,2);
+                }
+            }
+            return loss;
+        }
 
-	// decide initial paramaters
-	var init_params = (function(){
-	    var params = [];
-	    var set_num = table[0].length;
-	    var max_area = _.max(table, function(arr, i){
-		// calc the sum of overlapping area
-		var result=0;
-		for(var j=0;j<i;j++)result+=table[j][i];
-		for(var j=i+1;j<arr.length;j++)result+=table[i][j];
-		return result;
-	    });
-	    var center_i = set_num - max_area.length;
-	    params[center_i*2] = 0; // x
-	    params[center_i*2+1] = 0; // y
-	    var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
-	    for(var i=0;i<set_num;i++){
-		if(i!=center_i){
-		    var d = r[center_i] + r[i]/2;
-		    params[i*2] = d*Math.sin(rad);
-		    params[i*2+1] = d*Math.cos(rad);
-		    rad += rad_interval;
-		}
-	    }
-	    return params;
-	})();
+        // decide initial paramaters
+        var init_params = (function(){
+            var params = [];
+            var set_num = table[0].length;
+            var max_area = _.max(table, function(arr, i){
+                // calc the sum of overlapping area
+                var result=0;
+                for(var j=0;j<i;j++)result+=table[j][i];
+                for(var j=i+1;j<arr.length;j++)result+=table[i][j];
+                return result;
+            });
+            var center_i = set_num - max_area.length;
+            params[center_i*2] = 0; // x
+            params[center_i*2+1] = 0; // y
+            var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
+            for(var i=0;i<set_num;i++){
+                if(i!=center_i){
+                    var d = r[center_i] + r[i]/2;
+                    params[i*2] = d*Math.sin(rad);
+                    params[i*2+1] = d*Math.cos(rad);
+                    rad += rad_interval;
+                }
+            }
+            return params;
+        })();
 
-	// decide coordinates using Simplex method
-	var params = simplex(init_params, evaluation);
-	var pos=[], labels=[];
-	for(var i=0;i<params.length;i+=2)
-	    pos.push({x:params[i] ,y:params[i+1], r:r[i/2], name:categories[i/2]});
+        // decide coordinates using Simplex method
+        var params = simplex(init_params, evaluation);
+        var pos=[], labels=[];
+        for(var i=0;i<params.length;i+=2)
+            pos.push({x:params[i] ,y:params[i+1], r:r[i/2], name:categories[i/2]});
 
-	for(var i=0;i<categories.length;i++){
-	    labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
-	    for(var j=i+1;j<categories.length;j++){
-		var x = (params[i*2] + params[j*2])/2;
-		var y = (params[i*2+1] + params[j*2+1])/2;
-		labels.push({x: x, y: y, val: table[i][j]});
-	    }
-	}
+        for(var i=0;i<categories.length;i++){
+            labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
+            for(var j=i+1;j<categories.length;j++){
+                var x = (params[i*2] + params[j*2])/2;
+                var y = (params[i*2+1] + params[j*2+1])/2;
+                labels.push({x: x, y: y, val: table[i][j]});
+            }
+        }
 
-	return {pos:pos, labels:labels};
+        return {pos:pos, labels:labels};
     }
 
     Venn.prototype.updateModels = function(selector, scales, options){
-	var color_scale = this.color_scale;
-	var onMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", function(d){return d3.rgb(color_scale(d.name)).darker(1)});
-	}
+        var color_scale = this.color_scale;
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return d3.rgb(color_scale(d.name)).darker(1)});
+        }
 
-	var outMouse = function(){
-	    d3.select(this).transition()
-		.duration(200)
-		.attr("fill", function(d){return color_scale(d.name)});
-	}
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return color_scale(d.name)});
+        }
 
-	selector
-	    .attr("cx", function(d){return scales.x(d.x)})
-	    .attr("cy", function(d){return scales.y(d.y)})
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width)
-	    .attr("fill", function(d){return color_scale(d.name)})
-	    .attr("fill-opacity", options.opacity)
-	    .transition()
-	    .duration(500)
-	    .attr("r", function(d){return scales.r(d.r)});
+        selector
+            .attr("cx", function(d){return scales.x(d.x)})
+            .attr("cy", function(d){return scales.y(d.y)})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("fill", function(d){return color_scale(d.name)})
+            .attr("fill-opacity", options.opacity)
+            .transition()
+            .duration(500)
+            .attr("r", function(d){return scales.r(d.r)});
 
-	if(options.hover)selector
-	    .on("mouseover", onMouse)
-	    .on("mouseout", outMouse);
+        if(options.hover)selector
+            .on("mouseover", onMouse)
+            .on("mouseout", outMouse);
     }
 
     Venn.prototype.updateLabels = function(selector, scales, options){
-	selector
-	    .attr("x", function(d){return scales.x(d.x)})
-	    .attr("y", function(d){return scales.y(d.y)})
-	    .attr("text-anchor", "middle")
-	    .text(function(d){return String(d.val)})
+        selector
+            .attr("x", function(d){return scales.x(d.x)})
+            .attr("y", function(d){return scales.y(d.y)})
+            .attr("text-anchor", "middle")
+            .text(function(d){return String(d.val)})
     }
 
     Venn.prototype.selected = function(data, row_nums){
-	var selected_count = this.df.pickUpCells(this.options.count, row_nums);
-	var selected_category = this.df.pickUpCells(this.options.category, row_nums);
-	var data = this.proceedData(selected_category, selected_count, this.options);
-	var scales = this.getScales(data, this.scales);
+        var selected_count = this.df.pickUpCells(this.options.count, row_nums);
+        var selected_category = this.df.pickUpCells(this.options.category, row_nums);
+        var data = this.proceedData(selected_category, selected_count, this.options);
+        var scales = this.getScales(data, this.scales);
 
-	var circles = this.model.selectAll("circle").data(data.pos);
-	var texts = this.model.selectAll("text").data(data.labels);
-	this.updateModels(circles, scales, this.options);
-	this.updateLabels(texts, scales, this.options);
+        var circles = this.model.selectAll("circle").data(data.pos);
+        var texts = this.model.selectAll("text").data(data.labels);
+        this.updateModels(circles, scales, this.options);
+        this.updateLabels(texts, scales, this.options);
     }
 
     Venn.prototype.update = function(){
@@ -3218,7 +3218,7 @@ define('view/diagrams/multiple_venn',[
 });
 
 define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar','view/diagrams/histogram','view/diagrams/scatter','view/diagrams/line','view/diagrams/venn','view/diagrams/multiple_venn'],function(require, exports, module){
-    diagrams = {};
+    var diagrams = {};
 
     diagrams.bar = require('view/diagrams/bar');
     diagrams.histogram = require('view/diagrams/histogram');
@@ -3235,95 +3235,95 @@ define('view/components/axis',[
     'core/manager'
 ],function(_, Manager){
     function Axis(parent, scales, _options){
-	var options = {
-	    width:0,
-	    height:0,
-	    margin: {top:0,bottom:0,left:0,right:0},
-	    stroke_color:"#fff",
-	    stroke_width: 1.0,
-	    x_label:'X',
-	    y_label:'Y',
-	    grid:true
-	};
-	if(arguments.length>2)_.extend(options, _options);
+        var options = {
+            width:0,
+            height:0,
+            margin: {top:0,bottom:0,left:0,right:0},
+            stroke_color:"#fff",
+            stroke_width: 1.0,
+            x_label:'X',
+            y_label:'Y',
+            grid:true
+        };
+        if(arguments.length>2)_.extend(options, _options);
 
-	var xAxis = d3.svg.axis()
-	    .scale(scales.x)
-	    .orient("bottom");
+        var xAxis = d3.svg.axis()
+                .scale(scales.x)
+                .orient("bottom");
 
-	var yAxis = d3.svg.axis()
-	    .scale(scales.y)
-	    .orient("left");
+        var yAxis = d3.svg.axis()
+                .scale(scales.y)
+                .orient("left");
 
-	parent.append("g")
-	    .attr("class", "x_axis");
+        parent.append("g")
+            .attr("class", "x_axis");
 
-	parent.append("g")
-	    .attr("class", "y_axis");
+        parent.append("g")
+            .attr("class", "y_axis");
 
-	parent.append("text")
-	    .attr("x", options.width/2)
-	    .attr("y", options.height + options.margin.bottom/1.5)
-	    .attr("text-anchor", "middle")
-	    .attr("fill", "rgb(50,50,50)")
-	    .attr("font-size", 22)
-	    .style("font-family", "sans-serif")
-	    .text(options.x_label);
+        parent.append("text")
+            .attr("x", options.width/2)
+            .attr("y", options.height + options.margin.bottom/1.5)
+            .attr("text-anchor", "middle")
+            .attr("fill", "rgb(50,50,50)")
+            .attr("font-size", 22)
+            .style("font-family", "sans-serif")
+            .text(options.x_label);
 
-	parent.append("text")
-	    .attr("x", -options.margin.left/1.5)
-	    .attr("y", options.height/2)
-	    .attr("text-anchor", "middle")
-	    .attr("fill", "rgb(50,50,50)")
-	    .attr("font-size", 22)
-	    .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
-	    .text(options.y_label);
+        parent.append("text")
+            .attr("x", -options.margin.left/1.5)
+            .attr("y", options.height/2)
+            .attr("text-anchor", "middle")
+            .attr("fill", "rgb(50,50,50)")
+            .attr("font-size", 22)
+            .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
+            .text(options.y_label);
 
-	var update = function(){
-	    parent.select(".x_axis").call(xAxis);
-	    parent.select(".y_axis").call(yAxis);
+        var update = function(){
+            parent.select(".x_axis").call(xAxis);
+            parent.select(".y_axis").call(yAxis);
 
-	    parent.selectAll(".x_axis, .y_axis")
-		.selectAll("path, line")
-		.style("z-index", 100)
-		.style("fill","none")
-		.style("stroke",options.stroke_color)
-		.style("stroke-width",options.stroke_width);
+            parent.selectAll(".x_axis, .y_axis")
+                .selectAll("path, line")
+                .style("z-index", 100)
+                .style("fill","none")
+                .style("stroke",options.stroke_color)
+                .style("stroke-width",options.stroke_width);
 
-	    parent.selectAll(".x_axis, .y_axis")
-		.selectAll("text")
-		.style("font-family", "sans-serif")
-		.attr("fill", "rgb(50,50,50)");
+            parent.selectAll(".x_axis, .y_axis")
+                .selectAll("text")
+                .style("font-family", "sans-serif")
+                .attr("fill", "rgb(50,50,50)");
 
-	    parent.selectAll(".x_axis")
-		.attr("transform", "translate(0," + (options.height + 4) + ")");
+            parent.selectAll(".x_axis")
+                .attr("transform", "translate(0," + (options.height + 4) + ")");
 
-	    parent.selectAll(".y_axis")
-		.attr("transform", "translate(-4,0)");
+            parent.selectAll(".y_axis")
+                .attr("transform", "translate(-4,0)");
 
-	    Manager.update();
-	};
+            Manager.update();
+        };
 
-	if(options.grid){
-	    xAxis.tickSize((-1)*options.height);
-	    yAxis.tickSize((-1)*options.width);
-	}
+        if(options.grid){
+            xAxis.tickSize((-1)*options.height);
+            yAxis.tickSize((-1)*options.width);
+        }
 
-	if(options.zoom){
-	    var zoom = d3.behavior.zoom()
-		    .x(scales.x)
-		    .y(scales.y)
-		    .scaleExtent([1, 5])
-		    .on("zoom", update);
-	    parent.call(zoom);
-	    parent.on("dblclick.zoom", null);
-	}
+        if(options.zoom){
+            var zoom = d3.behavior.zoom()
+                    .x(scales.x)
+                    .y(scales.y)
+                    .scaleExtent([1, 5])
+                    .on("zoom", update);
+            parent.call(zoom);
+            parent.on("dblclick.zoom", null);
+        }
 
-	update();
+        update();
 
-	this.model = parent;
+        this.model = parent;
 
-	return this;
+        return this;
     }
 
     return Axis;
@@ -3334,103 +3334,103 @@ define('view/components/legend',[
     'core/manager'
 ],function(_, Manager){
     function Legend(parent, _options){
-	var options = {
-	    title: '',
-	    width: 100,
-	    height: 500,
-	    fill_color: "none",
-	    stroke_color: "#000",
-	    stroke_width: 0,
-	    title_height: 15,
-	    margin: {top:18, bottom:8, right:8, left: 18},
-	    middle: false
-	};
-	if(arguments.length>1)_.extend(options, _options);
+        var options = {
+            title: '',
+            width: 100,
+            height: 500,
+            fill_color: "none",
+            stroke_color: "#000",
+            stroke_width: 0,
+            title_height: 15,
+            margin: {top:18, bottom:8, right:8, left: 18},
+            middle: false
+        };
+        if(arguments.length>1)_.extend(options, _options);
 
-	parent.append("rect")
-	    .attr("width", options.width)
-	    .attr("height", options.height)
-	    .attr("x", 0)
-	    .attr("y", 0)
-	    .attr("fill", options.fill_color)
-	    .attr("stroke", options.stroke_color)
-	    .attr("stroke-width", options.stroke_width);
+        parent.append("rect")
+            .attr("width", options.width)
+            .attr("height", options.height)
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("fill", options.fill_color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width);
 
-	var model = parent.append("g")
-	    .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
+        var model = parent.append("g")
+                .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
 
-	model.append("text")
-	    .attr("x", 0)
-	    .attr("y", 0)
-	    .text(options.title);
+        model.append("text")
+            .attr("x", 0)
+            .attr("y", 0)
+            .text(options.title);
 
-	this.model = model;
-	this.options = options;
-	this.data = [];
+        this.model = model;
+        this.options = options;
+        this.data = [];
 
-	return this;
+        return this;
     }
 
     Legend.prototype.add = function(label, color, callback_on, callback_off, mode){
-	this.data.push({label:label, color:color, on:callback_on, off:callback_off});
+        this.data.push({label:label, color:color, on:callback_on, off:callback_off});
 
-	var new_entry = this.model.selectAll("g")
-	    .data(this.data)
-	    .enter()
-	    .append("g");
+        var new_entry = this.model.selectAll("g")
+                .data(this.data)
+                .enter()
+                .append("g");
 
-	var padding = this.options.title_height;
-	var height = this.options.height;
+        var padding = this.options.title_height;
+        var height = this.options.height;
 
-	if(this.options.width/100>2){
-	    new_entry.attr("transform",function(d, i){
-		return "translate("+ ((Math.floor(i/8))*100) +"," + (padding + 25*(i%8)) + ")";
-	    });
-	}else{
-	    new_entry.attr("transform",function(d, i){
-		return "translate(0," + (padding + 25*i) + ")";
-	    });
-	}
+        if(this.options.width/100>2){
+            new_entry.attr("transform",function(d, i){
+                return "translate("+ ((Math.floor(i/8))*100) +"," + (padding + 25*(i%8)) + ")";
+            });
+        }else{
+            new_entry.attr("transform",function(d, i){
+                return "translate(0," + (padding + 25*i) + ")";
+            });
+        }
 
-	if(color!==undefined){
-	    var circle = new_entry
-	    .append("circle")
-	    .attr("cx","8")
-	    .attr("cy","8")
-	    .attr("r","6")
-	    .attr("stroke", function(d){return d.color;})
-	    .attr("stroke-width","2")
-	    .attr("fill",function(d){return d.color;});
+        if(color!==undefined){
+            var circle = new_entry
+                    .append("circle")
+                    .attr("cx","8")
+                    .attr("cy","8")
+                    .attr("r","6")
+                    .attr("stroke", function(d){return d.color;})
+                    .attr("stroke-width","2")
+                    .attr("fill",function(d){return d.color;});
 
-	    if(mode == 'off')circle.attr("fill-opacity",0);
-	    else circle.attr("fill-opacity",1);
+            if(mode == 'off')circle.attr("fill-opacity",0);
+            else circle.attr("fill-opacity",1);
 
-	    if(callback_on !== undefined && callback_off !== undefined){
-		circle
-		    .on("click", function(d){
-		    var el = d3.select(this);
-		    if(el.attr("fill-opacity")==1){
-			el.attr("fill-opacity", 0);
-			d.off();
-		    }else{
-			el.attr("fill-opacity", 1);
-			d.on();
-		    };
-		})
-		    .style("cursor","pointer");
-	    }
-	}
+            if(callback_on !== undefined && callback_off !== undefined){
+                circle
+                    .on("click", function(d){
+                        var el = d3.select(this);
+                        if(el.attr("fill-opacity")==1){
+                            el.attr("fill-opacity", 0);
+                            d.off();
+                        }else{
+                            el.attr("fill-opacity", 1);
+                            d.on();
+                        };
+                    })
+                    .style("cursor","pointer");
+            }
+        }
 
-	new_entry.append("text")
-	    .attr("x","18")
-	    .attr("y","12")
-	    .attr("font-size","12")
-	    .text(function(d){return d.label;});
+        new_entry.append("text")
+            .attr("x","18")
+            .attr("y","12")
+            .attr("font-size","12")
+            .text(function(d){return d.label;});
 
-	if(this.options.middle){
-	    var height = padding + this.data.length * 25;
-	    this.model.attr("transform", "translate(" + this.options.margin.left + "," + (this.options.height - height)/2 + ")");
-	}
+        if(this.options.middle){
+            var height = padding + this.data.length * 25;
+            this.model.attr("transform", "translate(" + this.options.margin.left + "," + (this.options.height - height)/2 + ")");
+        }
     };
 
     return Legend;
@@ -3579,62 +3579,62 @@ define('utils/dataframe',[
     function Dataframe(name, data){
         // load data from a String containing a URL or
         // use the (raw) data
-	if(data instanceof String && /url(.+)/g.test(data)){
-	    var url = data.match(/url\((.+)\)/)[1];
-	    var df = this;
-	    d3.json(url, function(error, json){
-		df.raw = JSON.parse(json);
-	    });
-	    this.raw = {};
-	}
-	else this.raw = data;
-	this.filters = {};
-	return this;
+        if(data instanceof String && /url(.+)/g.test(data)){
+            var url = data.match(/url\((.+)\)/)[1];
+            var df = this;
+            d3.json(url, function(error, json){
+                df.raw = JSON.parse(json);
+            });
+            this.raw = {};
+        }
+        else this.raw = data;
+        this.filters = {};
+        return this;
     }
     
     // Get a row by index
     Dataframe.prototype.row = function(row_num){
-	return this.raw[row_num];
+        return this.raw[row_num];
     };
 
     // Get a column by label
     Dataframe.prototype.column = function(label){
-	var arr = [];
-	var raw = this.raw;
-	_.each(raw, function(row){arr.push(row[label]);});
-	return arr;
+        var arr = [];
+        var raw = this.raw;
+        _.each(raw, function(row){arr.push(row[label]);});
+        return arr;
     };
 
     // Add a filter function to the list
     Dataframe.prototype.addFilter = function(self_uuid, func, excepts){
-	this.filters[self_uuid] = {func:func, excepts:excepts};
+        this.filters[self_uuid] = {func:func, excepts:excepts};
     };
 
     // Iterate a column using filters
     Dataframe.prototype.columnWithFilters = function(self_uuid, label){
-	var raw = this.raw.concat();
-	_.each(this.filters, function(filter, uuid){
-	    if(filter.excepts.indexOf('self') != -1 && uuid==self_uuid)return;
-	    if(!(self_uuid in filter.excepts))
-		raw = _.filter(raw, filter.func);
-	});
-	return _.map(raw, function(row){return row[label];});
+        var raw = this.raw.concat();
+        _.each(this.filters, function(filter, uuid){
+            if(filter.excepts.indexOf('self') != -1 && uuid==self_uuid)return;
+            if(!(self_uuid in filter.excepts))
+                raw = _.filter(raw, filter.func);
+        });
+        return _.map(raw, function(row){return row[label];});
     };
 
     // Fetch a value using column label and row number
     Dataframe.prototype.pickUpCells = function(label, row_nums){
-	var column = this.column(label);
-	return _.map(row_nums, function(i){
-	    return column[i];
-	});
+        var column = this.column(label);
+        return _.map(row_nums, function(i){
+            return column[i];
+        });
     };
 
     Dataframe.prototype.columnRange = function(label){
-	var column = this.column(label);
-	return {
-	    max: d3.max(column, function(val){return val;}),
-	    min: d3.min(column, function(val){return val;})
-	};
+        var column = this.column(label);
+        return {
+            max: d3.max(column, function(val){return val;}),
+            min: d3.min(column, function(val){return val;})
+        };
     };
 
     return Dataframe;
@@ -3648,29 +3648,29 @@ define('core/parse',[
 ],function(_, Manager, Pane, Dataframe){
     function parse(model, element_name){
 
-	element = d3.select(element_name);
+        var element = d3.select(element_name);
 
-	_.each(model.data, function(value, name){
-	    Manager.addData(name, new Dataframe(name, value));
-	    Manager.update();
-	});
+        _.each(model.data, function(value, name){
+            Manager.addData(name, new Dataframe(name, value));
+            Manager.update();
+        });
 
-	_.each(model.panes, function(pane_model){
-	    var pane = new Pane(element, pane_model.options);
-	    var data_list = [];
+        _.each(model.panes, function(pane_model){
+            var pane = new Pane(element, pane_model.options);
+            var data_list = [];
 
-	    _.each(pane_model.diagrams, function(diagram){
-		pane.addDiagram(diagram.type, diagram.data, diagram.options || {});
-		data_list.push(diagram.data);
-	    });
+            _.each(pane_model.diagrams, function(diagram){
+                pane.addDiagram(diagram.type, diagram.data, diagram.options || {});
+                data_list.push(diagram.data);
+            });
 
-	    if(pane_model['filter'] !== undefined){
-		var filter = pane_model.filter;
-		pane.addFilter(filter.type, filter.options || {});
-	    }
+            if(pane_model['filter'] !== undefined){
+                var filter = pane_model.filter;
+                pane.addFilter(filter.type, filter.options || {});
+            }
 
-	    Manager.addPane({pane:pane, data: data_list});
-	});
+            Manager.addPane({pane:pane, data: data_list});
+        });
     }
 
     return parse;

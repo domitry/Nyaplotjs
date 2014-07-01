@@ -1,5 +1,5 @@
 define(function(require, exports, module){
-    diagrams = {};
+    var diagrams = {};
 
     diagrams.bar = require('view/diagrams/bar');
     diagrams.histogram = require('view/diagrams/histogram');
