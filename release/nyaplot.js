@@ -1797,23 +1797,11 @@ define('core/manager',[
         this.panes.push(pane);
     };
 
-    // Tell the manager that data has been selected
-    Manager.selected = function(data_id, rows){
-        _.each(this.panes, function(entry){
-            entry.pane.selected(data_id, rows);
-        });
-    };
-
     // Update and redraw the panes
     Manager.update = function(){
         _.each(this.panes, function(entry){
             entry.pane.update();
         });
-    };
-
-    // Update data (nyi)
-    Manager.updateData = function(data_id, column_name, value){
-
     };
 
     return Manager;
