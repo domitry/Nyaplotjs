@@ -20,12 +20,12 @@ define([
             var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
             var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
             var d_x = {
-                min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r}); return min_d.x - min_d.r})(),
-                max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r}); return max_d.x + max_d.r})()
+                min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
+                max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
             };
             var d_y = {
-                min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r}); return min_d.y - min_d.r})(),
-                max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r}); return max_d.y + max_d.r})()
+                min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r;}); return min_d.y - min_d.r;})(),
+                max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r;}); return max_d.y + max_d.r;})()
             };
             var d_w = d_x.max-d_x.min;
             var d_h = d_y.max-d_y.min;
@@ -108,10 +108,10 @@ define([
             var count_common = function(items){
                 var cnt=0;
                 _.each(counted_items, function(values, key){
-                    if(!_.some(items, function(item){return !(item in values)}))cnt++;
+                    if(!_.some(items, function(item){return !(item in values);}))cnt++;
                 });
                 return cnt;
-            }
+            };
             
             for(var i = 0; i<categories.length; i++){
                 table[i] = [];
@@ -150,7 +150,7 @@ define([
                 }
             }
             return loss;
-        }
+        };
 
         // decide initial paramaters
         var init_params = (function(){
@@ -194,45 +194,45 @@ define([
         }
 
         return {pos:pos, labels:labels};
-    }
+    };
 
     Venn.prototype.updateModels = function(selector, scales, options){
         var color_scale = this.color_scale;
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.name)).darker(1)});
-        }
+                .attr("fill", function(d){return d3.rgb(color_scale(d.name)).darker(1);});
+        };
 
         var outMouse = function(){
             d3.select(this).transition()
                 .duration(200)
-                .attr("fill", function(d){return color_scale(d.name)});
-        }
+                .attr("fill", function(d){return color_scale(d.name);});
+        };
 
         selector
-            .attr("cx", function(d){return scales.x(d.x)})
-            .attr("cy", function(d){return scales.y(d.y)})
+            .attr("cx", function(d){return scales.x(d.x);})
+            .attr("cy", function(d){return scales.y(d.y);})
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
-            .attr("fill", function(d){return color_scale(d.name)})
+            .attr("fill", function(d){return color_scale(d.name);})
             .attr("fill-opacity", options.opacity)
             .transition()
             .duration(500)
-            .attr("r", function(d){return scales.r(d.r)});
+            .attr("r", function(d){return scales.r(d.r);});
 
         if(options.hover)selector
             .on("mouseover", onMouse)
             .on("mouseout", outMouse);
-    }
+    };
 
     Venn.prototype.updateLabels = function(selector, scales, options){
         selector
-            .attr("x", function(d){return scales.x(d.x)})
-            .attr("y", function(d){return scales.y(d.y)})
+            .attr("x", function(d){return scales.x(d.x);})
+            .attr("y", function(d){return scales.y(d.y);})
             .attr("text-anchor", "middle")
-            .text(function(d){return String(d.val)})
-    }
+            .text(function(d){return String(d.val);});
+    };
 
     Venn.prototype.selected = function(data, row_nums){
         var selected_count = this.df.pickUpCells(this.options.count, row_nums);
@@ -244,13 +244,13 @@ define([
         var texts = this.model.selectAll("text").data(data.labels);
         this.updateModels(circles, scales, this.options);
         this.updateLabels(texts, scales, this.options);
-    }
+    };
 
     Venn.prototype.update = function(){
-    }
+    };
 
     Venn.prototype.checkSelectedData = function(ranges){
-    }
+    };
 
     return Venn;
 });
