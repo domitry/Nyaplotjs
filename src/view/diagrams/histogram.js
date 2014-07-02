@@ -1,8 +1,9 @@
 define([
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'view/components/legend/simple_legend'
+],function(_, Manager, Filter, SimpleLegend){
     function Histogram(parent, scales, df_id, _options){
         var options = {
             title: 'histogram',
@@ -79,6 +80,10 @@ define([
         if(options.hover)selector
             .on("mouseover", onMouse)
             .on("mouseout", outMouse);
+    };
+
+    Histogram.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
     };
 
     Histogram.prototype.checkSelectedData = function(ranges){

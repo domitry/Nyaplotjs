@@ -1,11 +1,16 @@
+/*
+ * Pane keeps a dom object which diagrams, filter, and legend will be placed on.
+ * It also calcurate scales and each diagram and axis will be rendered base on the scales.
+ */
+
 define([
     'underscore',
     'node-uuid',
     'view/diagrams/diagrams',
     'view/components/axis',
     'view/components/filter',
-    'view/components/legend'
-],function(_, uuid, diagrams, Axis, Filter, Legend){
+    'view/components/legend_area'
+],function(_, uuid, diagrams, Axis, Filter, LegendArea){
     function Pane(parent, _options){
         var options = {
             width: 700,
@@ -20,8 +25,11 @@ define([
             bg_color: '#eee',
             grid_color: '#fff',
             legend: false,
-            legend_width: 100,
-            legend_options: {}
+            legend_position: 'right',
+            legend_width: 200,
+            legend_height: 300,
+            legend_stroke_color: '#000',
+            legend_stroke_width: 0
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -31,36 +39,80 @@ define([
                 .attr("width", options.width)
                 .attr("height", options.height);
 
-        var inner_width = options.width - options.margin.left - options.margin.right;
-        var inner_height = options.height - options.margin.top - options.margin.bottom;
-        if(options.legend){
-            inner_width -= options.legend_width;
-        }
-        var ranges = {x:[0,inner_width], y:[inner_height,0]};
-        var scales = {};
+        var areas = (function(){
+            var areas = {};
+            areas.plot_x = options.margin.left;
+            areas.plot_y = options.margin.top;
+            areas.plot_width = options.width - options.margin.left - options.margin.right;
+            areas.plot_height = options.height - options.margin.top - options.margin.bottom;
+            
+            if(options.legend){
+                switch(options.legend_position){
+                case 'top':
+                    areas.plot_width -= options.legend_width;
+                    areas.plot_y += options.legend_height;
+                    areas.legend_x = (options.width - options.legend_width)/2;
+                    areas.legend_y = options.margin.top;
+                    break;
 
-        _.each({x:'xrange',y:'yrange'},function(val, key){
-            if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);}))
-                scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
-            else
-                scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
-        });
+                case 'bottom':
+                    areas.plot_height -= options.legend_height;
+                    areas.legend_x = (options.width - options.legend_width)/2;
+                    areas.legend_y = options.margin.top + options.height;
+                    break;
 
+                case 'left':
+                    areas.plot_x += options.legend_width;
+                    areas.plot_width -= options.legend_width;
+                    areas.legend_x = options.margin.left;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case 'right':
+                    areas.plot_width -= options.legend_width;
+                    areas.legend_x = options.width + options.margin.left;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case _.isArray(options.legend_position):
+                    areas.legend_x = options.width * options.legend_position[0];
+                    areas.legend_y = options.height * options.legend_position[1];
+                    break;
+                }
+            }
+            return areas;
+        })();
+
+        var scales = (function(){
+            var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
+            var scales = {};
+            _.each({x:'xrange',y:'yrange'},function(val, key){
+                if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);})){
+                    scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
+                }
+                else{
+                    scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
+                }
+            });
+            return scales;
+        })();
+
+        // add background
         model.append("g")
-            .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
+            .attr("transform", "translate(" + areas.plot_x + "," + areas.plot_y + ")")
             .append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", inner_width)
-            .attr("height", inner_height)
+            .attr("width", areas.plot_width)
+            .attr("height", areas.plot_height)
             .attr("stroke", "#000000")
             .attr("stroke_width", 2)
             .attr("fill", options.bg_color)
             .style("z-index",1);
 
         var axis = new Axis(model.select("g"), scales, {
-            width:inner_width, 
-            height:inner_height,
+            width:areas.plot_width,
+            height:areas.plot_height,
             margin:options.margin,
             grid:options.grid,
             zoom:options.zoom,
@@ -69,6 +121,7 @@ define([
             stroke_color: options.grid_color
         });
 
+        // add context
         model.select("g")
             .append("g")
             .attr("class", "context")
@@ -77,17 +130,21 @@ define([
             .append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", inner_width)
-            .attr("height", inner_height);
+            .attr("width", areas.plot_width)
+            .attr("height", areas.plot_height);
 
+        // add legend
         if(options.legend){
-            var legend_space = model.select("g")
-                    .append("g")
-                    .attr("transform", "translate(" + inner_width + ",0)");
+            model.append("g")
+                .attr("class", "legend_area")
+                .attr("transform", "translate(" + areas.legend_x + "," + areas.legend_y + ")");
 
-            options.legend_options['height'] = inner_height;
-            options.legend_options['width'] = options.legend_width;
-            this.legend = new Legend(legend_space, options.legend_options);
+            this.legend_area = new LegendArea(model.select(".legend_area"), {
+                width: options.legend_width,
+                height: options.legend_height,
+                stroke_color: options.legend_stroke_color,
+                stroke_width: options.legend_stroke_width
+            });
         }
 
         this.diagrams = [];
@@ -95,22 +152,31 @@ define([
         this.scales = scales;
         this.options = options;
         this.filter = null;
-
         return this;
     }
 
+    // Add diagram to pane
     Pane.prototype.addDiagram = function(type, data, options){
-        _.extend(options, {uuid: uuid.v4(), clip_id: this.uuid + 'clip_context'});
+        _.extend(options, {
+            uuid: uuid.v4(),
+            clip_id: this.uuid + 'clip_context'
+        });
+
         var diagram = new diagrams[type](this.context, this.scales, data, options);
-        var legend = this.legend;
+
         if(this.options.legend){
-            _.each(diagram.legends, function(l){
-                legend.add(l['label'], l['color'], l['on'], l['off'], l['mode']);
-	        });
+            var legend_area = this.legend_area;
+            var legend = diagram.getLegend();
+            if(_.isArray(legend))_.each(legend, function(l){
+                legend_area.add(l);
+            });
+            else this.legend_area.add(legend);
 	    }
+
 	    this.diagrams.push(diagram);
     };
 
+    // Add filter to pane (usually a gray box on the pane)
     Pane.prototype.addFilter = function(target, options){
 	    var diagrams = this.diagrams;
 	    var callback = function(ranges){
@@ -121,6 +187,7 @@ define([
 	    this.filter = new Filter(this.context, this.scales, callback, options);
     };
 
+    // Update all diagrams belong to the pane
     Pane.prototype.update = function(){
 	    _.each(this.diagrams, function(diagram){
 	        diagram.update();

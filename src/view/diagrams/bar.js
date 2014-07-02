@@ -1,7 +1,8 @@
 define([
     'underscore',
-    'core/manager'
-],function(_, Manager){
+    'core/manager',
+    'view/components/legend/simple_legend'
+],function(_, Manager, SimpleLegend){
     function Bar(parent, scales, df_id, _options){
         var options = {
             value: null,
@@ -22,7 +23,7 @@ define([
 
         var model = parent.append("g");
 
-        var legends = [], labels;
+        var legend_data = [], labels;
 
         if(options.value != null){
             var column_value = df.column(options.value);
@@ -31,13 +32,13 @@ define([
             labels = df.column(options.x);
         
         _.each(labels, function(label){
-            legends.push({label: label, color:color_scale(label)});
+            legend_data.push({label: label, color:color_scale(label)});
         });
 
         this.model = model;
         this.scales = scales;
         this.options = options;
-        this.legends = legends;
+        this.legend_data = legend_data;
         this.df = df;
         this.df_id = df_id;
         this.uuid = options.uuid;
@@ -106,6 +107,10 @@ define([
         if(options.hover)selector
             .on("mouseover", onMouse)
             .on("mouseout", outMouse);
+    };
+
+    Bar.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
     };
 
     Bar.prototype.countData = function(values){

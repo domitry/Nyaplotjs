@@ -1,8 +1,9 @@
 define([
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'view/components/legend/simple_legend'
+],function(_, Manager, Filter, SimpleLegend){
     function Scatter(parent, scales, df_id, _options){
         var options = {
             title: 'scatter',
@@ -21,7 +22,7 @@ define([
         var df = Manager.getData(df_id);
         var model = parent.append("g");
 
-        this.legends = (function(thisObj){
+        this.legend_data = (function(thisObj){
             var on = function(){
                 thisObj.render = true;
                 thisObj.update();
@@ -91,6 +92,10 @@ define([
         if(options.hover)selector
             .on("mouseover", onMouse)
             .on("mouseout", outMouse);
+    };
+
+    Scatter.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
     };
 
     Scatter.prototype.updateData = function(){

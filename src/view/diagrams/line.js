@@ -1,8 +1,9 @@
 define([
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'view/components/legend/simple_legend'
+],function(_, Manager, Filter, SimpleLegend){
     function Line(parent, scales, df_id, _options){
         var options = {
             x: null,
@@ -17,7 +18,7 @@ define([
         var df = Manager.getData(df_id);
         var model = parent.append("g");
 
-        this.legends = (function(thisObj){
+        this.legend_data = (function(thisObj){
             var on = function(){
                 thisObj.render = true;
                 thisObj.update();
@@ -82,6 +83,10 @@ define([
             .attr("stroke", options.color)
             .attr("stroke-width", options.stroke_width)
             .attr("fill", "none");
+    };
+
+    Line.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
     };
 
     Line.prototype.updateData = function(){

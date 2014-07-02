@@ -2,8 +2,9 @@ define([
     'underscore',
     'core/manager',
     'view/components/filter',
+    'view/components/legend/simple_legend',
     'utils/simplex'
-],function(_, Manager, Filter, simplex){
+],function(_, Manager, Filter, SimpleLegend, simplex){
     function Venn(parent, scales, df_id, _options){
         var options = {
             category: null,
@@ -29,14 +30,15 @@ define([
         else color_scale = d3.scale.ordinal().range(options.color).domain(options.area_names);
         this.color_scale = color_scale;
 
-        var legends = [];
+        var legend_data = [];
         var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
 
         var update = this.update, tellUpdate = this.tellUpdate;
         var thisObj = this;
 
         for(var i=0;i<3;i++){
-            legends.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
+            var entry = [];
+            entry.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
             _.each(categories, function(category){
                 var venn_id = i;
                 var on = function(){
@@ -51,16 +53,18 @@ define([
                     tellUpdate.call(thisObj);
                 };
                 var mode = (category == selected_category[i] ? 'on' : 'off');
-                legends.push({label: category, color:'black', mode:mode, on:on, off:off});
+                entry.push({label: category, color:'black', mode:mode, on:on, off:off});
             });
-            legends.push({label:''});
+            legend_data.push(new SimpleLegend(entry));
         }
 
         var filter_mode = 'all';
         if(options.filter_control){
-            legends.push({label:'Filter', color:'gray'});
+            var entry = [];
             var modes = ['all', 'overlapping', 'non-overlapping'];
             var default_mode = filter_mode;
+
+            entry.push({label:'Filter', color:'gray'});
             _.each(modes, function(mode){
                 var on = function(){
                     thisObj.filter_mode = mode;
@@ -68,13 +72,14 @@ define([
                     tellUpdate.call(thisObj);
                 };
                 var on_off = (mode==default_mode?'on':'off');
-                legends.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
+                entry.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
             });
+            legend_data.push(new SimpleLegend(entry));
         }
 
         this.selected_category = selected_category;
         this.filter_mode = filter_mode;
-        this.legends = legends;
+        this.legend_data = legend_data;
         this.options = options;
         this.scales = scales;
         this.model = model;
@@ -287,6 +292,10 @@ define([
             .attr("y", function(d){return scales.y(d.y);})
             .attr("text-anchor", "middle")
             .text(function(d){return String(d.val);});
+    };
+
+    Venn.prototype.getLegend = function(){
+        return this.legend_data;
     };
 
     Venn.prototype.tellUpdate = function(){
