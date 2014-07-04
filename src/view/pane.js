@@ -26,7 +26,7 @@ define([
             grid_color: '#fff',
             legend: false,
             legend_position: 'right',
-            legend_width: 200,
+            legend_width: 150,
             legend_height: 300,
             legend_stroke_color: '#000',
             legend_stroke_width: 0
@@ -70,7 +70,7 @@ define([
 
                 case 'right':
                     areas.plot_width -= options.legend_width;
-                    areas.legend_x = options.width + options.margin.left;
+                    areas.legend_x = areas.plot_width + options.margin.left;
                     areas.legend_y = options.margin.top;
                     break;
 

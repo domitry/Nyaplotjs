@@ -9,14 +9,14 @@ define([
     function SimpleLegend(data, _options){
         var options = {
             title: '',
-            width: 300,
-            height: 12,
+            width: 150,
+            height: 22,
             title_height: 15,
             mode: 'normal' // or 'radio'
         };
         if(arguments.length>1)_.extend(options, _options);
 
-        this.model = d3.select(document.createElement('g'));
+        this.model = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
         this.options = options;
         this.data = data;
 
@@ -60,7 +60,7 @@ define([
             case 'normal':
             circle
                 .on("click", function(d){
-                    if(d['on'] != undefined && d['off'] != undefined){
+                    if(!(!d['on'] && !d['off'])){
                         var el = d3.select(this);
                         if(el.attr("fill-opacity")==1){
                             el.attr("fill-opacity", 0);
@@ -70,10 +70,6 @@ define([
                             d.on();
                         };
                     }
-                })
-                .style("cursor", function(d){
-                    if(d['on'] != undefined && d['off'] != undefined)return "default";
-                    else return "pointer";
                 });
             break;
             case 'radio':
@@ -81,18 +77,23 @@ define([
                 var el = d3.select(this);
                 if(el.attr("fill-opacity")==0){
                     var thisObj = this;
-                    circle.filter(function(d){return (this == thisObj);}).attr("full-opacity", 0);
+                    circle.filter(function(d){return (this!=thisObj && !(!d['on'] && !d['off']));})
+                        .attr("fill-opacity", 0);
                     el.attr("fill-opacity", 1);
                     d.on();
                 }
-            })
-            .style("cursor", "pointer");
+            });
             break;
         }
+
+        circle.style("cursor", function(d){
+            if(d['on'] == undefined && d['off'] == undefined)return "default";
+            else return "pointer";
+        });
         
         entries.append("text")
             .attr("x","18")
-            .attr("y",function(d,i){return options.height*(i+1);})
+            .attr("y",function(d,i){return options.height*(i+1)+4;})
             .attr("font-size","12")
             .text(function(d){return d.label;});
 

@@ -31,26 +31,26 @@ define([
 
         this.model = model;
         this.options = options;
-        this.seek = {x: 0, y:0, width:0};
+        this.seek = {x: options.margin.left, y:options.margin.top, width:0};
 
         return this;
     }
     
     // Add a new legend to this area
     LegendArea.prototype.add = function(legend){
-        // calculate coordinates to place the new legend (too simple algorism!)
-        if(this.seek.y + legend.height > this.options.height){
-            this.seek.x += this.seek.width;
-            this.seek.y=0;
-        }else{
-            this.seek.width = _.max([this.seek.width, legend.width]);
-            this.seek.y += legend.height;
-        }
-
         var legend_area = this.model.append("g")
                 .attr("transform", "translate(" + this.seek.x + "," + this.seek.y + ")");
         var dom = legend.getDomObject();
-        legend_area.append(d3.select(dom));
+        legend_area[0][0].appendChild(dom[0][0]);
+
+        // calculate coordinates to place the new legend (too simple algorism!)
+        if(this.seek.y + legend.height() > this.options.height){
+            this.seek.x += this.seek.width;
+            this.seek.y=this.options.margin.top;
+        }else{
+            this.seek.width = _.max([this.seek.width, legend.width()]);
+            this.seek.y += legend.height();
+        }
     };
 
     return LegendArea;

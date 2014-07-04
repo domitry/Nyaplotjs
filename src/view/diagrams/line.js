@@ -86,7 +86,8 @@ define([
     };
 
     Line.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
+        var legend = new SimpleLegend(this.legend_data);
+        return legend;
     };
 
     Line.prototype.updateData = function(){

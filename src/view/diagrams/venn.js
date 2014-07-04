@@ -74,7 +74,7 @@ define([
                 var on_off = (mode==default_mode?'on':'off');
                 entry.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
             });
-            legend_data.push(new SimpleLegend(entry));
+            legend_data.push(new SimpleLegend(entry, {mode:'radio'}));
         }
 
         this.selected_category = selected_category;

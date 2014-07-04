@@ -2053,10 +2053,116 @@ define('core/manager',[
   }
 }).call(this);
 
-define('view/diagrams/bar',[
+/*
+ * SimpleLegend provides legend consists of simple circle buttons and labels.
+ */
+
+define('view/components/legend/simple_legend',[
     'underscore',
     'core/manager'
 ],function(_, Manager){
+    function SimpleLegend(data, _options){
+        var options = {
+            title: '',
+            width: 150,
+            height: 22,
+            title_height: 15,
+            mode: 'normal' // or 'radio'
+        };
+        if(arguments.length>1)_.extend(options, _options);
+
+        this.model = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
+        this.options = options;
+        this.data = data;
+
+        return this;
+    }
+
+    SimpleLegend.prototype.width = function(){
+        return this.options.width;
+    };
+
+    SimpleLegend.prototype.height = function(){
+        return this.options.height * (this.data.length + 1);
+    };
+
+    SimpleLegend.prototype.getDomObject = function(){
+        var model = this.model;
+        var options = this.options;
+
+        model.append("text")
+            .attr("x", 12)
+            .attr("y", options.height)
+            .attr("font-size","14")
+            .text(options.title);
+
+        var entries = this.model.selectAll("g")
+                .data(this.data)
+                .enter()
+                .append("g");
+
+        var circle = entries
+                .append("circle")
+                .attr("cx","8")
+                .attr("cy",function(d, i){return options.height*(i+1);})
+                .attr("r","6")
+                .attr("stroke", function(d){return d.color;})
+                .attr("stroke-width","2")
+                .attr("fill",function(d){return d.color;})
+                .attr("fill-opacity", function(d){return (d.mode=='off' ? 0 : 1);});
+
+        switch(options.mode){
+            case 'normal':
+            circle
+                .on("click", function(d){
+                    if(!(!d['on'] && !d['off'])){
+                        var el = d3.select(this);
+                        if(el.attr("fill-opacity")==1){
+                            el.attr("fill-opacity", 0);
+                            d.off();
+                        }else{
+                            el.attr("fill-opacity", 1);
+                            d.on();
+                        };
+                    }
+                });
+            break;
+            case 'radio':
+            circle.on("click", function(d){
+                var el = d3.select(this);
+                if(el.attr("fill-opacity")==0){
+                    var thisObj = this;
+                    circle.filter(function(d){return (this!=thisObj && !(!d['on'] && !d['off']));})
+                        .attr("fill-opacity", 0);
+                    el.attr("fill-opacity", 1);
+                    d.on();
+                }
+            });
+            break;
+        }
+
+        circle.style("cursor", function(d){
+            if(d['on'] == undefined && d['off'] == undefined)return "default";
+            else return "pointer";
+        });
+        
+        entries.append("text")
+            .attr("x","18")
+            .attr("y",function(d,i){return options.height*(i+1)+4;})
+            .attr("font-size","12")
+            .text(function(d){return d.label;});
+
+        return model;
+    };
+
+    return SimpleLegend;
+});
+
+define('view/diagrams/bar',[
+    'underscore',
+    'core/manager',
+    'view/components/legend/simple_legend'
+],function(_, Manager, SimpleLegend){
     function Bar(parent, scales, df_id, _options){
         var options = {
             value: null,
@@ -2077,7 +2183,7 @@ define('view/diagrams/bar',[
 
         var model = parent.append("g");
 
-        var legends = [], labels;
+        var legend_data = [], labels;
 
         if(options.value != null){
             var column_value = df.column(options.value);
@@ -2086,13 +2192,13 @@ define('view/diagrams/bar',[
             labels = df.column(options.x);
         
         _.each(labels, function(label){
-            legends.push({label: label, color:color_scale(label)});
+            legend_data.push({label: label, color:color_scale(label)});
         });
 
         this.model = model;
         this.scales = scales;
         this.options = options;
-        this.legends = legends;
+        this.legend_data = legend_data;
         this.df = df;
         this.df_id = df_id;
         this.uuid = options.uuid;
@@ -2163,6 +2269,10 @@ define('view/diagrams/bar',[
             .on("mouseout", outMouse);
     };
 
+    Bar.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
+    };
+
     Bar.prototype.countData = function(values){
         var hash = {};
         _.each(values, function(val){
@@ -2224,8 +2334,9 @@ define('view/components/filter',[
 define('view/diagrams/histogram',[
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'view/components/legend/simple_legend'
+],function(_, Manager, Filter, SimpleLegend){
     function Histogram(parent, scales, df_id, _options){
         var options = {
             title: 'histogram',
@@ -2304,6 +2415,10 @@ define('view/diagrams/histogram',[
             .on("mouseout", outMouse);
     };
 
+    Histogram.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
+    };
+
     Histogram.prototype.checkSelectedData = function(ranges){
         var label_value = this.options.value;
         var filter = function(row){
@@ -2321,8 +2436,9 @@ define('view/diagrams/histogram',[
 define('view/diagrams/scatter',[
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'view/components/legend/simple_legend'
+],function(_, Manager, Filter, SimpleLegend){
     function Scatter(parent, scales, df_id, _options){
         var options = {
             title: 'scatter',
@@ -2341,7 +2457,7 @@ define('view/diagrams/scatter',[
         var df = Manager.getData(df_id);
         var model = parent.append("g");
 
-        this.legends = (function(thisObj){
+        this.legend_data = (function(thisObj){
             var on = function(){
                 thisObj.render = true;
                 thisObj.update();
@@ -2413,6 +2529,10 @@ define('view/diagrams/scatter',[
             .on("mouseout", outMouse);
     };
 
+    Scatter.prototype.getLegend = function(){
+        return new SimpleLegend(this.legend_data);
+    };
+
     Scatter.prototype.updateData = function(){
         this.df = Manager.getData(this.df_id);
         var data = this.proceedData(this.df.column(this.options.value), this.options);
@@ -2430,8 +2550,9 @@ define('view/diagrams/scatter',[
 define('view/diagrams/line',[
     'underscore',
     'core/manager',
-    'view/components/filter'
-],function(_, Manager, Filter){
+    'view/components/filter',
+    'view/components/legend/simple_legend'
+],function(_, Manager, Filter, SimpleLegend){
     function Line(parent, scales, df_id, _options){
         var options = {
             x: null,
@@ -2446,7 +2567,7 @@ define('view/diagrams/line',[
         var df = Manager.getData(df_id);
         var model = parent.append("g");
 
-        this.legends = (function(thisObj){
+        this.legend_data = (function(thisObj){
             var on = function(){
                 thisObj.render = true;
                 thisObj.update();
@@ -2511,6 +2632,11 @@ define('view/diagrams/line',[
             .attr("stroke", options.color)
             .attr("stroke-width", options.stroke_width)
             .attr("fill", "none");
+    };
+
+    Line.prototype.getLegend = function(){
+        var legend = new SimpleLegend(this.legend_data);
+        return legend;
     };
 
     Line.prototype.updateData = function(){
@@ -2608,8 +2734,9 @@ define('view/diagrams/venn',[
     'underscore',
     'core/manager',
     'view/components/filter',
+    'view/components/legend/simple_legend',
     'utils/simplex'
-],function(_, Manager, Filter, simplex){
+],function(_, Manager, Filter, SimpleLegend, simplex){
     function Venn(parent, scales, df_id, _options){
         var options = {
             category: null,
@@ -2635,14 +2762,15 @@ define('view/diagrams/venn',[
         else color_scale = d3.scale.ordinal().range(options.color).domain(options.area_names);
         this.color_scale = color_scale;
 
-        var legends = [];
+        var legend_data = [];
         var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
 
         var update = this.update, tellUpdate = this.tellUpdate;
         var thisObj = this;
 
         for(var i=0;i<3;i++){
-            legends.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
+            var entry = [];
+            entry.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
             _.each(categories, function(category){
                 var venn_id = i;
                 var on = function(){
@@ -2657,16 +2785,18 @@ define('view/diagrams/venn',[
                     tellUpdate.call(thisObj);
                 };
                 var mode = (category == selected_category[i] ? 'on' : 'off');
-                legends.push({label: category, color:'black', mode:mode, on:on, off:off});
+                entry.push({label: category, color:'black', mode:mode, on:on, off:off});
             });
-            legends.push({label:''});
+            legend_data.push(new SimpleLegend(entry));
         }
 
         var filter_mode = 'all';
         if(options.filter_control){
-            legends.push({label:'Filter', color:'gray'});
+            var entry = [];
             var modes = ['all', 'overlapping', 'non-overlapping'];
             var default_mode = filter_mode;
+
+            entry.push({label:'Filter', color:'gray'});
             _.each(modes, function(mode){
                 var on = function(){
                     thisObj.filter_mode = mode;
@@ -2674,13 +2804,14 @@ define('view/diagrams/venn',[
                     tellUpdate.call(thisObj);
                 };
                 var on_off = (mode==default_mode?'on':'off');
-                legends.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
+                entry.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
             });
+            legend_data.push(new SimpleLegend(entry, {mode:'radio'}));
         }
 
         this.selected_category = selected_category;
         this.filter_mode = filter_mode;
-        this.legends = legends;
+        this.legend_data = legend_data;
         this.options = options;
         this.scales = scales;
         this.model = model;
@@ -2893,6 +3024,10 @@ define('view/diagrams/venn',[
             .attr("y", function(d){return scales.y(d.y);})
             .attr("text-anchor", "middle")
             .text(function(d){return String(d.val);});
+    };
+
+    Venn.prototype.getLegend = function(){
+        return this.legend_data;
     };
 
     Venn.prototype.tellUpdate = function(){
@@ -3317,25 +3452,29 @@ define('view/components/axis',[
     return Axis;
 });
 
-define('view/components/legend',[
+/*
+ * LegendArea keep a dom object which legends will be placed on and
+ * add legends on the best place in it.
+ */
+
+define('view/components/legend_area',[
     'underscore',
     'core/manager'
 ],function(_, Manager){
-    function Legend(parent, _options){
+    function LegendArea(parent, _options){
         var options = {
-            title: '',
-            width: 100,
-            height: 500,
-            fill_color: "none",
-            stroke_color: "#000",
-            stroke_width: 0,
-            title_height: 15,
-            margin: {top:18, bottom:8, right:8, left: 18},
-            middle: false
+            width: 200,
+            height: 300,
+            margin: {top: 10, bottom:10, left:10, right:10},
+            fill_color: 'none',
+            stroke_color: '#000',
+            stroke_width: 0
         };
         if(arguments.length>1)_.extend(options, _options);
 
-        parent.append("rect")
+        var model = parent.append("g");
+
+        model.append("rect")
             .attr("width", options.width)
             .attr("height", options.height)
             .attr("x", 0)
@@ -3344,85 +3483,37 @@ define('view/components/legend',[
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width);
 
-        var model = parent.append("g")
-                .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")");
-
-        model.append("text")
-            .attr("x", 0)
-            .attr("y", 0)
-            .text(options.title);
-
         this.model = model;
         this.options = options;
-        this.data = [];
+        this.seek = {x: options.margin.left, y:options.margin.top, width:0};
 
         return this;
     }
+    
+    // Add a new legend to this area
+    LegendArea.prototype.add = function(legend){
+        var legend_area = this.model.append("g")
+                .attr("transform", "translate(" + this.seek.x + "," + this.seek.y + ")");
+        var dom = legend.getDomObject();
+        legend_area[0][0].appendChild(dom[0][0]);
 
-    Legend.prototype.add = function(label, color, callback_on, callback_off, mode){
-        this.data.push({label:label, color:color, on:callback_on, off:callback_off});
-
-        var new_entry = this.model.selectAll("g")
-                .data(this.data)
-                .enter()
-                .append("g");
-
-        var padding = this.options.title_height;
-        var height = this.options.height;
-
-        if(this.options.width/100>2){
-            new_entry.attr("transform",function(d, i){
-                return "translate("+ ((Math.floor(i/8))*100) +"," + (padding + 25*(i%8)) + ")";
-            });
+        // calculate coordinates to place the new legend (too simple algorism!)
+        if(this.seek.y + legend.height() > this.options.height){
+            this.seek.x += this.seek.width;
+            this.seek.y=this.options.margin.top;
         }else{
-            new_entry.attr("transform",function(d, i){
-                return "translate(0," + (padding + 25*i) + ")";
-            });
-        }
-
-        if(color!==undefined){
-            var circle = new_entry
-                    .append("circle")
-                    .attr("cx","8")
-                    .attr("cy","8")
-                    .attr("r","6")
-                    .attr("stroke", function(d){return d.color;})
-                    .attr("stroke-width","2")
-                    .attr("fill",function(d){return d.color;});
-
-            if(mode == 'off')circle.attr("fill-opacity",0);
-            else circle.attr("fill-opacity",1);
-
-            if(callback_on !== undefined && callback_off !== undefined){
-                circle
-                    .on("click", function(d){
-                        var el = d3.select(this);
-                        if(el.attr("fill-opacity")==1){
-                            el.attr("fill-opacity", 0);
-                            d.off();
-                        }else{
-                            el.attr("fill-opacity", 1);
-                            d.on();
-                        };
-                    })
-                    .style("cursor","pointer");
-            }
-        }
-
-        new_entry.append("text")
-            .attr("x","18")
-            .attr("y","12")
-            .attr("font-size","12")
-            .text(function(d){return d.label;});
-
-        if(this.options.middle){
-            var height = padding + this.data.length * 25;
-            this.model.attr("transform", "translate(" + this.options.margin.left + "," + (this.options.height - height)/2 + ")");
+            this.seek.width = _.max([this.seek.width, legend.width()]);
+            this.seek.y += legend.height();
         }
     };
 
-    return Legend;
+    return LegendArea;
 });
+
+/*
+ * Pane keeps a dom object which diagrams, filter, and legend will be placed on.
+ * It also calcurate scales and each diagram and axis will be rendered base on the scales.
+ */
 
 define('view/pane',[
     'underscore',
@@ -3430,8 +3521,8 @@ define('view/pane',[
     'view/diagrams/diagrams',
     'view/components/axis',
     'view/components/filter',
-    'view/components/legend'
-],function(_, uuid, diagrams, Axis, Filter, Legend){
+    'view/components/legend_area'
+],function(_, uuid, diagrams, Axis, Filter, LegendArea){
     function Pane(parent, _options){
         var options = {
             width: 700,
@@ -3446,8 +3537,11 @@ define('view/pane',[
             bg_color: '#eee',
             grid_color: '#fff',
             legend: false,
-            legend_width: 100,
-            legend_options: {}
+            legend_position: 'right',
+            legend_width: 150,
+            legend_height: 300,
+            legend_stroke_color: '#000',
+            legend_stroke_width: 0
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -3457,36 +3551,80 @@ define('view/pane',[
                 .attr("width", options.width)
                 .attr("height", options.height);
 
-        var inner_width = options.width - options.margin.left - options.margin.right;
-        var inner_height = options.height - options.margin.top - options.margin.bottom;
-        if(options.legend){
-            inner_width -= options.legend_width;
-        }
-        var ranges = {x:[0,inner_width], y:[inner_height,0]};
-        var scales = {};
+        var areas = (function(){
+            var areas = {};
+            areas.plot_x = options.margin.left;
+            areas.plot_y = options.margin.top;
+            areas.plot_width = options.width - options.margin.left - options.margin.right;
+            areas.plot_height = options.height - options.margin.top - options.margin.bottom;
+            
+            if(options.legend){
+                switch(options.legend_position){
+                case 'top':
+                    areas.plot_width -= options.legend_width;
+                    areas.plot_y += options.legend_height;
+                    areas.legend_x = (options.width - options.legend_width)/2;
+                    areas.legend_y = options.margin.top;
+                    break;
 
-        _.each({x:'xrange',y:'yrange'},function(val, key){
-            if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);}))
-                scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
-            else
-                scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
-        });
+                case 'bottom':
+                    areas.plot_height -= options.legend_height;
+                    areas.legend_x = (options.width - options.legend_width)/2;
+                    areas.legend_y = options.margin.top + options.height;
+                    break;
 
+                case 'left':
+                    areas.plot_x += options.legend_width;
+                    areas.plot_width -= options.legend_width;
+                    areas.legend_x = options.margin.left;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case 'right':
+                    areas.plot_width -= options.legend_width;
+                    areas.legend_x = areas.plot_width + options.margin.left;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case _.isArray(options.legend_position):
+                    areas.legend_x = options.width * options.legend_position[0];
+                    areas.legend_y = options.height * options.legend_position[1];
+                    break;
+                }
+            }
+            return areas;
+        })();
+
+        var scales = (function(){
+            var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
+            var scales = {};
+            _.each({x:'xrange',y:'yrange'},function(val, key){
+                if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);})){
+                    scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
+                }
+                else{
+                    scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
+                }
+            });
+            return scales;
+        })();
+
+        // add background
         model.append("g")
-            .attr("transform", "translate(" + options.margin.left + "," + options.margin.top + ")")
+            .attr("transform", "translate(" + areas.plot_x + "," + areas.plot_y + ")")
             .append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", inner_width)
-            .attr("height", inner_height)
+            .attr("width", areas.plot_width)
+            .attr("height", areas.plot_height)
             .attr("stroke", "#000000")
             .attr("stroke_width", 2)
             .attr("fill", options.bg_color)
             .style("z-index",1);
 
         var axis = new Axis(model.select("g"), scales, {
-            width:inner_width, 
-            height:inner_height,
+            width:areas.plot_width,
+            height:areas.plot_height,
             margin:options.margin,
             grid:options.grid,
             zoom:options.zoom,
@@ -3495,6 +3633,7 @@ define('view/pane',[
             stroke_color: options.grid_color
         });
 
+        // add context
         model.select("g")
             .append("g")
             .attr("class", "context")
@@ -3503,17 +3642,21 @@ define('view/pane',[
             .append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", inner_width)
-            .attr("height", inner_height);
+            .attr("width", areas.plot_width)
+            .attr("height", areas.plot_height);
 
+        // add legend
         if(options.legend){
-            var legend_space = model.select("g")
-                    .append("g")
-                    .attr("transform", "translate(" + inner_width + ",0)");
+            model.append("g")
+                .attr("class", "legend_area")
+                .attr("transform", "translate(" + areas.legend_x + "," + areas.legend_y + ")");
 
-            options.legend_options['height'] = inner_height;
-            options.legend_options['width'] = options.legend_width;
-            this.legend = new Legend(legend_space, options.legend_options);
+            this.legend_area = new LegendArea(model.select(".legend_area"), {
+                width: options.legend_width,
+                height: options.legend_height,
+                stroke_color: options.legend_stroke_color,
+                stroke_width: options.legend_stroke_width
+            });
         }
 
         this.diagrams = [];
@@ -3521,22 +3664,31 @@ define('view/pane',[
         this.scales = scales;
         this.options = options;
         this.filter = null;
-
         return this;
     }
 
+    // Add diagram to pane
     Pane.prototype.addDiagram = function(type, data, options){
-        _.extend(options, {uuid: uuid.v4(), clip_id: this.uuid + 'clip_context'});
+        _.extend(options, {
+            uuid: uuid.v4(),
+            clip_id: this.uuid + 'clip_context'
+        });
+
         var diagram = new diagrams[type](this.context, this.scales, data, options);
-        var legend = this.legend;
+
         if(this.options.legend){
-            _.each(diagram.legends, function(l){
-                legend.add(l['label'], l['color'], l['on'], l['off'], l['mode']);
-	        });
+            var legend_area = this.legend_area;
+            var legend = diagram.getLegend();
+            if(_.isArray(legend))_.each(legend, function(l){
+                legend_area.add(l);
+            });
+            else this.legend_area.add(legend);
 	    }
+
 	    this.diagrams.push(diagram);
     };
 
+    // Add filter to pane (usually a gray box on the pane)
     Pane.prototype.addFilter = function(target, options){
 	    var diagrams = this.diagrams;
 	    var callback = function(ranges){
@@ -3547,6 +3699,7 @@ define('view/pane',[
 	    this.filter = new Filter(this.context, this.scales, callback, options);
     };
 
+    // Update all diagrams belong to the pane
     Pane.prototype.update = function(){
 	    _.each(this.diagrams, function(diagram){
 	        diagram.update();
