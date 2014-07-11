@@ -1,0 +1,24 @@
+<html lang='en'>
+<head>
+  <title>Nyaplotjs example -- Boxplot</title>
+  <script src='http://d3js.org/d3.v3.min.js'></script>
+  <script src='../release/nyaplot.js'></script>
+</head>
+<body>
+<div id='vis'></div>
+<script>
+var data1=[];
+for(var i=0;i<100;i++){
+data1.push({
+norm1:d3.random.normal(0, 1)(),
+norm2:d3.random.normal(3, 2)(),
+norm3:d3.random.normal(1, 0.5)()
+});
+}
+var y_min = d3.min(data1, function(d){return (d.norm2 < d.norm1 ? d.norm2 : d.norm1)})-1;
+var y_max = d3.max(data1, function(d){return (d.norm2 > d.norm1 ? d.norm2 : d.norm1)})+1;
+models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'box', data: 'data1', options: {value:["norm1","norm2","norm3"]}}],options:{width:500, height:500, xrange: ["norm1","norm2","norm3"], yrange: [y_min, y_max]}}]};
+window.onload = function(){Nyaplot.core.parse(models, '#vis');};
+</script>
+</body>
+</html>
