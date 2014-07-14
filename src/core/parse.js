@@ -13,7 +13,7 @@ define([
     function parse(model, element_name){
         var element = d3.select(element_name);
 
-        if(typeof model['extension'] !== undefined){
+        if(typeof model['extension'] !== "undefined"){
             Extension.load(model['extension']);
         }
 
@@ -30,7 +30,7 @@ define([
             var pane;
 
             // if this pane is depend on extension having its own pane
-            if(typeof pane_model['extension'] !== undefined){
+            if(typeof pane_model['extension'] !== "undefined"){
                 var pane_proto = Extension.pane(pane_model['extension']);
                 pane = new pane_proto(element, pane_model.options);
             }
