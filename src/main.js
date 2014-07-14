@@ -4,5 +4,8 @@ define(function(require, exports, module){
     Nyaplot.core = {};
     Nyaplot.core.parse = require('core/parse');
 
+    Nyaplot.Manager = require('core/manager');
+    Nyaplot.uuid = require('node-uuid');
+
     return Nyaplot;
 });

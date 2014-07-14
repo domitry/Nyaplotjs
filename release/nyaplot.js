@@ -1807,6 +1807,39 @@ define('core/manager',[
     return Manager;
 });
 
+/*
+ * Extension keeps information about extensions for Nyaplot.
+ *
+ */
+
+define('core/extension',[
+    'underscore'
+],function(_){
+    var Extension = {};
+    var buffer={};
+
+    // load extension
+    Extension.load = function(extension_name){
+        if(typeof window[extension_name] == undefined)return;
+        if(typeof window[extension_name]['Nya'] == undefined)return;
+
+        var ext_info = window[extension_name].Nya;
+
+        // not implemented yet
+        if(typeof ext_info['pane'] !== undefined);
+        if(typeof ext_info['diagrams'] !== undefined);
+        if(typeof ext_info['scale'] !== undefined);
+
+        buffer[extension_name] = ext_info;
+    };
+
+    Extension.pane = function(extension_name){
+        return buffer[extension_name]['pane'];
+    };
+
+    return Extension;
+});
+
 //     uuid.js
 //
 //     Copyright (c) 2010-2012 Robert Kieffer
@@ -2358,7 +2391,6 @@ define('view/diagrams/histogram',[
         this.options = options;
         this.model = model;
         this.df = df;
-        this.df_id = df_id;
         this.uuid = options.uuid;
 
         this.update();
@@ -3928,23 +3960,45 @@ define('utils/dataframe',[
     return Dataframe;
 });
 
+/*
+ * parse JSON model and generate plots based on the order.
+ *
+ */
+
 define('core/parse',[
     'underscore',
     'core/manager',
+    'core/extension',
     'view/pane',
     'utils/dataframe'
-],function(_, Manager, Pane, Dataframe){
+],function(_, Manager, Extension, Pane, Dataframe){
     function parse(model, element_name){
-
         var element = d3.select(element_name);
 
+        if(typeof model['extension'] !== undefined){
+            Extension.load(model['extension']);
+        }
+
+        parse_model(model, element);
+    }
+
+    function parse_model(model, element){
         _.each(model.data, function(value, name){
             Manager.addData(name, new Dataframe(name, value));
             Manager.update();
         });
 
         _.each(model.panes, function(pane_model){
-            var pane = new Pane(element, pane_model.options);
+            var pane;
+
+            // if this pane is depend on extension having its own pane
+            if(typeof pane_model['extension'] !== undefined){
+                var pane_proto = Extension.pane(pane_model['extension']);
+                pane = new pane_proto(element, pane_model.options);
+            }
+            else{
+                pane = new Pane(element, pane_model.options);
+            }
             var data_list = [];
 
             _.each(pane_model.diagrams, function(diagram){
@@ -3959,16 +4013,19 @@ define('core/parse',[
 
             Manager.addPane({pane:pane, data: data_list});
         });
-    }
+    };
 
     return parse;
 });
 
-define('main',['require','exports','module','core/parse'],function(require, exports, module){
+define('main',['require','exports','module','core/parse','core/manager','node-uuid'],function(require, exports, module){
     var Nyaplot = {};
 
     Nyaplot.core = {};
     Nyaplot.core.parse = require('core/parse');
+
+    Nyaplot.Manager = require('core/manager');
+    Nyaplot.uuid = require('node-uuid');
 
     return Nyaplot;
 });
