@@ -14,7 +14,13 @@ define([
         var element = d3.select(element_name);
 
         if(typeof model['extension'] !== "undefined"){
-            Extension.load(model['extension']);
+            if(_.isArray(model['extension'])){
+                _.each(model['extension'], function(ex){
+                    Extension.load(model['extension']);
+                });
+            }else{
+                Extension.load(model['extension']);
+            }
         }
 
         parse_model(model, element);
