@@ -3978,7 +3978,7 @@ define('core/parse',[
         if(typeof model['extension'] !== "undefined"){
             if(_.isArray(model['extension'])){
                 _.each(model['extension'], function(ex){
-                    Extension.load(model['extension']);
+                    Extension.load(ex);
                 });
             }else{
                 Extension.load(model['extension']);
