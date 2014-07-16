@@ -3611,7 +3611,7 @@ define('view/components/axis',[
             parent.selectAll(".y_axis")
                 .attr("transform", "translate(-4,0)");
 
-            Manager.update();
+            Manager.update(options.pane_uuid);
         };
 
         if(options.grid){
