@@ -26,10 +26,17 @@ define([
     };
 
     // Update and redraw the panes
-    Manager.update = function(){
-        _.each(this.panes, function(entry){
-            entry.pane.update();
-        });
+    Manager.update = function(uuid){
+        if(arguments.length>0){
+            var entries = _.filter(this.panes, function(entry){return entry.uuid==uuid;});
+            _.each(entries, function(entry){
+                entry.pane.update();
+            });
+        }else{
+            _.each(this.panes, function(entry){
+                entry.pane.update();
+            });
+        }
     };
 
     return Manager;

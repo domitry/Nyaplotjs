@@ -1798,10 +1798,17 @@ define('core/manager',[
     };
 
     // Update and redraw the panes
-    Manager.update = function(){
-        _.each(this.panes, function(entry){
-            entry.pane.update();
-        });
+    Manager.update = function(uuid){
+        if(arguments.length>0){
+            var entries = _.filter(this.panes, function(entry){return entry.uuid==uuid;});
+            _.each(entries, function(entry){
+                entry.pane.update();
+            });
+        }else{
+            _.each(this.panes, function(entry){
+                entry.pane.update();
+            });
+        }
     };
 
     return Manager;
@@ -3991,7 +3998,6 @@ define('core/parse',[
     function parse_model(model, element){
         _.each(model.data, function(value, name){
             Manager.addData(name, new Dataframe(name, value));
-            Manager.update();
         });
 
         _.each(model.panes, function(pane_model){
@@ -4017,7 +4023,8 @@ define('core/parse',[
                 pane.addFilter(filter.type, filter.options || {});
             }
 
-            Manager.addPane({pane:pane, data: data_list});
+            Manager.addPane({pane:pane, data: data_list, uuid:pane.uuid});
+            Manager.update(pane.uuid);
         });
     };
 
