@@ -3552,7 +3552,8 @@ define('view/components/axis',[
             stroke_width: 1.0,
             x_label:'X',
             y_label:'Y',
-            grid:true
+            grid:true,
+            pane_uuid: null
         };
         if(arguments.length>2)_.extend(options, _options);
 
@@ -3816,7 +3817,8 @@ define('view/pane',[
             zoom:options.zoom,
             x_label:options.x_label,
             y_label:options.y_label,
-            stroke_color: options.grid_color
+            stroke_color: options.grid_color,
+            pane_uuid: this.uuid
         });
 
         // add context

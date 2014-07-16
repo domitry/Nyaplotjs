@@ -11,7 +11,8 @@ define([
             stroke_width: 1.0,
             x_label:'X',
             y_label:'Y',
-            grid:true
+            grid:true,
+            pane_uuid: null
         };
         if(arguments.length>2)_.extend(options, _options);
 

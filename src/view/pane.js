@@ -118,7 +118,8 @@ define([
             zoom:options.zoom,
             x_label:options.x_label,
             y_label:options.y_label,
-            stroke_color: options.grid_color
+            stroke_color: options.grid_color,
+            pane_uuid: this.uuid
         });
 
         // add context
