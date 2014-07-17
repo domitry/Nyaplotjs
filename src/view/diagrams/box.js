@@ -37,8 +37,6 @@ define([
         this.color_scale = color_scale;
         this.uuid = options.uuid;
 
-        this.update();
-
         return this;
     }
 

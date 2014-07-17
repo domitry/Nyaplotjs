@@ -37,8 +37,6 @@ define([
         this.df = df;
         this.df_id = df_id;
 
-        this.update();
-
         return this;
     }
 

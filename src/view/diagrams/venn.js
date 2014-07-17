@@ -87,7 +87,6 @@ define([
         this.df = df;
         this.uuid = options.uuid;
 
-        this.update();
         this.tellUpdate();
 
         return this;

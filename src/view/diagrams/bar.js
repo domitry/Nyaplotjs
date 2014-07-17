@@ -43,8 +43,6 @@ define([
         this.df_id = df_id;
         this.uuid = options.uuid;
 
-        this.update();
-
         return this;
     }
 

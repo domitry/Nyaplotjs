@@ -25,10 +25,7 @@ define([
         this.options = options;
         this.model = model;
         this.df = df;
-        this.df_id = df_id;
         this.uuid = options.uuid;
-
-        this.update();
         
         return this;
     }
