@@ -9,8 +9,9 @@ define([
     'view/diagrams/diagrams',
     'view/components/axis',
     'view/components/filter',
-    'view/components/legend_area'
-],function(_, uuid, diagrams, Axis, Filter, LegendArea){
+    'view/components/legend_area',
+    'view/components/tooltip'
+],function(_, uuid, diagrams, Axis, Filter, LegendArea, Tooltip){
     function Pane(parent, _options){
         var options = {
             width: 700,
@@ -136,6 +137,18 @@ define([
             .attr("width", areas.plot_width)
             .attr("height", areas.plot_height);
 
+        // add tooltip
+        var tooltip = new Tooltip(model.select("g"), scales, {
+            context_width: areas.plot_width,
+            context_height: areas.plot_height,
+            context_margin: {
+                top: areas.plot_x,
+                left: areas.plot_y,
+                bottom: options.margin.bottom,
+                right: options.margin.right
+            }
+        });
+
         // add legend
         if(options.legend){
             model.append("g")
@@ -151,6 +164,7 @@ define([
         }
 
         this.diagrams = [];
+        this.tooltip = tooltip;
         this.context = model.select(".context");
         this.scales = scales;
         this.options = options;
@@ -162,6 +176,7 @@ define([
     Pane.prototype.addDiagram = function(type, data, options){
         _.extend(options, {
             uuid: uuid.v4(),
+            tooltip: this.tooltip,
             clip_id: this.uuid + 'clip_context'
         });
 
