@@ -2243,8 +2243,6 @@ define('view/diagrams/bar',[
         this.df_id = df_id;
         this.uuid = options.uuid;
 
-        this.update();
-
         return this;
     }
 
@@ -2399,8 +2397,6 @@ define('view/diagrams/histogram',[
         this.model = model;
         this.df = df;
         this.uuid = options.uuid;
-
-        this.update();
         
         return this;
     }
@@ -2515,8 +2511,6 @@ define('view/diagrams/scatter',[
         this.df = df;
         this.df_id = df_id;
 
-        this.update();
-        
         return this;
     }
 
@@ -2624,8 +2618,6 @@ define('view/diagrams/line',[
         this.model = model;
         this.df = df;
         this.df_id = df_id;
-
-        this.update();
 
         return this;
     }
@@ -2858,7 +2850,6 @@ define('view/diagrams/venn',[
         this.df = df;
         this.uuid = options.uuid;
 
-        this.update();
         this.tellUpdate();
 
         return this;
@@ -3418,8 +3409,6 @@ define('view/diagrams/box.js',[
         this.color_scale = color_scale;
         this.uuid = options.uuid;
 
-        this.update();
-
         return this;
     }
 
@@ -3539,6 +3528,11 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
     return diagrams;
 });
 
+/*
+ * Axis generates x and y axies for plot. It also controlls grids.
+ * Have a look at documents on d3.svg.axis and d3.behavior.zoom to learn more.
+ */
+
 define('view/components/axis',[
     'underscore',
     'core/manager'
@@ -3553,6 +3547,8 @@ define('view/components/axis',[
             x_label:'X',
             y_label:'Y',
             grid:true,
+            zoom:false,
+            zoom_range:[0.5, 5],
             pane_uuid: null
         };
         if(arguments.length>2)_.extend(options, _options);
@@ -3623,7 +3619,7 @@ define('view/components/axis',[
             var zoom = d3.behavior.zoom()
                     .x(scales.x)
                     .y(scales.y)
-                    .scaleExtent([1, 5])
+                    .scaleExtent(options.zoom_range)
                     .on("zoom", update);
             parent.call(zoom);
             parent.on("dblclick.zoom", null);
@@ -3632,7 +3628,6 @@ define('view/components/axis',[
         update();
 
         this.model = parent;
-
         return this;
     }
 
@@ -3721,6 +3716,7 @@ define('view/pane',[
             y_label:'Y',
             zoom: false,
             grid: true,
+            zoom_range: [0.5, 5],
             bg_color: '#eee',
             grid_color: '#fff',
             legend: false,
@@ -3815,6 +3811,7 @@ define('view/pane',[
             margin:options.margin,
             grid:options.grid,
             zoom:options.zoom,
+            zoom_range:options.zoom_range,
             x_label:options.x_label,
             y_label:options.y_label,
             stroke_color: options.grid_color,

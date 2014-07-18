@@ -1,3 +1,8 @@
+/*
+ * Axis generates x and y axies for plot. It also controlls grids.
+ * Have a look at documents on d3.svg.axis and d3.behavior.zoom to learn more.
+ */
+
 define([
     'underscore',
     'core/manager'
@@ -12,6 +17,8 @@ define([
             x_label:'X',
             y_label:'Y',
             grid:true,
+            zoom:false,
+            zoom_range:[0.5, 5],
             pane_uuid: null
         };
         if(arguments.length>2)_.extend(options, _options);
@@ -82,7 +89,7 @@ define([
             var zoom = d3.behavior.zoom()
                     .x(scales.x)
                     .y(scales.y)
-                    .scaleExtent([1, 5])
+                    .scaleExtent(options.zoom_range)
                     .on("zoom", update);
             parent.call(zoom);
             parent.on("dblclick.zoom", null);
@@ -91,7 +98,6 @@ define([
         update();
 
         this.model = parent;
-
         return this;
     }
 
