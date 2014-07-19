@@ -2556,24 +2556,45 @@ define('view/diagrams/scatter',[
     };
 
     Scatter.prototype.proceedData = function(options){
-        var x_arr = this.df.column(this.options.x);
-        var y_arr = this.df.column(this.options.y);
-        return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+        var df = this.df;
+        var x_arr = df.column(this.options.x);
+        var y_arr = df.column(this.options.y);
+        if(options.tooltip_contents.length > 0){
+            var arr = _.map(options.tooltip_contents,function(column_name){
+                return df.column(column_name);
+            });
+            arr =  _.zip.apply(_, arr);
+            arr = _.map(arr, function(row){
+                // [1,2,3] -> {a:1, b:2, c:3}
+                return _.reduce(row, function(memo, val, i){
+                    memo[options.tooltip_contents[i]]=val;
+                    return memo;
+                }, {});
+            });
+            return _.map(_.zip(x_arr, y_arr, arr), function(d){return {x:d[0], y:d[1], tt:d[2]};});
+        }else{
+            return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+        }
     };
 
     Scatter.prototype.updateModels = function(selector, scales, options){
         var df = this.df;
         var onMouse = function(){
+            console.log("onMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
             var id = d3.select(this).attr("id");
             options.tooltip.addToXAxis(id, this.__data__.x, 3);
             options.tooltip.addToYAxis(id, this.__data__.y, 3);
+            if(options.tooltip_contents.length > 0){
+                options.tooltip.add(id, this.__data__.x, this.__data__.y, 'top', this.__data__.tt);
+            }
             options.tooltip.update();
         };
 
         var outMouse = function(){
+            console.log("outMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
@@ -2615,6 +2636,7 @@ define('view/diagrams/scatter',[
 
     return Scatter;
 });
+
 
 define('view/diagrams/line',[
     'underscore',
@@ -3794,10 +3816,9 @@ define('view/components/tooltip',[
 
     // add small tool-tip to context area
     Tooltip.prototype.add = function(id, x, y, pos, contents){
-        var str = _.reduce(contents, function(memo, v, k){
-            return memo.concat(String(k) + ":" + String(v) + "/n");
-        }, "");
-        str = str.slice(0, str.length-1);
+        var str = _.map(contents, function(v, k){
+            return String(k) + ":" + String(v);
+        });
         this.lists.push({id:id, x:x, y:y, pos:pos, contents:str});
     };
 
@@ -3829,6 +3850,7 @@ define('view/components/tooltip',[
 
     // calcurate position, height and width of tool-tip, then update dom objects
     Tooltip.prototype.update = function(){
+        console.log("tooltip:updated");
         var style = this.proceedData(this.lists);
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);
@@ -3852,13 +3874,36 @@ define('view/components/tooltip',[
                 .attr("fill", options.bg_color);
             //.atrr("stroke-width", options.stroke_width)
 
-            enters.append("text")
-                .text(function(d){return d.text;})
-                .attr("x", function(d){return d.text_x;})
-                .attr("y", function(d){return d.text_y;})
-                .attr("text-anchor", "middle")
-                .attr("fill", "#ffffff")
-                .attr("font-size",options.font_size);
+            enters.each(function(){
+                if(_.isArray(this.__data__.text)){
+                    var texts = this.__data__.text;
+                    var x = this.__data__.text_x;
+                    var y = this.__data__.text_y;
+                    var data = _.map(_.zip(texts, y), function(row){return {text: row[0], y: row[1]};});
+                    d3.select(this)
+                        .append("g")
+                        .selectAll("text")
+                        .data(data)
+                        .enter()
+                        .append("text")
+                        .text(function(d){return d.text;})
+                        .attr("x", function(d){return x;})
+                        .attr("y", function(d){return d.y;})
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#ffffff")
+                        .attr("font-size",options.font_size)
+                        .attr("dominant-baseline","text-after-edge");
+                }else{
+                    d3.select(this).append("text")
+                        .text(function(d){return d.text;})
+                        .attr("x", function(d){return d.text_x;})
+                        .attr("y", function(d){return d.text_y;})
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#ffffff")
+                        .attr("font-size",options.font_size)
+                        .attr("dominant-baseline","text-after-edge");
+                }
+            });
 
             enters.attr("transform",function(d){
                 return "translate(" + d.tip_x + "," + d.tip_y + ")";
@@ -3915,26 +3960,43 @@ define('view/components/tooltip',[
         var scales = this.scales;
         var model = this.model;
 
-        return _.map(lists, function(list){
-            var text = model.append("text").text(list.contents).attr("font-size", options.font_size);
-            var text_width = text[0][0].getBBox().width;
-            var text_height = text[0][0].getBBox().height;
-            text.remove();
+        var calcText = function(text, size){
+            var dom = model.append("text").text(text).attr("font-size", size);
+            var text_width = dom[0][0].getBBox().width;
+            var text_height = dom[0][0].getBBox().height;
+            dom.remove();
+            return {w: text_width, h:text_height};
+        };
 
-            var tip_width = text_width + margin.left + margin.right;
-            var tip_height = text_height + margin.top + margin.bottom;
+        return _.map(lists, function(list){
+            var text_num = (_.isArray(list.contents) ? list.contents.length : 1);
+            var str = (_.isArray(list.contents) ? _.max(list.contents, function(d){return d.length;}) : list.contents);
+
+            var text_size = calcText(str, options.font_size);
+            var tip_width = text_size.w + margin.left + margin.right;
+            var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
 
             var tip_x = (list.x == "left" ? 0 : scales.x(list.x));
             var tip_y = (list.y == "bottom" ? context_height : scales.y(list.y));
 
             var points = calcPoints(list.pos, tip_width, tip_height);
 
+            var text_y;
+            if(_.isArray(list.contents)){
+                var len = list.contents.length;
+                text_y = _.map(list.contents, function(str, i){
+                    return (points.text.y - text_size.h*(len-2)) + text_size.h*i;
+                });
+            }else{
+                text_y = points.text.y + text_size.h/2;
+            }
+
             return {
                 shape: points.shape,
                 tip_x: tip_x,
                 tip_y: tip_y,
                 text_x: points.text.x,
-                text_y: points.text.y + text_height/2,
+                text_y: text_y,
                 text: list.contents
             };
         });

@@ -67,24 +67,45 @@ define([
     };
 
     Scatter.prototype.proceedData = function(options){
-        var x_arr = this.df.column(this.options.x);
-        var y_arr = this.df.column(this.options.y);
-        return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+        var df = this.df;
+        var x_arr = df.column(this.options.x);
+        var y_arr = df.column(this.options.y);
+        if(options.tooltip_contents.length > 0){
+            var arr = _.map(options.tooltip_contents,function(column_name){
+                return df.column(column_name);
+            });
+            arr =  _.zip.apply(_, arr);
+            arr = _.map(arr, function(row){
+                // [1,2,3] -> {a:1, b:2, c:3}
+                return _.reduce(row, function(memo, val, i){
+                    memo[options.tooltip_contents[i]]=val;
+                    return memo;
+                }, {});
+            });
+            return _.map(_.zip(x_arr, y_arr, arr), function(d){return {x:d[0], y:d[1], tt:d[2]};});
+        }else{
+            return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
+        }
     };
 
     Scatter.prototype.updateModels = function(selector, scales, options){
         var df = this.df;
         var onMouse = function(){
+            console.log("onMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
             var id = d3.select(this).attr("id");
             options.tooltip.addToXAxis(id, this.__data__.x, 3);
             options.tooltip.addToYAxis(id, this.__data__.y, 3);
+            if(options.tooltip_contents.length > 0){
+                options.tooltip.add(id, this.__data__.x, this.__data__.y, 'top', this.__data__.tt);
+            }
             options.tooltip.update();
         };
 
         var outMouse = function(){
+            console.log("outMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
@@ -126,3 +147,4 @@ define([
 
     return Scatter;
 });
+
