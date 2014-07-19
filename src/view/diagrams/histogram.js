@@ -1,9 +1,10 @@
 define([
     'underscore',
+    'node-uuid',
     'core/manager',
     'view/components/filter',
     'view/components/legend/simple_legend'
-],function(_, Manager, Filter, SimpleLegend){
+],function(_, uuid, Manager, Filter, SimpleLegend){
     function Histogram(parent, scales, df_id, _options){
         var options = {
             title: 'histogram',
@@ -13,7 +14,8 @@ define([
             color:'steelblue',
             stroke_color: 'black',
             stroke_width: 1,
-            hover: false
+            hover: true,
+            tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -55,12 +57,18 @@ define([
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
+            var id = d3.select(this).attr("id");
+            options.tooltip.addToYAxis(id, this.__data__.y, 3);
+            options.tooltip.update();
         };
 
         var outMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
+            var id = d3.select(this).attr("id");
+            options.tooltip.remove(id);
+            options.tooltip.update();
         };
 
         selector
@@ -72,7 +80,8 @@ define([
             .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
             .attr("y", function(d){return scales.y(d.y);})
-            .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+            .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+            .attr("id", uuid.v4());
         
         if(options.hover)selector
             .on("mouseover", onMouse)
