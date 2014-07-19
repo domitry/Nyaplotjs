@@ -69,7 +69,6 @@ define([
 
     // calcurate position, height and width of tool-tip, then update dom objects
     Tooltip.prototype.update = function(){
-        console.log("tooltip:updated");
         var style = this.proceedData(this.lists);
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);

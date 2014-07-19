@@ -91,7 +91,6 @@ define([
     Scatter.prototype.updateModels = function(selector, scales, options){
         var df = this.df;
         var onMouse = function(){
-            console.log("onMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
@@ -105,7 +104,6 @@ define([
         };
 
         var outMouse = function(){
-            console.log("outMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);

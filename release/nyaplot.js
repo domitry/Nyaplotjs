@@ -2580,7 +2580,6 @@ define('view/diagrams/scatter',[
     Scatter.prototype.updateModels = function(selector, scales, options){
         var df = this.df;
         var onMouse = function(){
-            console.log("onMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
@@ -2594,7 +2593,6 @@ define('view/diagrams/scatter',[
         };
 
         var outMouse = function(){
-            console.log("outMouse");
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
@@ -3864,7 +3862,6 @@ define('view/components/tooltip',[
 
     // calcurate position, height and width of tool-tip, then update dom objects
     Tooltip.prototype.update = function(){
-        console.log("tooltip:updated");
         var style = this.proceedData(this.lists);
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);
