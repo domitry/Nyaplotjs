@@ -42,16 +42,24 @@ define([
     };
 
     // add small tool-tip to x-axis
-    Tooltip.prototype.addToXAxis = function(id, x){
+    Tooltip.prototype.addToXAxis = function(id, x, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            x = Math.round(x*pow10)/pow10;
+        }
         this.lists.push({id:id, x:x, y:"bottom", pos:'bottom', contents:String(x)});
     };
 
     // add small tool-tip to y-axis
-    Tooltip.prototype.addToYAxis = function(id, y){
+    Tooltip.prototype.addToYAxis = function(id, y, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            y = Math.round(y*pow10)/pow10;
+        }
         this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
     };
 
-    // remove old tool-tips (dom objects are deleted after being called Tooltip.update)
+    // remove old tool-tips (dom objects are deleted after Tooltip.update are called)
     Tooltip.prototype.remove = function(id){
         this.lists = _.filter(this.lists, function(d){
             if(d.id==id)return false;

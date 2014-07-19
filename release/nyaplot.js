@@ -3777,7 +3777,7 @@ define('view/components/tooltip',[
         this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
     };
 
-    // remove old tool-tips (dom objects are deleted after being called Tooltip.update)
+    // remove old tool-tips (dom objects are deleted after Tooltip.update are called)
     Tooltip.prototype.remove = function(id){
         this.lists = _.filter(this.lists, function(d){
             if(d.id==id)return false;
