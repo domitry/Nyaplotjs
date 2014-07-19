@@ -1,8 +1,9 @@
 define([
     'underscore',
+    'node-uuid',
     'core/manager',
     'view/components/legend/simple_legend'
-],function(_, Manager, SimpleLegend){
+],function(_, uuid, Manager, SimpleLegend){
     function Bar(parent, scales, df_id, _options){
         var options = {
             value: null,
@@ -10,7 +11,8 @@ define([
             y: null,
             width: 0.9,
             color: null,
-            hover: true
+            hover: true,
+            tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -83,12 +85,18 @@ define([
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
+            var id = d3.select(this).attr("id");
+            options.tooltip.addToYAxis(id, this.__data__.y);
+            options.tooltip.update();
         };
 
         var outMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", function(d){return color_scale(d.x);});
+            var id = d3.select(this).attr("id");
+            options.tooltip.remove(id);
+            options.tooltip.update();
         };
 
         var width = scales.x.rangeBand()*options.width;
@@ -100,7 +108,8 @@ define([
             .attr("fill", function(d){return color_scale(d.x);})
             .transition().duration(200)
             .attr("y", function(d){return scales.y(d.y);})
-            .attr("height", function(d){return scales.y(0) - scales.y(d.y);});
+            .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+            .attr("id", uuid.v4());
 
         if(options.hover)selector
             .on("mouseover", onMouse)
