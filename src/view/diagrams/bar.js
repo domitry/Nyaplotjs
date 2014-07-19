@@ -12,6 +12,7 @@ define([
             width: 0.9,
             color: null,
             hover: true,
+            tooltip_contents:null,
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);

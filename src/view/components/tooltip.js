@@ -209,7 +209,7 @@ define([
             if(_.isArray(list.contents)){
                 var len = list.contents.length;
                 text_y = _.map(list.contents, function(str, i){
-                    return (points.text.y - text_size.h*(len-2)) + text_size.h*i;
+                    return (points.text.y - text_size.h/2*(len-2)) + text_size.h*i;
                 });
             }else{
                 text_y = points.text.y + text_size.h/2;
