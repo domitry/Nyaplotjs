@@ -155,7 +155,8 @@ define([
                     .append("circle")
                     .attr("cx", function(d1){return scales.x(d.x) + width/2 + padding;})
                     .attr("cy", function(d1){return scales.y(d1);})
-                    .attr("r", options.outlier_r);
+                    .attr("r", options.outlier_r)
+                    .attr("clip-path","url(#" + options.clip_id + ")");
             });
     };
 
