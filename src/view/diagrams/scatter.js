@@ -49,14 +49,16 @@ define([
     }
 
     Scatter.prototype.update = function(){
-        var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+        var data = this.proceedData(this.options);
         if(this.render){
-            var circles = this.model.selectAll("circle")
-                    .data(data);
+            var circles = this.model.selectAll("circle").data(data);
+            circles.each(function(){
+                var event = document.createEvent("MouseEvents");
+                event.initEvent("mouseout", false, true);
+                this.dispatchEvent(event);
+            });
             if(circles[0][0]==undefined){
-                circles.enter()
-                    .append("circle")
-                    .attr("r", 0);
+                circles.enter().append("circle").attr("r", 0);
             }
             this.updateModels(circles, this.scales, this.options);
         }else{
@@ -64,7 +66,9 @@ define([
         }
     };
 
-    Scatter.prototype.proceedData = function(x_arr, y_arr, options){
+    Scatter.prototype.proceedData = function(options){
+        var x_arr = this.df.column(this.options.x);
+        var y_arr = this.df.column(this.options.y);
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
@@ -77,7 +81,6 @@ define([
             var id = d3.select(this).attr("id");
             options.tooltip.addToXAxis(id, this.__data__.x, 3);
             options.tooltip.addToYAxis(id, this.__data__.y, 3);
-
             options.tooltip.update();
         };
 
