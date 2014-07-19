@@ -4,8 +4,9 @@
  */
 
 define([
-    'underscore'
-],function(_){
+    'underscore',
+    'utils/ua_info'
+],function(_, ua){
     function Tooltip(parent, scales, _options){
         var options = {
             bg_color:"#333",
@@ -93,12 +94,13 @@ define([
             //.atrr("stroke-width", options.stroke_width)
 
             enters.each(function(){
+                var dom;
                 if(_.isArray(this.__data__.text)){
                     var texts = this.__data__.text;
                     var x = this.__data__.text_x;
                     var y = this.__data__.text_y;
                     var data = _.map(_.zip(texts, y), function(row){return {text: row[0], y: row[1]};});
-                    d3.select(this)
+                    dom = d3.select(this)
                         .append("g")
                         .selectAll("text")
                         .data(data)
@@ -106,20 +108,24 @@ define([
                         .append("text")
                         .text(function(d){return d.text;})
                         .attr("x", function(d){return x;})
-                        .attr("y", function(d){return d.y;})
-                        .attr("text-anchor", "middle")
-                        .attr("fill", "#ffffff")
-                        .attr("font-size",options.font_size)
-                        .attr("dominant-baseline","text-after-edge");
+                        .attr("y", function(d){return d.y;});
                 }else{
-                    d3.select(this).append("text")
+                    dom = d3.select(this).append("text")
                         .text(function(d){return d.text;})
                         .attr("x", function(d){return d.text_x;})
-                        .attr("y", function(d){return d.text_y;})
-                        .attr("text-anchor", "middle")
-                        .attr("fill", "#ffffff")
-                        .attr("font-size",options.font_size)
-                        .attr("dominant-baseline","text-after-edge");
+                        .attr("y", function(d){return d.text_y;});
+                }
+                dom.attr("text-anchor", "middle")
+                    .attr("fill", "#ffffff")
+                    .attr("font-size",options.font_size);
+
+                // Fix for chrome's Issue 143990
+                // https://code.google.com/p/chromium/issues/detail?colspec=ID20Pri20Feature20Status20Modified20Mstone%20OS&sort=-modified&id=143990
+                switch(ua()){
+                    case 'chrome':
+                    dom.attr("dominant-baseline","middle").attr("baseline-shift","50%");break;
+                    default:
+                    dom.attr("dominant-baseline","text-after-edge");break;
                 }
             });
 
