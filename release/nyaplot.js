@@ -3400,10 +3400,11 @@ define('view/diagrams/multiple_venn',[
 
 define('view/diagrams/box.js',[
     'underscore',
+    'node-uuid',
     'core/manager',
     'view/components/filter',
     'view/components/legend/simple_legend'
-],function(_, Manager, SimpleLegend){
+],function(_, uuid, Manager, SimpleLegend){
     function Box(parent, scales, df_id, _options){
         var options = {
             title: '',
@@ -3412,7 +3413,9 @@ define('view/diagrams/box.js',[
             color:null,
             stroke_color: 'black',
             stroke_width: 1,
-            outlier_r: 3
+            outlier_r: 3,
+            tooltip_contents:[],
+            tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -3486,6 +3489,29 @@ define('view/diagrams/box.js',[
         var padding = scales.x.rangeBand()*((1-options.width)/2);
         var color_scale = this.color_scale;
 
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
+            var id = d3.select(this).attr("id");
+
+            options.tooltip.addToYAxis(id, this.__data__.min, 3);
+            options.tooltip.addToYAxis(id, this.__data__.q1, 3);
+            options.tooltip.addToYAxis(id, this.__data__.med, 3);
+            options.tooltip.addToYAxis(id, this.__data__.q3, 3);
+            options.tooltip.addToYAxis(id, this.__data__.max, 3);
+            options.tooltip.update();
+        };
+
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return d3.rgb(color_scale(d.x));});
+            var id = d3.select(this).attr("id");
+            options.tooltip.remove(id);
+            options.tooltip.update();
+        };
+
         selector
             .append("line")
             .attr("x1", function(d){return scales.x(d.x) + width/2 + padding;})
@@ -3501,7 +3527,10 @@ define('view/diagrams/box.js',[
             .attr("height", function(d){return scales.y(d.q1) - scales.y(d.q3);})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
-            .attr("stroke", options.stroke_color);
+            .attr("stroke", options.stroke_color)
+            .attr("id", uuid.v4())
+            .on("mouseover", onMouse)
+            .on("mouseout", outMouse);
 
         // median line
         selector
