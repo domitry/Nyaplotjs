@@ -1,9 +1,10 @@
 define([
     'underscore',
+    'node-uuid',
     'core/manager',
     'view/components/filter',
     'view/components/legend/simple_legend'
-],function(_, Manager, Filter, SimpleLegend){
+],function(_, uuid, Manager, Filter, SimpleLegend){
     function Scatter(parent, scales, df_id, _options){
         var options = {
             title: 'scatter',
@@ -14,7 +15,9 @@ define([
             color:'steelblue',
             stroke_color: 'black',
             stroke_width: 1,
-            hover: true
+            hover: true,
+            tooltip_contents:[],
+            tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -40,6 +43,7 @@ define([
         this.model = model;
         this.df = df;
         this.df_id = df_id;
+        this.uuid = options.uuid;
 
         return this;
     }
@@ -65,16 +69,25 @@ define([
     };
 
     Scatter.prototype.updateModels = function(selector, scales, options){
+        var df = this.df;
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
+            var id = d3.select(this).attr("id");
+            options.tooltip.addToXAxis(id, this.__data__.x, 3);
+            options.tooltip.addToYAxis(id, this.__data__.y, 3);
+
+            options.tooltip.update();
         };
 
         var outMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
+            var id = d3.select(this).attr("id");
+            options.tooltip.remove(id);
+            options.tooltip.update();
         };
 
         selector
@@ -85,7 +98,8 @@ define([
             .attr("stroke-width", options.stroke_width)
             .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
-            .attr("r", options.r);
+            .attr("r", options.r)
+            .attr("id", uuid.v4());
 
         if(options.hover)selector
             .on("mouseover", onMouse)

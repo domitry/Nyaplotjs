@@ -2212,6 +2212,7 @@ define('view/diagrams/bar',[
             width: 0.9,
             color: null,
             hover: true,
+            tooltip_contents:null,
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
@@ -2479,10 +2480,11 @@ define('view/diagrams/histogram',[
 
 define('view/diagrams/scatter',[
     'underscore',
+    'node-uuid',
     'core/manager',
     'view/components/filter',
     'view/components/legend/simple_legend'
-],function(_, Manager, Filter, SimpleLegend){
+],function(_, uuid, Manager, Filter, SimpleLegend){
     function Scatter(parent, scales, df_id, _options){
         var options = {
             title: 'scatter',
@@ -2493,7 +2495,9 @@ define('view/diagrams/scatter',[
             color:'steelblue',
             stroke_color: 'black',
             stroke_width: 1,
-            hover: true
+            hover: true,
+            tooltip_contents:[],
+            tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -2519,6 +2523,7 @@ define('view/diagrams/scatter',[
         this.model = model;
         this.df = df;
         this.df_id = df_id;
+        this.uuid = options.uuid;
 
         return this;
     }
@@ -2544,16 +2549,25 @@ define('view/diagrams/scatter',[
     };
 
     Scatter.prototype.updateModels = function(selector, scales, options){
+        var df = this.df;
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
+            var id = d3.select(this).attr("id");
+            options.tooltip.addToXAxis(id, this.__data__.x, 3);
+            options.tooltip.addToYAxis(id, this.__data__.y, 3);
+
+            options.tooltip.update();
         };
 
         var outMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
+            var id = d3.select(this).attr("id");
+            options.tooltip.remove(id);
+            options.tooltip.update();
         };
 
         selector
@@ -2564,7 +2578,8 @@ define('view/diagrams/scatter',[
             .attr("stroke-width", options.stroke_width)
             .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
-            .attr("r", options.r);
+            .attr("r", options.r)
+            .attr("id", uuid.v4());
 
         if(options.hover)selector
             .on("mouseover", onMouse)
@@ -3745,12 +3760,20 @@ define('view/components/tooltip',[
     };
 
     // add small tool-tip to x-axis
-    Tooltip.prototype.addToXAxis = function(id, x){
+    Tooltip.prototype.addToXAxis = function(id, x, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            x = Math.round(x*pow10)/pow10;
+        }
         this.lists.push({id:id, x:x, y:"bottom", pos:'bottom', contents:String(x)});
     };
 
     // add small tool-tip to y-axis
-    Tooltip.prototype.addToYAxis = function(id, y){
+    Tooltip.prototype.addToYAxis = function(id, y, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            y = Math.round(y*pow10)/pow10;
+        }
         this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
     };
 
