@@ -8,6 +8,7 @@ define(function(require, exports, module){
     diagrams.venn = require('view/diagrams/venn');
     diagrams.multiple_venn = require('view/diagrams/multiple_venn');
     diagrams.box = require('view/diagrams/box.js');
+    diagrams.heatmap = require('view/diagrams/heatmap.js');
 
     return diagrams;
 });
