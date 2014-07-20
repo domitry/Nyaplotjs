@@ -3665,11 +3665,12 @@ define('utils/color',[
 
 define('view/diagrams/heatmap.js',[
     'underscore',
+    'node-uuid',
     'core/manager',
     'view/components/filter',
     'view/components/legend/simple_legend',
     'utils/color'
-],function(_, Manager, Filter, SimpleLegend, colorset){
+],function(_, uuid, Manager, Filter, SimpleLegend, colorset){
     function HeatMap(parent, scales, df_id, _options){
         var options = {
             title: 'heatmap',
@@ -3678,10 +3679,10 @@ define('view/diagrams/heatmap.js',[
             fill: null,
             width: 1.0,
             height: 1.0,
-            color: colorset("RdBu"),
-            stroke_color: 'black',
+            color: colorset("RdBu").reverse(),
+            stroke_color: "#fff",
             stroke_width: 1,
-            hover: false
+            hover: true
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -3733,11 +3734,30 @@ define('view/diagrams/heatmap.js',[
                 x = scales.x(row[0]) - width/2;
                 y = scales.y(row[1]) - height/2;
             }
-            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2])};
+            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
         });
     };
 
     HeatMap.prototype.updateModels = function(selector, options){
+        var onMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return d3.rgb(d.fill).darker(1);});
+            var id = d3.select(this).attr("id");
+            options.tooltip.addToXAxis(id, this.__data__.x_raw, 3);
+            options.tooltip.addToYAxis(id, this.__data__.y_raw, 3);
+            options.tooltip.update();
+        };
+
+        var outMouse = function(){
+            d3.select(this).transition()
+                .duration(200)
+                .attr("fill", function(d){return d.fill;});
+            var id = d3.select(this).attr("id");
+            options.tooltip.remove(id);
+            options.tooltip.update();
+        };
+
         selector
             .attr("x", function(d){return d.x;})
             .attr("width", function(d){return d.width;})
@@ -3746,7 +3766,12 @@ define('view/diagrams/heatmap.js',[
             .attr("fill", function(d){return d.fill;})
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")");
+            .attr("clip-path","url(#" + this.options.clip_id + ")")
+            .attr("id", uuid.v4());
+
+        if(options.hover)selector
+            .on("mouseover", onMouse)
+            .on("mouseout", outMouse);
     };
 
     HeatMap.prototype.checkSelectedData = function(ranges){
