@@ -1,3 +1,9 @@
+/*
+ * Bar chart
+ * This diagram has two mode, ordinal-mode and count-mode. The former creates bar from x and y column.
+ * The latter counts unique value in 'value' column and generates bar from the result.
+ */
+
 define([
     'underscore',
     'node-uuid',
