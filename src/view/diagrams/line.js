@@ -88,13 +88,6 @@ define([
         return legend;
     };
 
-    Line.prototype.updateData = function(){
-        this.df = Manager.getData(this.df_id);
-        var data = this.proceedData(this.df.column(this.options.value), this.options);
-        var models = this.model.selectAll("path").datum(data);
-        this.updateModels(models,  this.scales, this.options);
-    };
-
     Line.prototype.checkSelectedData = function(ranges){
         return;
     };
