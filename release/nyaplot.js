@@ -3734,7 +3734,7 @@ define('view/diagrams/heatmap.js',[
                 x = scales.x(row[0]) - width/2;
                 y = scales.y(row[1]) - height/2;
             }
-            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
+            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1], uuid:uuid.v4()};
         });
     };
 
@@ -3767,7 +3767,7 @@ define('view/diagrams/heatmap.js',[
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
             .attr("clip-path","url(#" + this.options.clip_id + ")")
-            .attr("id", uuid.v4());
+            .attr("id", function(d){return d.uuid;});
 
         if(options.hover)selector
             .on("mouseover", onMouse)
