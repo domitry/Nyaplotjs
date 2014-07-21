@@ -90,11 +90,11 @@ define([
 
     Scatter.prototype.updateModels = function(selector, scales, options){
         var df = this.df;
+        var id = this.uuid;
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
-            var id = d3.select(this).attr("id");
             options.tooltip.addToXAxis(id, this.__data__.x, 3);
             options.tooltip.addToYAxis(id, this.__data__.y, 3);
             if(options.tooltip_contents.length > 0){
@@ -107,7 +107,6 @@ define([
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
-            var id = d3.select(this).attr("id");
             options.tooltip.remove(id);
             options.tooltip.update();
         };
@@ -120,8 +119,7 @@ define([
             .attr("stroke-width", options.stroke_width)
             .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
-            .attr("r", options.r)
-            .attr("id", uuid.v4());
+            .attr("r", options.r);
 
         if(options.hover)selector
             .on("mouseover", onMouse)

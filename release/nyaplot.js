@@ -2585,11 +2585,11 @@ define('view/diagrams/scatter',[
 
     Scatter.prototype.updateModels = function(selector, scales, options){
         var df = this.df;
+        var id = this.uuid;
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", d3.rgb(options.color).darker(1));
-            var id = d3.select(this).attr("id");
             options.tooltip.addToXAxis(id, this.__data__.x, 3);
             options.tooltip.addToYAxis(id, this.__data__.y, 3);
             if(options.tooltip_contents.length > 0){
@@ -2602,7 +2602,6 @@ define('view/diagrams/scatter',[
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
-            var id = d3.select(this).attr("id");
             options.tooltip.remove(id);
             options.tooltip.update();
         };
@@ -2615,8 +2614,7 @@ define('view/diagrams/scatter',[
             .attr("stroke-width", options.stroke_width)
             .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
-            .attr("r", options.r)
-            .attr("id", uuid.v4());
+            .attr("r", options.r);
 
         if(options.hover)selector
             .on("mouseover", onMouse)
@@ -3739,16 +3737,16 @@ define('view/diagrams/heatmap.js',[
                 x = scales.x(row[0]) - width/2;
                 y = scales.y(row[1]) - height/2;
             }
-            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1], uuid:uuid.v4()};
+            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
         });
     };
 
     HeatMap.prototype.updateModels = function(selector, options){
+        var id = this.uuid;
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", function(d){return d3.rgb(d.fill).darker(1);});
-            var id = d3.select(this).attr("id");
             options.tooltip.addToXAxis(id, this.__data__.x_raw, 3);
             options.tooltip.addToYAxis(id, this.__data__.y_raw, 3);
             options.tooltip.update();
@@ -3758,7 +3756,6 @@ define('view/diagrams/heatmap.js',[
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", function(d){return d.fill;});
-            var id = d3.select(this).attr("id");
             options.tooltip.remove(id);
             options.tooltip.update();
         };
@@ -3771,8 +3768,7 @@ define('view/diagrams/heatmap.js',[
             .attr("fill", function(d){return d.fill;})
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")")
-            .attr("id", function(d){return d.uuid;});
+            .attr("clip-path","url(#" + this.options.clip_id + ")");
 
         if(options.hover)selector
             .on("mouseover", onMouse)
