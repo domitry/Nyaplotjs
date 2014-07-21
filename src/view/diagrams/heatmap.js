@@ -41,6 +41,11 @@ define([
     HeatMap.prototype.update = function(){
         var data = this.proceedData();
         var models = this.model.selectAll("rect").data(data);
+        models.each(function(){
+            var event = document.createEvent("MouseEvents");
+            event.initEvent("mouseout", false, true);
+            this.dispatchEvent(event);
+        });
         models.enter().append("rect");
         this.updateModels(models, this.options);
     };
