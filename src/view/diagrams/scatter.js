@@ -42,7 +42,6 @@ define([
         this.options = options;
         this.model = model;
         this.df = df;
-        this.df_id = df_id;
         this.uuid = options.uuid;
 
         return this;
@@ -128,13 +127,6 @@ define([
 
     Scatter.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
-    };
-
-    Scatter.prototype.updateData = function(){
-        this.df = Manager.getData(this.df_id);
-        var data = this.proceedData(this.df.column(this.options.value), this.options);
-        var models = this.model.selectAll("circle").data(data);
-        this.updateModels(models,  this.scales, this.options);
     };
 
     Scatter.prototype.checkSelectedData = function(ranges){
