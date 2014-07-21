@@ -9,9 +9,9 @@ define([
     'node-uuid',
     'core/manager',
     'view/components/filter',
-    'view/components/legend/simple_legend',
+    'view/components/legend/color_bar',
     'utils/color'
-],function(_, uuid, Manager, Filter, SimpleLegend, colorset){
+],function(_, uuid, Manager, Filter, ColorBar, colorset){
     function HeatMap(parent, scales, df_id, _options){
         var options = {
             title: 'heatmap',
@@ -29,6 +29,15 @@ define([
 
         var df = Manager.getData(df_id);
         var model = parent.append("g");
+
+        this.color_scale = (function(){
+            var column_fill = df.columnWithFilters(options.uuid, options.fill);
+            var min_max = d3.extent(column_fill);
+            var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
+            return d3.scale.linear()
+                .range(options.color)
+                .domain(domain);
+        })();
 
         this.scales = scales;
         this.options = options;
@@ -56,14 +65,7 @@ define([
         var column_fill = this.df.columnWithFilters(this.uuid, this.options.fill);
         var scales = this.scales;
         var options = this.options;
-
-        var color_scale = (function(){
-            var min_max = d3.extent(column_fill);
-            var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
-            return d3.scale.linear()
-                .range(options.color)
-                .domain(domain);
-        })();
+        var color_scale = this.color_scale;
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
@@ -117,6 +119,10 @@ define([
             .on("mouseover", onMouse)
             .on("mouseout", outMouse);
     };
+
+    HeatMap.prototype.getLegend = function(){
+        return new ColorBar(this.color_scale);
+    };    
 
     HeatMap.prototype.checkSelectedData = function(ranges){
         return;

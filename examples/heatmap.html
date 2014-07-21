@@ -15,7 +15,7 @@ for(var i=0;i<50;i+=step){
    }
 }
 
-models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'heatmap', data: 'data1', options: {x:'x', y:'y', fill:'val', width:step, height:step, stroke_width:0}}],options:{width:500, height:500, xrange: [0, 50], yrange: [0, 50], zoom:true}}]};
+models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'heatmap', data: 'data1', options: {x:'x', y:'y', fill:'val', width:step, height:step, stroke_width:0}}],options:{width:500, height:500, xrange: [0, 50], yrange: [0, 50], legend:true, zoom:true}}]};
 window.onload = function(){Nyaplot.core.parse(models, '#vis');};
 </script>
 </body>

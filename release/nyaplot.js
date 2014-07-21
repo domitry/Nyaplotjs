@@ -2537,7 +2537,6 @@ define('view/diagrams/scatter',[
         this.options = options;
         this.model = model;
         this.df = df;
-        this.df_id = df_id;
         this.uuid = options.uuid;
 
         return this;
@@ -2623,13 +2622,6 @@ define('view/diagrams/scatter',[
 
     Scatter.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
-    };
-
-    Scatter.prototype.updateData = function(){
-        this.df = Manager.getData(this.df_id);
-        var data = this.proceedData(this.df.column(this.options.value), this.options);
-        var models = this.model.selectAll("circle").data(data);
-        this.updateModels(models,  this.scales, this.options);
     };
 
     Scatter.prototype.checkSelectedData = function(ranges){
@@ -3597,6 +3589,96 @@ define('view/diagrams/box.js',[
     return Box;
 });
 
+/*
+ * Colorset provides colorbar filled with gradient for continuous data.
+ * Each diagram create an instance of Colorset and Pane append it to itself.
+ */
+
+define('view/components/legend/color_bar',[
+    'underscore'
+], function(_){
+    function ColorBar(color_scale, _options){
+        var options = {
+            width: 150,
+            height: 200
+        };
+        if(arguments.length>1)_.extend(options, _options);
+        
+        this.options = options;
+        this.model = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
+        this.color_scale = color_scale;
+    }
+
+    ColorBar.prototype.width = function(){
+        return this.options.width;
+    };
+
+    ColorBar.prototype.height = function(){
+        return this.options.height;
+    };
+
+    ColorBar.prototype.getDomObject = function(){
+        var model = this.model;
+	    var color_scale = this.color_scale;
+        var colors = color_scale.range();
+        var values = color_scale.domain();
+
+        var height_scale = d3.scale.linear()
+                .domain(d3.extent(values))
+                .range([this.options.height,0]);
+
+	    var gradient = model.append("svg:defs")
+	            .append("svg:linearGradient")
+	            .attr("id", "gradient")
+	            .attr("x1", "0%")
+	            .attr("x2", "0%")
+	            .attr("y1", "100%")
+	            .attr("y2", "0%");
+
+	    for(var i=0; i<colors.length; i++){
+	        gradient.append("svg:stop")
+		        .attr("offset", (100/(colors.length-1))*i + "%")
+		        .attr("stop-color", colors[i]);
+	    }
+
+	    var group = model.append("g");
+
+	    group.append("svg:rect")
+	        .attr("y",10)
+	        .attr("width", "25")
+	        .attr("height", this.options.height)
+	        .style("fill", "url(#gradient)");
+
+	    model.append("g")
+	        .attr("width", "100")
+	        .attr("height", this.options.height)
+	        .attr("class", "axis")
+	        .attr("transform", "translate(25,10)")
+	        .call(d3.svg.axis()
+		          .scale(height_scale)
+		          .orient("right")
+		          .ticks(5));
+
+	    model.selectAll(".axis").selectAll("path")
+	        .style("fill", "none")
+	        .style("stroke", "black")
+	        .style("shape-rendering", "crispEdges");
+
+	    model.selectAll(".axis").selectAll("line")
+	        .style("fill", "none")
+	        .style("stroke", "black")
+	        .style("shape-rendering", "crispEdges");
+
+	    model.selectAll(".axis").selectAll("text")
+	        .style("font-family", "san-serif")
+	        .style("font-size", "11px");
+
+	    return model;
+    };
+
+    return ColorBar;
+});
+
 define('colorbrewer',[],function(){
 return{
 "Spectral":  {"3": ["rgb(252,141,89)", "rgb(255,255,191)", "rgb(153,213,148)"], "4": ["rgb(215,25,28)", "rgb(253,174,97)", "rgb(171,221,164)", "rgb(43,131,186)"], "5": ["rgb(215,25,28)", "rgb(253,174,97)", "rgb(255,255,191)", "rgb(171,221,164)", "rgb(43,131,186)"], "6": ["rgb(213,62,79)", "rgb(252,141,89)", "rgb(254,224,139)", "rgb(230,245,152)", "rgb(153,213,148)", "rgb(50,136,189)"], "7": ["rgb(213,62,79)", "rgb(252,141,89)", "rgb(254,224,139)", "rgb(255,255,191)", "rgb(230,245,152)", "rgb(153,213,148)", "rgb(50,136,189)"], "8": ["rgb(213,62,79)", "rgb(244,109,67)", "rgb(253,174,97)", "rgb(254,224,139)", "rgb(230,245,152)", "rgb(171,221,164)", "rgb(102,194,165)", "rgb(50,136,189)"], "9": ["rgb(213,62,79)", "rgb(244,109,67)", "rgb(253,174,97)", "rgb(254,224,139)", "rgb(255,255,191)", "rgb(230,245,152)", "rgb(171,221,164)", "rgb(102,194,165)", "rgb(50,136,189)"], "10": ["rgb(158,1,66)", "rgb(213,62,79)", "rgb(244,109,67)", "rgb(253,174,97)", "rgb(254,224,139)", "rgb(230,245,152)", "rgb(171,221,164)", "rgb(102,194,165)", "rgb(50,136,189)", "rgb(94,79,162)"], "11": ["rgb(158,1,66)", "rgb(213,62,79)", "rgb(244,109,67)", "rgb(253,174,97)", "rgb(254,224,139)", "rgb(255,255,191)", "rgb(230,245,152)", "rgb(171,221,164)", "rgb(102,194,165)", "rgb(50,136,189)", "rgb(94,79,162)"], "type": "div"} ,
@@ -3666,9 +3748,9 @@ define('view/diagrams/heatmap.js',[
     'node-uuid',
     'core/manager',
     'view/components/filter',
-    'view/components/legend/simple_legend',
+    'view/components/legend/color_bar',
     'utils/color'
-],function(_, uuid, Manager, Filter, SimpleLegend, colorset){
+],function(_, uuid, Manager, Filter, ColorBar, colorset){
     function HeatMap(parent, scales, df_id, _options){
         var options = {
             title: 'heatmap',
@@ -3686,6 +3768,15 @@ define('view/diagrams/heatmap.js',[
 
         var df = Manager.getData(df_id);
         var model = parent.append("g");
+
+        this.color_scale = (function(){
+            var column_fill = df.columnWithFilters(options.uuid, options.fill);
+            var min_max = d3.extent(column_fill);
+            var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
+            return d3.scale.linear()
+                .range(options.color)
+                .domain(domain);
+        })();
 
         this.scales = scales;
         this.options = options;
@@ -3713,14 +3804,7 @@ define('view/diagrams/heatmap.js',[
         var column_fill = this.df.columnWithFilters(this.uuid, this.options.fill);
         var scales = this.scales;
         var options = this.options;
-
-        var color_scale = (function(){
-            var min_max = d3.extent(column_fill);
-            var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
-            return d3.scale.linear()
-                .range(options.color)
-                .domain(domain);
-        })();
+        var color_scale = this.color_scale;
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
@@ -3774,6 +3858,10 @@ define('view/diagrams/heatmap.js',[
             .on("mouseover", onMouse)
             .on("mouseout", outMouse);
     };
+
+    HeatMap.prototype.getLegend = function(){
+        return new ColorBar(this.color_scale);
+    };    
 
     HeatMap.prototype.checkSelectedData = function(ranges){
         return;
