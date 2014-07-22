@@ -1,3 +1,8 @@
+/*
+ * Scatter
+ * Shapes: 'circle', 'cross', 'diamond', 'square', 'triangle-down', 'triangle-up'
+ */
+
 define([
     'underscore',
     'node-uuid',
@@ -10,7 +15,7 @@ define([
             title: 'scatter',
             x: null,
             y: null,
-            r: 5,
+            size: 100,
             shape:'circle',
             color:'steelblue',
             stroke_color: 'black',
@@ -50,18 +55,19 @@ define([
     Scatter.prototype.update = function(){
         var data = this.proceedData(this.options);
         if(this.render){
-            var circles = this.model.selectAll("circle").data(data);
-            circles.each(function(){
+            var shapes = this.model.selectAll("path").data(data);
+            shapes.each(function(){
                 var event = document.createEvent("MouseEvents");
                 event.initEvent("mouseout", false, true);
                 this.dispatchEvent(event);
             });
-            if(circles[0][0]==undefined){
-                circles.enter().append("circle").attr("r", 0);
+            if(shapes[0][0]==undefined){
+                shapes.enter().append("path");
+                    //.attr("d", d3.svg.symbol().type(this.options.shape).size(0));
             }
-            this.updateModels(circles, this.scales, this.options);
+            this.updateModels(shapes, this.scales, this.options);
         }else{
-            this.model.selectAll("circle").remove();
+            this.model.selectAll("path").remove();
         }
     };
 
@@ -111,14 +117,13 @@ define([
         };
 
         selector
-            .attr("cx",function(d){return scales.x(d.x);})
-            .attr("cy", function(d){return scales.y(d.y);})
+            .attr("transform", function(d) {
+                return "translate(" + scales.x(d.x) + "," + scales.y(d.y) + ")"; })
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
-            .attr("r", options.r);
+            .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
 
         if(options.hover)selector
             .on("mouseover", onMouse)
