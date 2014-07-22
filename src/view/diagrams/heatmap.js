@@ -112,8 +112,7 @@ define([
             .attr("height", function(d){return d.height;})
             .attr("fill", function(d){return d.fill;})
             .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")");
+            .attr("stroke-width", options.stroke_width);
 
         if(options.hover)selector
             .on("mouseover", onMouse)

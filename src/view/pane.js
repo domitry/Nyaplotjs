@@ -137,6 +137,9 @@ define([
             .attr("width", areas.plot_width)
             .attr("height", areas.plot_height);
 
+        model.select(".context")
+            .attr("clip-path","url(#" + this.uuid + 'clip_context' + ")");
+
         // add tooltip
         var tooltip = new Tooltip(model.select("g"), scales, {
             context_width: areas.plot_width,
@@ -176,8 +179,7 @@ define([
     Pane.prototype.addDiagram = function(type, data, options){
         _.extend(options, {
             uuid: uuid.v4(),
-            tooltip: this.tooltip,
-            clip_id: this.uuid + 'clip_context'
+            tooltip: this.tooltip
         });
 
         var diagram = new diagrams[type](this.context, this.scales, data, options);

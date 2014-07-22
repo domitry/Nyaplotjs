@@ -2464,7 +2464,6 @@ define('view/diagrams/histogram',[
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
             .attr("y", function(d){return scales.y(d.y);})
             .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
@@ -2493,6 +2492,11 @@ define('view/diagrams/histogram',[
     return Histogram;
 });
 
+/*
+ * Scatter
+ * Shapes: 'circle', 'cross', 'diamond', 'square', 'triangle-down', 'triangle-up'
+ */
+
 define('view/diagrams/scatter',[
     'underscore',
     'node-uuid',
@@ -2505,7 +2509,7 @@ define('view/diagrams/scatter',[
             title: 'scatter',
             x: null,
             y: null,
-            r: 5,
+            size: 100,
             shape:'circle',
             color:'steelblue',
             stroke_color: 'black',
@@ -2545,18 +2549,19 @@ define('view/diagrams/scatter',[
     Scatter.prototype.update = function(){
         var data = this.proceedData(this.options);
         if(this.render){
-            var circles = this.model.selectAll("circle").data(data);
-            circles.each(function(){
+            var shapes = this.model.selectAll("path").data(data);
+            shapes.each(function(){
                 var event = document.createEvent("MouseEvents");
                 event.initEvent("mouseout", false, true);
                 this.dispatchEvent(event);
             });
-            if(circles[0][0]==undefined){
-                circles.enter().append("circle").attr("r", 0);
+            if(shapes[0][0]==undefined){
+                shapes.enter().append("path");
+                    //.attr("d", d3.svg.symbol().type(this.options.shape).size(0));
             }
-            this.updateModels(circles, this.scales, this.options);
+            this.updateModels(shapes, this.scales, this.options);
         }else{
-            this.model.selectAll("circle").remove();
+            this.model.selectAll("path").remove();
         }
     };
 
@@ -2606,14 +2611,13 @@ define('view/diagrams/scatter',[
         };
 
         selector
-            .attr("cx",function(d){return scales.x(d.x);})
-            .attr("cy", function(d){return scales.y(d.y);})
+            .attr("transform", function(d) {
+                return "translate(" + scales.x(d.x) + "," + scales.y(d.y) + ")"; })
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")")
             .transition().duration(200)
-            .attr("r", options.r);
+            .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
 
         if(options.hover)selector
             .on("mouseover", onMouse)
@@ -2680,7 +2684,6 @@ define('view/diagrams/line',[
             this.model.selectAll("path").remove();
             var path =this.model
                     .append("path")
-                    .attr("clip-path","url(#" + this.options.clip_id + ")")
                     .datum(data);
             
             this.updateModels(path, this.scales, this.options);
@@ -3572,8 +3575,7 @@ define('view/diagrams/box.js',[
                     .append("circle")
                     .attr("cx", function(d1){return scales.x(d.x) + width/2 + padding;})
                     .attr("cy", function(d1){return scales.y(d1);})
-                    .attr("r", options.outlier_r)
-                    .attr("clip-path","url(#" + options.clip_id + ")");
+                    .attr("r", options.outlier_r);
             });
     };
 
@@ -3851,8 +3853,7 @@ define('view/diagrams/heatmap.js',[
             .attr("height", function(d){return d.height;})
             .attr("fill", function(d){return d.fill;})
             .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("clip-path","url(#" + this.options.clip_id + ")");
+            .attr("stroke-width", options.stroke_width);
 
         if(options.hover)selector
             .on("mouseover", onMouse)
@@ -4431,6 +4432,9 @@ define('view/pane',[
             .attr("width", areas.plot_width)
             .attr("height", areas.plot_height);
 
+        model.select(".context")
+            .attr("clip-path","url(#" + this.uuid + 'clip_context' + ")");
+
         // add tooltip
         var tooltip = new Tooltip(model.select("g"), scales, {
             context_width: areas.plot_width,
@@ -4470,8 +4474,7 @@ define('view/pane',[
     Pane.prototype.addDiagram = function(type, data, options){
         _.extend(options, {
             uuid: uuid.v4(),
-            tooltip: this.tooltip,
-            clip_id: this.uuid + 'clip_context'
+            tooltip: this.tooltip
         });
 
         var diagram = new diagrams[type](this.context, this.scales, data, options);
