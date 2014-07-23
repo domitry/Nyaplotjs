@@ -59,6 +59,16 @@ define([
         });
     };
 
+    // Fetch partical dataframe as the format like [{a:1, b:2, c:3}, ...,{a:1, b:2, c:3}] using column names
+    Dataframe.prototype.getPartialDf = function(column_names){
+        return _.map(this.raw, function(row){
+            return _.reduce(column_names, function(memo, name){
+                memo[name] = row[name];
+                return memo;
+            }, {});
+        });
+    };
+
     Dataframe.prototype.columnRange = function(label){
         var column = this.column(label);
         return {

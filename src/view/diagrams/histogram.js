@@ -67,8 +67,7 @@ define([
                 .duration(200)
                 .attr("fill", options.color);
             var id = d3.select(this).attr("id");
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector

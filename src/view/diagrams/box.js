@@ -112,8 +112,7 @@ define([
                 .duration(200)
                 .attr("fill", function(d){return d3.rgb(color_scale(d.x));});
             var id = d3.select(this).attr("id");
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector

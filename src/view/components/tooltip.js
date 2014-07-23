@@ -59,12 +59,10 @@ define([
         this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
     };
 
-    // remove old tool-tips (dom objects are deleted after Tooltip.update are called)
-    Tooltip.prototype.remove = function(id){
-        this.lists = _.filter(this.lists, function(d){
-            if(d.id==id)return false;
-            return true;
-        });
+    // remove all exsistng tool-tips
+    Tooltip.prototype.reset = function(){
+        this.lists = [];
+        this.update();
     };
 
     // calcurate position, height and width of tool-tip, then update dom objects

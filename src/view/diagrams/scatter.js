@@ -54,16 +54,12 @@ define([
 
     Scatter.prototype.update = function(){
         var data = this.proceedData(this.options);
+        this.options.tooltip.reset();
         if(this.render){
             var shapes = this.model.selectAll("path").data(data);
-            shapes.each(function(){
-                var event = document.createEvent("MouseEvents");
-                event.initEvent("mouseout", false, true);
-                this.dispatchEvent(event);
-            });
             if(shapes[0][0]==undefined){
-                shapes.enter().append("path");
-                    //.attr("d", d3.svg.symbol().type(this.options.shape).size(0));
+                shapes.enter().append("path")
+                    .attr("d", d3.svg.symbol().type(this.options.shape).size(0));
             }
             this.updateModels(shapes, this.scales, this.options);
         }else{
@@ -76,18 +72,10 @@ define([
         var x_arr = df.column(this.options.x);
         var y_arr = df.column(this.options.y);
         if(options.tooltip_contents.length > 0){
-            var arr = _.map(options.tooltip_contents,function(column_name){
-                return df.column(column_name);
+            var tt_arr = df.getPartialDf(options.tooltip_contents);
+            return _.map(_.zip(x_arr, y_arr, tt_arr), function(d){
+                return {x:d[0], y:d[1], tt:d[2]};
             });
-            arr =  _.zip.apply(_, arr);
-            arr = _.map(arr, function(row){
-                // [1,2,3] -> {a:1, b:2, c:3}
-                return _.reduce(row, function(memo, val, i){
-                    memo[options.tooltip_contents[i]]=val;
-                    return memo;
-                }, {});
-            });
-            return _.map(_.zip(x_arr, y_arr, arr), function(d){return {x:d[0], y:d[1], tt:d[2]};});
         }else{
             return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
         }
@@ -112,8 +100,7 @@ define([
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector
@@ -140,4 +127,3 @@ define([
 
     return Scatter;
 });
-

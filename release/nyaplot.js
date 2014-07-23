@@ -2302,8 +2302,7 @@ define('view/diagrams/bar',[
                 .duration(200)
                 .attr("fill", function(d){return color_scale(d.x);});
             var id = d3.select(this).attr("id");
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         var width = scales.x.rangeBand()*options.width;
@@ -2454,8 +2453,7 @@ define('view/diagrams/histogram',[
                 .duration(200)
                 .attr("fill", options.color);
             var id = d3.select(this).attr("id");
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector
@@ -2548,16 +2546,12 @@ define('view/diagrams/scatter',[
 
     Scatter.prototype.update = function(){
         var data = this.proceedData(this.options);
+        this.options.tooltip.reset();
         if(this.render){
             var shapes = this.model.selectAll("path").data(data);
-            shapes.each(function(){
-                var event = document.createEvent("MouseEvents");
-                event.initEvent("mouseout", false, true);
-                this.dispatchEvent(event);
-            });
             if(shapes[0][0]==undefined){
-                shapes.enter().append("path");
-                    //.attr("d", d3.svg.symbol().type(this.options.shape).size(0));
+                shapes.enter().append("path")
+                    .attr("d", d3.svg.symbol().type(this.options.shape).size(0));
             }
             this.updateModels(shapes, this.scales, this.options);
         }else{
@@ -2570,18 +2564,10 @@ define('view/diagrams/scatter',[
         var x_arr = df.column(this.options.x);
         var y_arr = df.column(this.options.y);
         if(options.tooltip_contents.length > 0){
-            var arr = _.map(options.tooltip_contents,function(column_name){
-                return df.column(column_name);
+            var tt_arr = df.getPartialDf(options.tooltip_contents);
+            return _.map(_.zip(x_arr, y_arr, tt_arr), function(d){
+                return {x:d[0], y:d[1], tt:d[2]};
             });
-            arr =  _.zip.apply(_, arr);
-            arr = _.map(arr, function(row){
-                // [1,2,3] -> {a:1, b:2, c:3}
-                return _.reduce(row, function(memo, val, i){
-                    memo[options.tooltip_contents[i]]=val;
-                    return memo;
-                }, {});
-            });
-            return _.map(_.zip(x_arr, y_arr, arr), function(d){return {x:d[0], y:d[1], tt:d[2]};});
         }else{
             return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
         }
@@ -2606,8 +2592,7 @@ define('view/diagrams/scatter',[
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", options.color);
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector
@@ -2634,7 +2619,6 @@ define('view/diagrams/scatter',[
 
     return Scatter;
 });
-
 
 define('view/diagrams/line',[
     'underscore',
@@ -3532,8 +3516,7 @@ define('view/diagrams/box.js',[
                 .duration(200)
                 .attr("fill", function(d){return d3.rgb(color_scale(d.x));});
             var id = d3.select(this).attr("id");
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector
@@ -3842,8 +3825,7 @@ define('view/diagrams/heatmap.js',[
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", function(d){return d.fill;});
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector
@@ -4124,12 +4106,10 @@ define('view/components/tooltip',[
         this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
     };
 
-    // remove old tool-tips (dom objects are deleted after Tooltip.update are called)
-    Tooltip.prototype.remove = function(id){
-        this.lists = _.filter(this.lists, function(d){
-            if(d.id==id)return false;
-            return true;
-        });
+    // remove all exsistng tool-tips
+    Tooltip.prototype.reset = function(){
+        this.lists = [];
+        this.update();
     };
 
     // calcurate position, height and width of tool-tip, then update dom objects
@@ -4570,6 +4550,16 @@ define('utils/dataframe',[
         var column = this.column(label);
         return _.map(row_nums, function(i){
             return column[i];
+        });
+    };
+
+    // Fetch partical dataframe as the format like [{a:1, b:2, c:3}, ...,{a:1, b:2, c:3}] using column names
+    Dataframe.prototype.getPartialDf = function(column_names){
+        return _.map(this.raw, function(row){
+            return _.reduce(column_names, function(memo, name){
+                memo[name] = row[name];
+                return memo;
+            }, {});
         });
     };
 

@@ -101,8 +101,7 @@ define([
             d3.select(this).transition()
                 .duration(200)
                 .attr("fill", function(d){return d.fill;});
-            options.tooltip.remove(id);
-            options.tooltip.update();
+            options.tooltip.reset();
         };
 
         selector
