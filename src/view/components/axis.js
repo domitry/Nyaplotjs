@@ -19,6 +19,8 @@ define([
             grid:true,
             zoom:false,
             zoom_range:[0.5, 5],
+            rotate_x_label:0,
+            rotate_y_label:0,
             pane_uuid: null
         };
         if(arguments.length>2)_.extend(options, _options);
@@ -76,6 +78,24 @@ define([
 
             parent.selectAll(".y_axis")
                 .attr("transform", "translate(-4,0)");
+            
+            if(options.rotate_x_label != 0){
+                parent.selectAll(".x_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_x_label + ")";
+                    });
+            }
+
+            if(options.rotate_y_label != 0){
+                parent.selectAll(".y_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_y_label + ")";
+                    });
+            }
 
             Manager.update(options.pane_uuid);
         };

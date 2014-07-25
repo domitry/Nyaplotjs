@@ -21,6 +21,8 @@ define([
             yrange: [0,0],
             x_label:'X',
             y_label:'Y',
+            rotate_x_label: 0,
+            rotate_y_label:0,
             zoom: false,
             grid: true,
             zoom_range: [0.5, 5],
@@ -121,6 +123,8 @@ define([
             zoom_range:options.zoom_range,
             x_label:options.x_label,
             y_label:options.y_label,
+            rotate_x_label:options.rotate_x_label,
+            rotate_y_label:options.rotate_y_label,
             stroke_color: options.grid_color,
             pane_uuid: this.uuid
         });

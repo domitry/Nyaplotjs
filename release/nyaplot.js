@@ -3889,6 +3889,8 @@ define('view/components/axis',[
             grid:true,
             zoom:false,
             zoom_range:[0.5, 5],
+            rotate_x_label:0,
+            rotate_y_label:0,
             pane_uuid: null
         };
         if(arguments.length>2)_.extend(options, _options);
@@ -3946,6 +3948,24 @@ define('view/components/axis',[
 
             parent.selectAll(".y_axis")
                 .attr("transform", "translate(-4,0)");
+            
+            if(options.rotate_x_label != 0){
+                parent.selectAll(".x_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_x_label + ")";
+                    });
+            }
+
+            if(options.rotate_y_label != 0){
+                parent.selectAll(".y_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_y_label + ")";
+                    });
+            }
 
             Manager.update(options.pane_uuid);
         };
@@ -4296,6 +4316,8 @@ define('view/pane',[
             yrange: [0,0],
             x_label:'X',
             y_label:'Y',
+            rotate_x_label: 0,
+            rotate_y_label:0,
             zoom: false,
             grid: true,
             zoom_range: [0.5, 5],
@@ -4396,6 +4418,8 @@ define('view/pane',[
             zoom_range:options.zoom_range,
             x_label:options.x_label,
             y_label:options.y_label,
+            rotate_x_label:options.rotate_x_label,
+            rotate_y_label:options.rotate_y_label,
             stroke_color: options.grid_color,
             pane_uuid: this.uuid
         });
