@@ -21,7 +21,8 @@ define([
             zoom_range:[0.5, 5],
             rotate_x_label:0,
             rotate_y_label:0,
-            pane_uuid: null
+            pane_uuid: null,
+            z_index:0
         };
         if(arguments.length>2)_.extend(options, _options);
 
@@ -62,14 +63,13 @@ define([
 
             parent.selectAll(".x_axis, .y_axis")
                 .selectAll("path, line")
-                .style("z-index", 100)
+                .style("z-index", options.z_index)
                 .style("fill","none")
                 .style("stroke",options.stroke_color)
                 .style("stroke-width",options.stroke_width);
 
             parent.selectAll(".x_axis, .y_axis")
                 .selectAll("text")
-                .style("font-family", "sans-serif")
                 .attr("fill", "rgb(50,50,50)");
 
             parent.selectAll(".x_axis")

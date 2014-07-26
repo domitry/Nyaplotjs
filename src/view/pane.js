@@ -110,8 +110,6 @@ define([
             .attr("y", 0)
             .attr("width", areas.plot_width)
             .attr("height", areas.plot_height)
-            .attr("stroke", "#000000")
-            .attr("stroke_width", 2)
             .attr("fill", options.bg_color)
             .style("z-index",1);
 
@@ -127,7 +125,8 @@ define([
             rotate_x_label:options.rotate_x_label,
             rotate_y_label:options.rotate_y_label,
             stroke_color: options.grid_color,
-            pane_uuid: this.uuid
+            pane_uuid: this.uuid,
+            z_index:100
         });
 
         // add context
@@ -144,6 +143,17 @@ define([
 
         model.select(".context")
             .attr("clip-path","url(#" + this.uuid + 'clip_context' + ")");
+
+        model.select("g")
+            .append("rect")
+            .attr("x", -1)
+            .attr("y", -1)
+            .attr("width", areas.plot_width+2)
+            .attr("height", areas.plot_height+2)
+            .attr("fill", "none")
+            .attr("stroke", "#666")
+            .attr("stroke-width", 1)
+            .style("z-index", 200);
 
         // add tooltip
         var tooltip = new Tooltip(model.select("g"), scales, {

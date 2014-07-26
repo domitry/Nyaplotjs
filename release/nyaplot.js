@@ -3891,7 +3891,8 @@ define('view/components/axis',[
             zoom_range:[0.5, 5],
             rotate_x_label:0,
             rotate_y_label:0,
-            pane_uuid: null
+            pane_uuid: null,
+            z_index:0
         };
         if(arguments.length>2)_.extend(options, _options);
 
@@ -3932,14 +3933,13 @@ define('view/components/axis',[
 
             parent.selectAll(".x_axis, .y_axis")
                 .selectAll("path, line")
-                .style("z-index", 100)
+                .style("z-index", options.z_index)
                 .style("fill","none")
                 .style("stroke",options.stroke_color)
                 .style("stroke-width",options.stroke_width);
 
             parent.selectAll(".x_axis, .y_axis")
                 .selectAll("text")
-                .style("font-family", "sans-serif")
                 .attr("fill", "rgb(50,50,50)");
 
             parent.selectAll(".x_axis")
@@ -4404,8 +4404,6 @@ define('view/pane',[
             .attr("y", 0)
             .attr("width", areas.plot_width)
             .attr("height", areas.plot_height)
-            .attr("stroke", "#000000")
-            .attr("stroke_width", 2)
             .attr("fill", options.bg_color)
             .style("z-index",1);
 
@@ -4421,7 +4419,8 @@ define('view/pane',[
             rotate_x_label:options.rotate_x_label,
             rotate_y_label:options.rotate_y_label,
             stroke_color: options.grid_color,
-            pane_uuid: this.uuid
+            pane_uuid: this.uuid,
+            z_index:100
         });
 
         // add context
@@ -4438,6 +4437,17 @@ define('view/pane',[
 
         model.select(".context")
             .attr("clip-path","url(#" + this.uuid + 'clip_context' + ")");
+
+        model.select("g")
+            .append("rect")
+            .attr("x", -1)
+            .attr("y", -1)
+            .attr("width", areas.plot_width+2)
+            .attr("height", areas.plot_height+2)
+            .attr("fill", "none")
+            .attr("stroke", "#666")
+            .attr("stroke-width", 1)
+            .style("z-index", 200);
 
         // add tooltip
         var tooltip = new Tooltip(model.select("g"), scales, {
