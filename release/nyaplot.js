@@ -3915,7 +3915,6 @@ define('view/components/axis',[
             .attr("text-anchor", "middle")
             .attr("fill", "rgb(50,50,50)")
             .attr("font-size", 22)
-            .style("font-family", "sans-serif")
             .text(options.x_label);
 
         parent.append("text")
@@ -4328,7 +4327,8 @@ define('view/pane',[
             legend_width: 150,
             legend_height: 300,
             legend_stroke_color: '#000',
-            legend_stroke_width: 0
+            legend_stroke_width: 0,
+            font: "Helvetica, Arial, sans-serif"
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -4468,6 +4468,7 @@ define('view/pane',[
         this.diagrams = [];
         this.tooltip = tooltip;
         this.context = model.select(".context");
+        this.model = model;
         this.scales = scales;
         this.options = options;
         this.filter = null;
@@ -4508,9 +4509,13 @@ define('view/pane',[
 
     // Update all diagrams belong to the pane
     Pane.prototype.update = function(){
+        var font = this.options.font;
 	    _.each(this.diagrams, function(diagram){
 	        diagram.update();
 	    });
+
+        this.model.selectAll("text")
+            .style("font-family", font);
     };
 
     return Pane;

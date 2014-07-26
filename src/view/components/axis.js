@@ -45,7 +45,6 @@ define([
             .attr("text-anchor", "middle")
             .attr("fill", "rgb(50,50,50)")
             .attr("font-size", 22)
-            .style("font-family", "sans-serif")
             .text(options.x_label);
 
         parent.append("text")
