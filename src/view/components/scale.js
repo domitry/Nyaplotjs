@@ -3,12 +3,13 @@
  */
 
 define(['underscore'], function(_){
-    function scales(domains, ranges, _options){
+    function Scales(domains, ranges, _options){
         var options = {
             linear: 'linear' //linear, power, and log
         };
-        if(arguments.length>1)_.extend(options, _options);        
+        if(arguments.length>1)_.extend(options, _options);
 
+        var scales = {};
         _.each(['x', 'y'],function(label){
             if(_.some(domains[label], function(val){
                 return _.isString(val);
@@ -27,5 +28,5 @@ define(['underscore'], function(_){
         return scales;
     }
 
-    return scales;
+    return Scales;
 });
