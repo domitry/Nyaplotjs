@@ -7,9 +7,9 @@ define([
     'underscore',
     'core/manager',
     'core/extension',
-    'view/pane',
+    'core/stl',
     'utils/dataframe'
-],function(_, Manager, Extension, Pane, Dataframe){
+],function(_, Manager, Extension, STL, Dataframe){
     function parse(model, element_name){
         var element = d3.select(element_name);
 
@@ -34,16 +34,20 @@ define([
         _.each(model.panes, function(pane_model){
             var pane;
 
-            // if this pane is depend on extension having its own pane
+            var pane_proto, axis, scale;
             if(typeof pane_model['extension'] !== "undefined"){
-                var pane_proto = Extension.pane(pane_model['extension']);
-                pane = new pane_proto(element, pane_model.options);
+                var ext = Extension.get(pane_model['extension']);
+                pane_proto = ext.pane;
+                axis = ext.axis;
+                scale = ext.scale;
+            }else{
+                pane_proto = STL.pane;
+                axis = STL.axis;
+                scale = STL.scale;
             }
-            else{
-                pane = new Pane(element, pane_model.options);
-            }
-            var data_list = [];
+            pane = new pane_proto(element, scale, axis, pane_model.options);
 
+            var data_list = [];
             _.each(pane_model.diagrams, function(diagram){
                 pane.addDiagram(diagram.type, diagram.data, diagram.options || {});
                 data_list.push(diagram.data);

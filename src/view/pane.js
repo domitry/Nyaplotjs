@@ -7,12 +7,11 @@ define([
     'underscore',
     'node-uuid',
     'view/diagrams/diagrams',
-    'view/components/axis',
     'view/components/filter',
     'view/components/legend_area',
     'view/components/tooltip'
-],function(_, uuid, diagrams, Axis, Filter, LegendArea, Tooltip){
-    function Pane(parent, _options){
+],function(_, uuid, diagrams, Filter, LegendArea, Tooltip){
+    function Pane(parent, scale, Axis, _options){
         var options = {
             width: 700,
             height: 500,
@@ -34,7 +33,8 @@ define([
             legend_height: 300,
             legend_stroke_color: '#000',
             legend_stroke_width: 0,
-            font: "Helvetica, Arial, sans-serif"
+            font: "Helvetica, Arial, sans-serif",
+            scale: 'linear'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -89,17 +89,9 @@ define([
         })();
 
         var scales = (function(){
+            var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            var scales = {};
-            _.each({x:'xrange',y:'yrange'},function(val, key){
-                if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);})){
-                    scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
-                }
-                else{
-                    scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
-                }
-            });
-            return scales;
+            return scale(domains, ranges, {linear: options.scale});
         })();
 
         // add background
@@ -157,6 +149,7 @@ define([
 
         // add tooltip
         var tooltip = new Tooltip(model.select("g"), scales, {
+            font: options.font,
             context_width: areas.plot_width,
             context_height: areas.plot_height,
             context_margin: {

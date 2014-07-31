@@ -4,8 +4,9 @@
  */
 
 define([
-    'underscore'
-],function(_){
+    'underscore',
+    'core/stl'
+],function(_, STL){
     var Extension = {};
     var buffer={};
 
@@ -16,16 +17,16 @@ define([
 
         var ext_info = window[extension_name].Nya;
 
-        // not implemented yet
-        if(typeof ext_info['pane'] !== "undefined");
-        if(typeof ext_info['diagrams'] !== "undefined");
-        if(typeof ext_info['scale'] !== "undefined");
+        _.each(['pane', 'scale', 'axis'], function(component){
+            if(typeof ext_info[component] == "undefined")
+                ext_info[component] = STL[component];
+        });
 
         buffer[extension_name] = ext_info;
     };
 
-    Extension.pane = function(extension_name){
-        return buffer[extension_name]['pane'];
+    Extension.get = function(name){
+        return buffer[name];
     };
 
     return Extension;

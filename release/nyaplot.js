@@ -1814,39 +1814,6 @@ define('core/manager',[
     return Manager;
 });
 
-/*
- * Extension keeps information about extensions for Nyaplot.
- *
- */
-
-define('core/extension',[
-    'underscore'
-],function(_){
-    var Extension = {};
-    var buffer={};
-
-    // load extension
-    Extension.load = function(extension_name){
-        if(typeof window[extension_name] == "undefined")return;
-        if(typeof window[extension_name]['Nya'] == "undefined")return;
-
-        var ext_info = window[extension_name].Nya;
-
-        // not implemented yet
-        if(typeof ext_info['pane'] !== "undefined");
-        if(typeof ext_info['diagrams'] !== "undefined");
-        if(typeof ext_info['scale'] !== "undefined");
-
-        buffer[extension_name] = ext_info;
-    };
-
-    Extension.pane = function(extension_name){
-        return buffer[extension_name]['pane'];
-    };
-
-    return Extension;
-});
-
 //     uuid.js
 //
 //     Copyright (c) 2010-2012 Robert Kieffer
@@ -3869,6 +3836,539 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
 });
 
 /*
+ * LegendArea keep a dom object which legends will be placed on and
+ * add legends on the best place in it.
+ */
+
+define('view/components/legend_area',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+    function LegendArea(parent, _options){
+        var options = {
+            width: 200,
+            height: 300,
+            margin: {top: 10, bottom:10, left:10, right:10},
+            fill_color: 'none',
+            stroke_color: '#000',
+            stroke_width: 0
+        };
+        if(arguments.length>1)_.extend(options, _options);
+
+        var model = parent.append("g");
+
+        model.append("rect")
+            .attr("width", options.width)
+            .attr("height", options.height)
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("fill", options.fill_color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width);
+
+        this.model = model;
+        this.options = options;
+        this.seek = {x: options.margin.left, y:options.margin.top, width:0};
+
+        return this;
+    }
+    
+    // Add a new legend to this area
+    LegendArea.prototype.add = function(legend){
+        var legend_area = this.model.append("g")
+                .attr("transform", "translate(" + this.seek.x + "," + this.seek.y + ")");
+        var dom = legend.getDomObject();
+        legend_area[0][0].appendChild(dom[0][0]);
+
+        // calculate coordinates to place the new legend (too simple algorism!)
+        if(this.seek.y + legend.height() > this.options.height){
+            this.seek.x += this.seek.width;
+            this.seek.y=this.options.margin.top;
+        }else{
+            this.seek.width = _.max([this.seek.width, legend.width()]);
+            this.seek.y += legend.height();
+        }
+    };
+
+    return LegendArea;
+});
+
+/* 
+ * Return UA information
+ */
+
+define('utils/ua_info',['underscore'], function(_){
+    return (function(){
+        var userAgent = window.navigator.userAgent.toLowerCase();
+        if(userAgent.indexOf('chrome')!=-1)return 'chrome';
+        if(userAgent.indexOf('firefox')!=-1)return 'firefox';
+        else return 'unknown';
+    });
+});
+
+/*
+ * Tooltip is an interface for generating small tool-tips and rendering them.
+ * Pane generate its instance and keep it. Then each diagrams send requests to it.
+ */
+
+define('view/components/tooltip',[
+    'underscore',
+    'utils/ua_info'
+],function(_, ua){
+    function Tooltip(parent, scales, _options){
+        var options = {
+            bg_color:"#333",
+            stroke_color:"#000",
+            stroke_width:1,
+            text_color:"#fff",
+            context_width:0,
+            context_height:0,
+            context_margin:{top:0,left:0,bottom:0,right:0},
+            arrow_width:10,
+            arrow_height:10,
+            tooltip_margin:{top:2,left:5,bottom:2,right:5},
+            font: "Helvetica, Arial, sans-serif",
+            font_size: "1em"
+        };
+        if(arguments.length>1)_.extend(options, _options);
+        
+        var model=parent.append("g");
+
+        this.scales = scales;
+        this.options = options;
+        this.lists = [];
+        this.model = model;
+
+        return this;
+    }
+
+    // add small tool-tip to context area
+    Tooltip.prototype.add = function(id, x, y, pos, contents){
+        var str = _.map(contents, function(v, k){
+            return String(k) + ":" + String(v);
+        });
+        this.lists.push({id:id, x:x, y:y, pos:pos, contents:str});
+    };
+
+    // add small tool-tip to x-axis
+    Tooltip.prototype.addToXAxis = function(id, x, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            x = Math.round(x*pow10)/pow10;
+        }
+        this.lists.push({id:id, x:x, y:"bottom", pos:'bottom', contents:String(x)});
+    };
+
+    // add small tool-tip to y-axis
+    Tooltip.prototype.addToYAxis = function(id, y, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            y = Math.round(y*pow10)/pow10;
+        }
+        this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
+    };
+
+    // remove all exsistng tool-tips
+    Tooltip.prototype.reset = function(){
+        this.lists = [];
+        this.update();
+    };
+
+    // calcurate position, height and width of tool-tip, then update dom objects
+    Tooltip.prototype.update = function(){
+        var style = this.proceedData(this.lists);
+        var model = this.model.selectAll("g").data(style);
+        this.updateModels(model);
+    };
+
+
+    // generate dom objects for new tool-tips, and delete old ones
+    Tooltip.prototype.updateModels = function(model){
+        model.exit().remove();
+        var options = this.options;
+
+        (function(enters, options){
+            var lineFunc = d3.svg.line()
+                    .x(function(d){return d.x;})
+                    .y(function(d){return d.y;})
+                    .interpolate("linear");
+
+            enters.append("path")
+                .attr("d", function(d){return lineFunc(d.shape);})
+                .attr("stroke", options.stroke_color)
+                .attr("fill", options.bg_color);
+            //.atrr("stroke-width", options.stroke_width)
+
+            enters.each(function(){
+                var dom;
+                if(_.isArray(this.__data__.text)){
+                    var texts = this.__data__.text;
+                    var x = this.__data__.text_x;
+                    var y = this.__data__.text_y;
+                    var data = _.map(_.zip(texts, y), function(row){return {text: row[0], y: row[1]};});
+                    dom = d3.select(this)
+                        .append("g")
+                        .selectAll("text")
+                        .data(data)
+                        .enter()
+                        .append("text")
+                        .text(function(d){return d.text;})
+                        .attr("x", function(d){return x;})
+                        .attr("y", function(d){return d.y;});
+                }else{
+                    dom = d3.select(this).append("text")
+                        .text(function(d){return d.text;})
+                        .attr("x", function(d){return d.text_x;})
+                        .attr("y", function(d){return d.text_y;});
+                }
+                dom.attr("text-anchor", "middle")
+                    .attr("fill", "#ffffff")
+                    .attr("font-size",options.font_size)
+                    .style("font-family", options.font);
+
+                // Fix for chrome's Issue 143990
+                // https://code.google.com/p/chromium/issues/detail?colspec=ID20Pri20Feature20Status20Modified20Mstone%20OS&sort=-modified&id=143990
+                switch(ua()){
+                    case 'chrome':
+                    dom.attr("dominant-baseline","middle").attr("baseline-shift","50%");break;
+                    default:
+                    dom.attr("dominant-baseline","text-after-edge");break;
+                }
+            });
+
+            enters.attr("transform",function(d){
+                return "translate(" + d.tip_x + "," + d.tip_y + ")";
+            });
+
+        })(model.enter().append("g"), this.options);
+    };
+
+    // calcurate height and width that are necessary for rendering the tool-tip
+    Tooltip.prototype.proceedData = function(lists){
+        var options = this.options;
+
+        // calcurate shape and center point of tool-tip
+        var calcPoints = function(pos, width, height){
+            var arr_w = options.arrow_width;
+            var arr_h = options.arrow_height;
+            var tt_w = width;
+            var tt_h = height;
+            var points = {
+                'top':[
+                    {x:0, y:0},{x:arr_w/2, y:-arr_h},
+                    {x:tt_w/2, y:-arr_h},{x:tt_w/2, y:-arr_h-tt_h},
+                    {x:-tt_w/2, y:-arr_h-tt_h},{x:-tt_w/2, y:-arr_h},
+                    {x:-arr_w/2, y:-arr_h},{x:0, y:0}
+                ],
+                'right':[
+                    {x:0, y:0},{x:-arr_w, y:-arr_h/2},
+                    {x:-arr_w, y:-tt_h/2},{x:-arr_w-tt_w, y:-tt_h/2},
+                    {x:-arr_w-tt_w, y:tt_h/2},{x:-arr_w, y:tt_h/2},
+                    {x:-arr_w, y:arr_h/2},{x:0, y:0}
+                ]
+            };
+            points['bottom'] = _.map(points['top'], function(p){return {x:p.x, y:-p.y};});
+            points['left'] = _.map(points['right'], function(p){return {x:-p.x, y:p.y};});
+
+            var center = (function(p){
+                var result={};
+                switch(pos){
+                case 'top': case 'bottom':
+                    result = {x:0, y:(p[2].y+p[3].y)/2};
+                    break;
+                case 'right': case 'left':
+                    result = {x:(p[2].x+p[3].x)/2, y:0};
+                    break;
+                }
+                return result;
+            })(points[pos]);
+
+            return {shape:points[pos], text: center};
+        };
+
+        var margin = this.options.tooltip_margin;
+        var context_height = this.options.context_height;
+        var scales = this.scales;
+        var model = this.model;
+
+        var calcText = function(text, size){
+            var dom = model.append("text").text(text).attr("font-size", size).style("font-family", options.font);
+            var text_width = dom[0][0].getBBox().width;
+            var text_height = dom[0][0].getBBox().height;
+            dom.remove();
+            return {w: text_width, h:text_height};
+        };
+
+        return _.map(lists, function(list){
+            var text_num = (_.isArray(list.contents) ? list.contents.length : 1);
+            var str = (_.isArray(list.contents) ? _.max(list.contents, function(d){return d.length;}) : list.contents);
+
+            var text_size = calcText(str, options.font_size);
+            var tip_width = text_size.w + margin.left + margin.right;
+            var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
+
+            var tip_x = (list.x == "left" ? 0 : scales.x(list.x));
+            var tip_y = (list.y == "bottom" ? context_height : scales.y(list.y));
+
+            var points = calcPoints(list.pos, tip_width, tip_height);
+
+            var text_y;
+            if(_.isArray(list.contents)){
+                var len = list.contents.length;
+                text_y = _.map(list.contents, function(str, i){
+                    return (points.text.y - text_size.h/2*(len-2)) + text_size.h*i;
+                });
+            }else{
+                text_y = points.text.y + text_size.h/2;
+            }
+
+            return {
+                shape: points.shape,
+                tip_x: tip_x,
+                tip_y: tip_y,
+                text_x: points.text.x,
+                text_y: text_y,
+                text: list.contents
+            };
+        });
+    };
+
+    return Tooltip;
+});
+
+/*
+ * Pane keeps a dom object which diagrams, filter, and legend will be placed on.
+ * It also calcurate scales and each diagram and axis will be rendered base on the scales.
+ */
+
+define('view/pane',[
+    'underscore',
+    'node-uuid',
+    'view/diagrams/diagrams',
+    'view/components/filter',
+    'view/components/legend_area',
+    'view/components/tooltip'
+],function(_, uuid, diagrams, Filter, LegendArea, Tooltip){
+    function Pane(parent, scale, Axis, _options){
+        var options = {
+            width: 700,
+            height: 500,
+            margin: {top: 30, bottom: 80, left: 80, right: 30},
+            xrange: [0,0],
+            yrange: [0,0],
+            x_label:'X',
+            y_label:'Y',
+            rotate_x_label: 0,
+            rotate_y_label:0,
+            zoom: false,
+            grid: true,
+            zoom_range: [0.5, 5],
+            bg_color: '#eee',
+            grid_color: '#fff',
+            legend: false,
+            legend_position: 'right',
+            legend_width: 150,
+            legend_height: 300,
+            legend_stroke_color: '#000',
+            legend_stroke_width: 0,
+            font: "Helvetica, Arial, sans-serif",
+            scale: 'linear'
+        };
+        if(arguments.length>1)_.extend(options, _options);
+
+        this.uuid = uuid.v4();
+
+        var model = parent.append("svg")
+                .attr("width", options.width)
+                .attr("height", options.height);
+
+        var areas = (function(){
+            var areas = {};
+            areas.plot_x = options.margin.left;
+            areas.plot_y = options.margin.top;
+            areas.plot_width = options.width - options.margin.left - options.margin.right;
+            areas.plot_height = options.height - options.margin.top - options.margin.bottom;
+            
+            if(options.legend){
+                switch(options.legend_position){
+                case 'top':
+                    areas.plot_width -= options.legend_width;
+                    areas.plot_y += options.legend_height;
+                    areas.legend_x = (options.width - options.legend_width)/2;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case 'bottom':
+                    areas.plot_height -= options.legend_height;
+                    areas.legend_x = (options.width - options.legend_width)/2;
+                    areas.legend_y = options.margin.top + options.height;
+                    break;
+
+                case 'left':
+                    areas.plot_x += options.legend_width;
+                    areas.plot_width -= options.legend_width;
+                    areas.legend_x = options.margin.left;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case 'right':
+                    areas.plot_width -= options.legend_width;
+                    areas.legend_x = areas.plot_width + options.margin.left;
+                    areas.legend_y = options.margin.top;
+                    break;
+
+                case _.isArray(options.legend_position):
+                    areas.legend_x = options.width * options.legend_position[0];
+                    areas.legend_y = options.height * options.legend_position[1];
+                    break;
+                }
+            }
+            return areas;
+        })();
+
+        var scales = (function(){
+            var domains = {x: options.xrange, y:options.yrange};
+            var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
+            return scale(domains, ranges, {linear: options.scale});
+        })();
+
+        // add background
+        model.append("g")
+            .attr("transform", "translate(" + areas.plot_x + "," + areas.plot_y + ")")
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", areas.plot_width)
+            .attr("height", areas.plot_height)
+            .attr("fill", options.bg_color)
+            .style("z-index",1);
+
+        var axis = new Axis(model.select("g"), scales, {
+            width:areas.plot_width,
+            height:areas.plot_height,
+            margin:options.margin,
+            grid:options.grid,
+            zoom:options.zoom,
+            zoom_range:options.zoom_range,
+            x_label:options.x_label,
+            y_label:options.y_label,
+            rotate_x_label:options.rotate_x_label,
+            rotate_y_label:options.rotate_y_label,
+            stroke_color: options.grid_color,
+            pane_uuid: this.uuid,
+            z_index:100
+        });
+
+        // add context
+        model.select("g")
+            .append("g")
+            .attr("class", "context")
+            .append("clipPath")
+            .attr("id", this.uuid + "clip_context")
+            .append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", areas.plot_width)
+            .attr("height", areas.plot_height);
+
+        model.select(".context")
+            .attr("clip-path","url(#" + this.uuid + 'clip_context' + ")");
+
+        model.select("g")
+            .append("rect")
+            .attr("x", -1)
+            .attr("y", -1)
+            .attr("width", areas.plot_width+2)
+            .attr("height", areas.plot_height+2)
+            .attr("fill", "none")
+            .attr("stroke", "#666")
+            .attr("stroke-width", 1)
+            .style("z-index", 200);
+
+        // add tooltip
+        var tooltip = new Tooltip(model.select("g"), scales, {
+            font: options.font,
+            context_width: areas.plot_width,
+            context_height: areas.plot_height,
+            context_margin: {
+                top: areas.plot_x,
+                left: areas.plot_y,
+                bottom: options.margin.bottom,
+                right: options.margin.right
+            }
+        });
+
+        // add legend
+        if(options.legend){
+            model.append("g")
+                .attr("class", "legend_area")
+                .attr("transform", "translate(" + areas.legend_x + "," + areas.legend_y + ")");
+
+            this.legend_area = new LegendArea(model.select(".legend_area"), {
+                width: options.legend_width,
+                height: options.legend_height,
+                stroke_color: options.legend_stroke_color,
+                stroke_width: options.legend_stroke_width
+            });
+        }
+
+        this.diagrams = [];
+        this.tooltip = tooltip;
+        this.context = model.select(".context");
+        this.model = model;
+        this.scales = scales;
+        this.options = options;
+        this.filter = null;
+        return this;
+    }
+
+    // Add diagram to pane
+    Pane.prototype.addDiagram = function(type, data, options){
+        _.extend(options, {
+            uuid: uuid.v4(),
+            tooltip: this.tooltip
+        });
+
+        var diagram = new diagrams[type](this.context, this.scales, data, options);
+
+        if(this.options.legend){
+            var legend_area = this.legend_area;
+            var legend = diagram.getLegend();
+            if(_.isArray(legend))_.each(legend, function(l){
+                legend_area.add(l);
+            });
+            else this.legend_area.add(legend);
+	    }
+
+	    this.diagrams.push(diagram);
+    };
+
+    // Add filter to pane (usually a gray box on the pane)
+    Pane.prototype.addFilter = function(target, options){
+	    var diagrams = this.diagrams;
+	    var callback = function(ranges){
+	        _.each(diagrams, function(diagram){
+		        diagram.checkSelectedData(ranges);
+	        });
+	    };
+	    this.filter = new Filter(this.context, this.scales, callback, options);
+    };
+
+    // Update all diagrams belong to the pane
+    Pane.prototype.update = function(){
+        var font = this.options.font;
+	    _.each(this.diagrams, function(diagram){
+	        diagram.update();
+	    });
+
+        this.model.selectAll("text")
+            .style("font-family", font);
+    };
+
+    return Pane;
+});
+
+/*
  * Axis generates x and y axies for plot. It also controlls grids.
  * Have a look at documents on d3.svg.axis and d3.behavior.zoom to learn more.
  */
@@ -3994,541 +4494,81 @@ define('view/components/axis',[
 });
 
 /*
- * LegendArea keep a dom object which legends will be placed on and
- * add legends on the best place in it.
+ * the wrapper for d3.scales.ordinal and d3.scales.linear
  */
 
-define('view/components/legend_area',[
-    'underscore',
-    'core/manager'
-],function(_, Manager){
-    function LegendArea(parent, _options){
+define('view/components/scale',['underscore'], function(_){
+    function scales(domains, ranges, _options){
         var options = {
-            width: 200,
-            height: 300,
-            margin: {top: 10, bottom:10, left:10, right:10},
-            fill_color: 'none',
-            stroke_color: '#000',
-            stroke_width: 0
+            linear: 'linear' //linear, power, and log
         };
-        if(arguments.length>1)_.extend(options, _options);
+        if(arguments.length>1)_.extend(options, _options);        
 
-        var model = parent.append("g");
-
-        model.append("rect")
-            .attr("width", options.width)
-            .attr("height", options.height)
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("fill", options.fill_color)
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width);
-
-        this.model = model;
-        this.options = options;
-        this.seek = {x: options.margin.left, y:options.margin.top, width:0};
-
-        return this;
+        _.each(['x', 'y'],function(label){
+            if(_.some(domains[label], function(val){
+                return _.isString(val);
+            })){
+                scales[label] = d3.scale.ordinal()
+                    .domain(domains[label])
+                    .rangeBands(ranges[label]);
+            }
+            else{
+                var scale = (d3.scale[options.linear])();
+                scales[label] = scale
+                    .domain(domains[label])
+                    .range(ranges[label]);
+            }
+        });
+        return scales;
     }
-    
-    // Add a new legend to this area
-    LegendArea.prototype.add = function(legend){
-        var legend_area = this.model.append("g")
-                .attr("transform", "translate(" + this.seek.x + "," + this.seek.y + ")");
-        var dom = legend.getDomObject();
-        legend_area[0][0].appendChild(dom[0][0]);
 
-        // calculate coordinates to place the new legend (too simple algorism!)
-        if(this.seek.y + legend.height() > this.options.height){
-            this.seek.x += this.seek.width;
-            this.seek.y=this.options.margin.top;
-        }else{
-            this.seek.width = _.max([this.seek.width, legend.width()]);
-            this.seek.y += legend.height();
-        }
-    };
-
-    return LegendArea;
-});
-
-/* 
- * Return UA information
- */
-
-define('utils/ua_info',['underscore'], function(_){
-    return (function(){
-        var userAgent = window.navigator.userAgent.toLowerCase();
-        if(userAgent.indexOf('chrome')!=-1)return 'chrome';
-        if(userAgent.indexOf('firefox')!=-1)return 'firefox';
-        else return 'unknown';
-    });
+    return scales;
 });
 
 /*
- * Tooltip is an interface for generating small tool-tips and rendering them.
- * Pane generate its instance and keep it. Then each diagrams send requests to it.
+ * Standard library for Nyaplot
  */
 
-define('view/components/tooltip',[
-    'underscore',
-    'utils/ua_info'
-],function(_, ua){
-    function Tooltip(parent, scales, _options){
-        var options = {
-            bg_color:"#333",
-            stroke_color:"#000",
-            stroke_width:1,
-            text_color:"#fff",
-            context_width:0,
-            context_height:0,
-            context_margin:{top:0,left:0,bottom:0,right:0},
-            arrow_width:10,
-            arrow_height:10,
-            tooltip_margin:{top:2,left:5,bottom:2,right:5},
-            font_size: "1em"
-        };
-        if(arguments.length>1)_.extend(options, _options);
-        
-        var model=parent.append("g");
-
-        this.scales = scales;
-        this.options = options;
-        this.lists = [];
-        this.model = model;
-
-        return this;
-    }
-
-    // add small tool-tip to context area
-    Tooltip.prototype.add = function(id, x, y, pos, contents){
-        var str = _.map(contents, function(v, k){
-            return String(k) + ":" + String(v);
-        });
-        this.lists.push({id:id, x:x, y:y, pos:pos, contents:str});
-    };
-
-    // add small tool-tip to x-axis
-    Tooltip.prototype.addToXAxis = function(id, x, round){
-        if(arguments.length > 2){
-            var pow10 = Math.pow(10, round);
-            x = Math.round(x*pow10)/pow10;
-        }
-        this.lists.push({id:id, x:x, y:"bottom", pos:'bottom', contents:String(x)});
-    };
-
-    // add small tool-tip to y-axis
-    Tooltip.prototype.addToYAxis = function(id, y, round){
-        if(arguments.length > 2){
-            var pow10 = Math.pow(10, round);
-            y = Math.round(y*pow10)/pow10;
-        }
-        this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
-    };
-
-    // remove all exsistng tool-tips
-    Tooltip.prototype.reset = function(){
-        this.lists = [];
-        this.update();
-    };
-
-    // calcurate position, height and width of tool-tip, then update dom objects
-    Tooltip.prototype.update = function(){
-        var style = this.proceedData(this.lists);
-        var model = this.model.selectAll("g").data(style);
-        this.updateModels(model);
-    };
-
-
-    // generate dom objects for new tool-tips, and delete old ones
-    Tooltip.prototype.updateModels = function(model){
-        model.exit().remove();
-        var options = this.options;
-
-        (function(enters, options){
-            var lineFunc = d3.svg.line()
-                    .x(function(d){return d.x;})
-                    .y(function(d){return d.y;})
-                    .interpolate("linear");
-
-            enters.append("path")
-                .attr("d", function(d){return lineFunc(d.shape);})
-                .attr("stroke", options.stroke_color)
-                .attr("fill", options.bg_color);
-            //.atrr("stroke-width", options.stroke_width)
-
-            enters.each(function(){
-                var dom;
-                if(_.isArray(this.__data__.text)){
-                    var texts = this.__data__.text;
-                    var x = this.__data__.text_x;
-                    var y = this.__data__.text_y;
-                    var data = _.map(_.zip(texts, y), function(row){return {text: row[0], y: row[1]};});
-                    dom = d3.select(this)
-                        .append("g")
-                        .selectAll("text")
-                        .data(data)
-                        .enter()
-                        .append("text")
-                        .text(function(d){return d.text;})
-                        .attr("x", function(d){return x;})
-                        .attr("y", function(d){return d.y;});
-                }else{
-                    dom = d3.select(this).append("text")
-                        .text(function(d){return d.text;})
-                        .attr("x", function(d){return d.text_x;})
-                        .attr("y", function(d){return d.text_y;});
-                }
-                dom.attr("text-anchor", "middle")
-                    .attr("fill", "#ffffff")
-                    .attr("font-size",options.font_size);
-
-                // Fix for chrome's Issue 143990
-                // https://code.google.com/p/chromium/issues/detail?colspec=ID20Pri20Feature20Status20Modified20Mstone%20OS&sort=-modified&id=143990
-                switch(ua()){
-                    case 'chrome':
-                    dom.attr("dominant-baseline","middle").attr("baseline-shift","50%");break;
-                    default:
-                    dom.attr("dominant-baseline","text-after-edge");break;
-                }
-            });
-
-            enters.attr("transform",function(d){
-                return "translate(" + d.tip_x + "," + d.tip_y + ")";
-            });
-
-        })(model.enter().append("g"), this.options);
-    };
-
-    // calcurate height and width that are necessary for rendering the tool-tip
-    Tooltip.prototype.proceedData = function(lists){
-        var options = this.options;
-
-        // calcurate shape and center point of tool-tip
-        var calcPoints = function(pos, width, height){
-            var arr_w = options.arrow_width;
-            var arr_h = options.arrow_height;
-            var tt_w = width;
-            var tt_h = height;
-            var points = {
-                'top':[
-                    {x:0, y:0},{x:arr_w/2, y:-arr_h},
-                    {x:tt_w/2, y:-arr_h},{x:tt_w/2, y:-arr_h-tt_h},
-                    {x:-tt_w/2, y:-arr_h-tt_h},{x:-tt_w/2, y:-arr_h},
-                    {x:-arr_w/2, y:-arr_h},{x:0, y:0}
-                ],
-                'right':[
-                    {x:0, y:0},{x:-arr_w, y:-arr_h/2},
-                    {x:-arr_w, y:-tt_h/2},{x:-arr_w-tt_w, y:-tt_h/2},
-                    {x:-arr_w-tt_w, y:tt_h/2},{x:-arr_w, y:tt_h/2},
-                    {x:-arr_w, y:arr_h/2},{x:0, y:0}
-                ]
-            };
-            points['bottom'] = _.map(points['top'], function(p){return {x:p.x, y:-p.y};});
-            points['left'] = _.map(points['right'], function(p){return {x:-p.x, y:p.y};});
-
-            var center = (function(p){
-                var result={};
-                switch(pos){
-                case 'top': case 'bottom':
-                    result = {x:0, y:(p[2].y+p[3].y)/2};
-                    break;
-                case 'right': case 'left':
-                    result = {x:(p[2].x+p[3].x)/2, y:0};
-                    break;
-                }
-                return result;
-            })(points[pos]);
-
-            return {shape:points[pos], text: center};
-        };
-
-        var margin = this.options.tooltip_margin;
-        var context_height = this.options.context_height;
-        var scales = this.scales;
-        var model = this.model;
-
-        var calcText = function(text, size){
-            var dom = model.append("text").text(text).attr("font-size", size);
-            var text_width = dom[0][0].getBBox().width;
-            var text_height = dom[0][0].getBBox().height;
-            dom.remove();
-            return {w: text_width, h:text_height};
-        };
-
-        return _.map(lists, function(list){
-            var text_num = (_.isArray(list.contents) ? list.contents.length : 1);
-            var str = (_.isArray(list.contents) ? _.max(list.contents, function(d){return d.length;}) : list.contents);
-
-            var text_size = calcText(str, options.font_size);
-            var tip_width = text_size.w + margin.left + margin.right;
-            var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
-
-            var tip_x = (list.x == "left" ? 0 : scales.x(list.x));
-            var tip_y = (list.y == "bottom" ? context_height : scales.y(list.y));
-
-            var points = calcPoints(list.pos, tip_width, tip_height);
-
-            var text_y;
-            if(_.isArray(list.contents)){
-                var len = list.contents.length;
-                text_y = _.map(list.contents, function(str, i){
-                    return (points.text.y - text_size.h/2*(len-2)) + text_size.h*i;
-                });
-            }else{
-                text_y = points.text.y + text_size.h/2;
-            }
-
-            return {
-                shape: points.shape,
-                tip_x: tip_x,
-                tip_y: tip_y,
-                text_x: points.text.x,
-                text_y: text_y,
-                text: list.contents
-            };
-        });
-    };
-
-    return Tooltip;
+define('core/stl',['require','exports','module','view/pane','view/components/axis','view/components/scale'],function(require, exports, module){
+    var stl = {};
+    stl.pane = require('view/pane');
+    stl.axis = require('view/components/axis');
+    stl.scale = require('view/components/scale');
+    return stl;
 });
 
 /*
- * Pane keeps a dom object which diagrams, filter, and legend will be placed on.
- * It also calcurate scales and each diagram and axis will be rendered base on the scales.
+ * Extension keeps information about extensions for Nyaplot.
+ *
  */
 
-define('view/pane',[
+define('core/extension',[
     'underscore',
-    'node-uuid',
-    'view/diagrams/diagrams',
-    'view/components/axis',
-    'view/components/filter',
-    'view/components/legend_area',
-    'view/components/tooltip'
-],function(_, uuid, diagrams, Axis, Filter, LegendArea, Tooltip){
-    function Pane(parent, _options){
-        var options = {
-            width: 700,
-            height: 500,
-            margin: {top: 30, bottom: 80, left: 80, right: 30},
-            xrange: [0,0],
-            yrange: [0,0],
-            x_label:'X',
-            y_label:'Y',
-            rotate_x_label: 0,
-            rotate_y_label:0,
-            zoom: false,
-            grid: true,
-            zoom_range: [0.5, 5],
-            bg_color: '#eee',
-            grid_color: '#fff',
-            legend: false,
-            legend_position: 'right',
-            legend_width: 150,
-            legend_height: 300,
-            legend_stroke_color: '#000',
-            legend_stroke_width: 0,
-            font: "Helvetica, Arial, sans-serif"
-        };
-        if(arguments.length>1)_.extend(options, _options);
+    'core/stl'
+],function(_, STL){
+    var Extension = {};
+    var buffer={};
 
-        this.uuid = uuid.v4();
+    // load extension
+    Extension.load = function(extension_name){
+        if(typeof window[extension_name] == "undefined")return;
+        if(typeof window[extension_name]['Nya'] == "undefined")return;
 
-        var model = parent.append("svg")
-                .attr("width", options.width)
-                .attr("height", options.height);
+        var ext_info = window[extension_name].Nya;
 
-        var areas = (function(){
-            var areas = {};
-            areas.plot_x = options.margin.left;
-            areas.plot_y = options.margin.top;
-            areas.plot_width = options.width - options.margin.left - options.margin.right;
-            areas.plot_height = options.height - options.margin.top - options.margin.bottom;
-            
-            if(options.legend){
-                switch(options.legend_position){
-                case 'top':
-                    areas.plot_width -= options.legend_width;
-                    areas.plot_y += options.legend_height;
-                    areas.legend_x = (options.width - options.legend_width)/2;
-                    areas.legend_y = options.margin.top;
-                    break;
-
-                case 'bottom':
-                    areas.plot_height -= options.legend_height;
-                    areas.legend_x = (options.width - options.legend_width)/2;
-                    areas.legend_y = options.margin.top + options.height;
-                    break;
-
-                case 'left':
-                    areas.plot_x += options.legend_width;
-                    areas.plot_width -= options.legend_width;
-                    areas.legend_x = options.margin.left;
-                    areas.legend_y = options.margin.top;
-                    break;
-
-                case 'right':
-                    areas.plot_width -= options.legend_width;
-                    areas.legend_x = areas.plot_width + options.margin.left;
-                    areas.legend_y = options.margin.top;
-                    break;
-
-                case _.isArray(options.legend_position):
-                    areas.legend_x = options.width * options.legend_position[0];
-                    areas.legend_y = options.height * options.legend_position[1];
-                    break;
-                }
-            }
-            return areas;
-        })();
-
-        var scales = (function(){
-            var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            var scales = {};
-            _.each({x:'xrange',y:'yrange'},function(val, key){
-                if(options[val].length > 2 || _.any(options[val], function(el){return !isFinite(el);})){
-                    scales[key] = d3.scale.ordinal().domain(options[val]).rangeBands(ranges[key]);
-                }
-                else{
-                    scales[key] = d3.scale.linear().domain(options[val]).range(ranges[key]);
-                }
-            });
-            return scales;
-        })();
-
-        // add background
-        model.append("g")
-            .attr("transform", "translate(" + areas.plot_x + "," + areas.plot_y + ")")
-            .append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", areas.plot_width)
-            .attr("height", areas.plot_height)
-            .attr("fill", options.bg_color)
-            .style("z-index",1);
-
-        var axis = new Axis(model.select("g"), scales, {
-            width:areas.plot_width,
-            height:areas.plot_height,
-            margin:options.margin,
-            grid:options.grid,
-            zoom:options.zoom,
-            zoom_range:options.zoom_range,
-            x_label:options.x_label,
-            y_label:options.y_label,
-            rotate_x_label:options.rotate_x_label,
-            rotate_y_label:options.rotate_y_label,
-            stroke_color: options.grid_color,
-            pane_uuid: this.uuid,
-            z_index:100
+        _.each(['pane', 'scale', 'axis'], function(component){
+            if(typeof ext_info[component] == "undefined")
+                ext_info[component] = STL[component];
         });
 
-        // add context
-        model.select("g")
-            .append("g")
-            .attr("class", "context")
-            .append("clipPath")
-            .attr("id", this.uuid + "clip_context")
-            .append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", areas.plot_width)
-            .attr("height", areas.plot_height);
-
-        model.select(".context")
-            .attr("clip-path","url(#" + this.uuid + 'clip_context' + ")");
-
-        model.select("g")
-            .append("rect")
-            .attr("x", -1)
-            .attr("y", -1)
-            .attr("width", areas.plot_width+2)
-            .attr("height", areas.plot_height+2)
-            .attr("fill", "none")
-            .attr("stroke", "#666")
-            .attr("stroke-width", 1)
-            .style("z-index", 200);
-
-        // add tooltip
-        var tooltip = new Tooltip(model.select("g"), scales, {
-            context_width: areas.plot_width,
-            context_height: areas.plot_height,
-            context_margin: {
-                top: areas.plot_x,
-                left: areas.plot_y,
-                bottom: options.margin.bottom,
-                right: options.margin.right
-            }
-        });
-
-        // add legend
-        if(options.legend){
-            model.append("g")
-                .attr("class", "legend_area")
-                .attr("transform", "translate(" + areas.legend_x + "," + areas.legend_y + ")");
-
-            this.legend_area = new LegendArea(model.select(".legend_area"), {
-                width: options.legend_width,
-                height: options.legend_height,
-                stroke_color: options.legend_stroke_color,
-                stroke_width: options.legend_stroke_width
-            });
-        }
-
-        this.diagrams = [];
-        this.tooltip = tooltip;
-        this.context = model.select(".context");
-        this.model = model;
-        this.scales = scales;
-        this.options = options;
-        this.filter = null;
-        return this;
-    }
-
-    // Add diagram to pane
-    Pane.prototype.addDiagram = function(type, data, options){
-        _.extend(options, {
-            uuid: uuid.v4(),
-            tooltip: this.tooltip
-        });
-
-        var diagram = new diagrams[type](this.context, this.scales, data, options);
-
-        if(this.options.legend){
-            var legend_area = this.legend_area;
-            var legend = diagram.getLegend();
-            if(_.isArray(legend))_.each(legend, function(l){
-                legend_area.add(l);
-            });
-            else this.legend_area.add(legend);
-	    }
-
-	    this.diagrams.push(diagram);
+        buffer[extension_name] = ext_info;
     };
 
-    // Add filter to pane (usually a gray box on the pane)
-    Pane.prototype.addFilter = function(target, options){
-	    var diagrams = this.diagrams;
-	    var callback = function(ranges){
-	        _.each(diagrams, function(diagram){
-		        diagram.checkSelectedData(ranges);
-	        });
-	    };
-	    this.filter = new Filter(this.context, this.scales, callback, options);
+    Extension.get = function(name){
+        return buffer[name];
     };
 
-    // Update all diagrams belong to the pane
-    Pane.prototype.update = function(){
-        var font = this.options.font;
-	    _.each(this.diagrams, function(diagram){
-	        diagram.update();
-	    });
-
-        this.model.selectAll("text")
-            .style("font-family", font);
-    };
-
-    return Pane;
+    return Extension;
 });
 
 /*
@@ -4622,9 +4662,9 @@ define('core/parse',[
     'underscore',
     'core/manager',
     'core/extension',
-    'view/pane',
+    'core/stl',
     'utils/dataframe'
-],function(_, Manager, Extension, Pane, Dataframe){
+],function(_, Manager, Extension, STL, Dataframe){
     function parse(model, element_name){
         var element = d3.select(element_name);
 
@@ -4649,16 +4689,20 @@ define('core/parse',[
         _.each(model.panes, function(pane_model){
             var pane;
 
-            // if this pane is depend on extension having its own pane
+            var pane_proto, axis, scale;
             if(typeof pane_model['extension'] !== "undefined"){
-                var pane_proto = Extension.pane(pane_model['extension']);
-                pane = new pane_proto(element, pane_model.options);
+                var ext = Extension.get(pane_model['extension']);
+                pane_proto = ext.pane;
+                axis = ext.axis;
+                scale = ext.scale;
+            }else{
+                pane_proto = STL.pane;
+                axis = STL.axis;
+                scale = STL.scale;
             }
-            else{
-                pane = new Pane(element, pane_model.options);
-            }
-            var data_list = [];
+            pane = new pane_proto(element, scale, axis, pane_model.options);
 
+            var data_list = [];
             _.each(pane_model.diagrams, function(diagram){
                 pane.addDiagram(diagram.type, diagram.data, diagram.options || {});
                 data_list.push(diagram.data);

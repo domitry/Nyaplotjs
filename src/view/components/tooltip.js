@@ -19,6 +19,7 @@ define([
             arrow_width:10,
             arrow_height:10,
             tooltip_margin:{top:2,left:5,bottom:2,right:5},
+            font: "Helvetica, Arial, sans-serif",
             font_size: "1em"
         };
         if(arguments.length>1)_.extend(options, _options);
@@ -114,7 +115,8 @@ define([
                 }
                 dom.attr("text-anchor", "middle")
                     .attr("fill", "#ffffff")
-                    .attr("font-size",options.font_size);
+                    .attr("font-size",options.font_size)
+                    .style("font-family", options.font);
 
                 // Fix for chrome's Issue 143990
                 // https://code.google.com/p/chromium/issues/detail?colspec=ID20Pri20Feature20Status20Modified20Mstone%20OS&sort=-modified&id=143990
@@ -182,7 +184,7 @@ define([
         var model = this.model;
 
         var calcText = function(text, size){
-            var dom = model.append("text").text(text).attr("font-size", size);
+            var dom = model.append("text").text(text).attr("font-size", size).style("font-family", options.font);
             var text_width = dom[0][0].getBBox().width;
             var text_height = dom[0][0].getBBox().height;
             dom.remove();
