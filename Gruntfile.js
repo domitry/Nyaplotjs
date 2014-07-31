@@ -27,8 +27,8 @@ module.exports = function(grunt){
 	}
     });
     
-    grunt.loadNpmTasks("grunt-contrib-requirejs")
-    grunt.registerTask("default", ["release"])
-    grunt.registerTask("debug", ["requirejs:development"])
-    grunt.registerTask("release", ["requirejs"])
+    grunt.loadNpmTasks("grunt-contrib-requirejs");
+    grunt.registerTask("default", ["release"]);
+    grunt.registerTask("debug", ["requirejs:development"]);
+    grunt.registerTask("release", ["requirejs"]);
 };
