@@ -60,11 +60,11 @@ define([
         if(this.options.value !== null){
             var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
             var raw = this.countData(column_value);
-            data = this.proceedData(raw.x, raw.y, this.options);
+            data = this.processData(raw.x, raw.y, this.options);
         }else{
             var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
             var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
-            data = this.proceedData(column_x, column_y, this.options);
+            data = this.processData(column_x, column_y, this.options);
         }
 
         var rects = this.model.selectAll("rect").data(data);
@@ -78,7 +78,7 @@ define([
         this.updateModels(rects, this.scales, this.options);
     };
     
-    Bar.prototype.proceedData = function(x, y, options){
+    Bar.prototype.processData = function(x, y, options){
         return _.map(
             _.zip(x,y),
             function(d, i){return {x:d[0], y:d[1]};}

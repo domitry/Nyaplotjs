@@ -51,7 +51,7 @@ define([
         };
 
         var df = Manager.getData(df_id);
-        var data = this.proceedData(df.column(options.category), df.column(options.count));
+        var data = this.processData(df.column(options.category), df.column(options.count));
         var new_scales = this.getScales(data, scales);
 
         var model = parent.append("g");
@@ -90,7 +90,7 @@ define([
         return this;
     }
 
-    Venn.prototype.proceedData = function(category_column, count_column){
+    Venn.prototype.processData = function(category_column, count_column){
         var categories = _.uniq(category_column);
 
         // decide overlapping areas
@@ -237,7 +237,7 @@ define([
     Venn.prototype.selected = function(data, row_nums){
         var selected_count = this.df.pickUpCells(this.options.count, row_nums);
         var selected_category = this.df.pickUpCells(this.options.category, row_nums);
-        var data = this.proceedData(selected_category, selected_count, this.options);
+        var data = this.processData(selected_category, selected_count, this.options);
         var scales = this.getScales(data, this.scales);
 
         var circles = this.model.selectAll("circle").data(data.pos);

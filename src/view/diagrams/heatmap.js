@@ -48,7 +48,7 @@ define([
     };
 
     HeatMap.prototype.update = function(){
-        var data = this.proceedData();
+        var data = this.processData();
         var models = this.model.selectAll("rect").data(data);
         models.each(function(){
             var event = document.createEvent("MouseEvents");
@@ -59,7 +59,7 @@ define([
         this.updateModels(models, this.options);
     };
 
-    HeatMap.prototype.proceedData = function(){
+    HeatMap.prototype.processData = function(){
         var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
         var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
         var column_fill = this.df.columnWithFilters(this.uuid, this.options.fill);

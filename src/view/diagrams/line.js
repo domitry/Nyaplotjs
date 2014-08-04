@@ -42,7 +42,7 @@ define([
 
     Line.prototype.update = function(){
         if(this.render){
-            var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+            var data = this.processData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
             this.model.selectAll("path").remove();
             var path =this.model
                     .append("path")
@@ -54,7 +54,7 @@ define([
         }
     };
 
-    Line.prototype.proceedData = function(x_arr, y_arr, options){
+    Line.prototype.processData = function(x_arr, y_arr, options){
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 

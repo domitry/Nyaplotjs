@@ -34,7 +34,7 @@ define([
 
     Histogram.prototype.update = function(){
         var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
-        var data = this.proceedData(column_value, this.options);
+        var data = this.processData(column_value, this.options);
 
         var models = this.model.selectAll("rect").data(data);
         if(models[0][0]==undefined){
@@ -47,7 +47,7 @@ define([
         this.updateModels(models,  this.scales, this.options);
     };
 
-    Histogram.prototype.proceedData = function(column, options){
+    Histogram.prototype.processData = function(column, options){
         return d3.layout.histogram()
             .bins(this.scales.x.ticks(options.bin_num))(column);
     };

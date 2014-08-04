@@ -130,7 +130,7 @@ define([
         var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
         var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
 
-        var data = this.proceedData(column_category, column_count, this.selected_category);
+        var data = this.processData(column_category, column_count, this.selected_category);
         var scales = this.getScales(data, this.scales);
         var circles = this.model.selectAll("circle").data(data.pos);
         var texts = this.model.selectAll("text").data(data.labels);
@@ -143,7 +143,7 @@ define([
         this.updateLabels(texts, scales, this.options);
     };
 
-    Venn.prototype.proceedData = function(category_column, count_column, selected_category){
+    Venn.prototype.processData = function(category_column, count_column, selected_category){
         // decide overlapping areas
         var items = (function(){
             var table = [];

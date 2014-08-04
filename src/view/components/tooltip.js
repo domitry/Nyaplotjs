@@ -68,7 +68,7 @@ define([
 
     // calcurate position, height and width of tool-tip, then update dom objects
     Tooltip.prototype.update = function(){
-        var style = this.proceedData(this.lists);
+        var style = this.processData(this.lists);
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);
     };
@@ -136,7 +136,7 @@ define([
     };
 
     // calcurate height and width that are necessary for rendering the tool-tip
-    Tooltip.prototype.proceedData = function(lists){
+    Tooltip.prototype.processData = function(lists){
         var options = this.options;
 
         // calcurate shape and center point of tool-tip

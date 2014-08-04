@@ -53,7 +53,7 @@ define([
     }
 
     Scatter.prototype.update = function(){
-        var data = this.proceedData(this.options);
+        var data = this.processData(this.options);
         this.options.tooltip.reset();
         if(this.render){
             var shapes = this.model.selectAll("path").data(data);
@@ -67,7 +67,7 @@ define([
         }
     };
 
-    Scatter.prototype.proceedData = function(options){
+    Scatter.prototype.processData = function(options){
         var df = this.df;
         var x_arr = df.column(this.options.x);
         var y_arr = df.column(this.options.y);

@@ -46,12 +46,12 @@ define([
     // proceed data and build SVG dom node
     Box.prototype.update = function(){
         var uuid = this.uuid;
-        var proceedData = this.proceedData;
+        var processData = this.processData;
         var df = this.df;
         var data = [];
         _.each(this.options.value, function(column_name){
             var column = df.columnWithFilters(uuid, column_name);
-            data.push(_.extend(proceedData(column), {x: column_name}));
+            data.push(_.extend(processData(column), {x: column_name}));
         });
 
         var boxes = this.model.selectAll("g").data(data);
@@ -62,7 +62,7 @@ define([
     };
 
     // convert raw data into style information for box
-    Box.prototype.proceedData = function(column){
+    Box.prototype.processData = function(column){
         var getMed = function(arr){
             var n = arr.length;
             return (n%2==1 ? arr[Math.floor(n/2)] : (arr[n/2]+arr[n/2+1])/2);
