@@ -2227,11 +2227,11 @@ define('view/diagrams/bar',[
         if(this.options.value !== null){
             var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
             var raw = this.countData(column_value);
-            data = this.proceedData(raw.x, raw.y, this.options);
+            data = this.processData(raw.x, raw.y, this.options);
         }else{
             var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
             var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
-            data = this.proceedData(column_x, column_y, this.options);
+            data = this.processData(column_x, column_y, this.options);
         }
 
         var rects = this.model.selectAll("rect").data(data);
@@ -2245,7 +2245,7 @@ define('view/diagrams/bar',[
         this.updateModels(rects, this.scales, this.options);
     };
     
-    Bar.prototype.proceedData = function(x, y, options){
+    Bar.prototype.processData = function(x, y, options){
         return _.map(
             _.zip(x,y),
             function(d, i){return {x:d[0], y:d[1]};}
@@ -2387,7 +2387,7 @@ define('view/diagrams/histogram',[
 
     Histogram.prototype.update = function(){
         var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
-        var data = this.proceedData(column_value, this.options);
+        var data = this.processData(column_value, this.options);
 
         var models = this.model.selectAll("rect").data(data);
         if(models[0][0]==undefined){
@@ -2400,7 +2400,7 @@ define('view/diagrams/histogram',[
         this.updateModels(models,  this.scales, this.options);
     };
 
-    Histogram.prototype.proceedData = function(column, options){
+    Histogram.prototype.processData = function(column, options){
         return d3.layout.histogram()
             .bins(this.scales.x.ticks(options.bin_num))(column);
     };
@@ -2512,7 +2512,7 @@ define('view/diagrams/scatter',[
     }
 
     Scatter.prototype.update = function(){
-        var data = this.proceedData(this.options);
+        var data = this.processData(this.options);
         this.options.tooltip.reset();
         if(this.render){
             var shapes = this.model.selectAll("path").data(data);
@@ -2526,7 +2526,7 @@ define('view/diagrams/scatter',[
         }
     };
 
-    Scatter.prototype.proceedData = function(options){
+    Scatter.prototype.processData = function(options){
         var df = this.df;
         var x_arr = df.column(this.options.x);
         var y_arr = df.column(this.options.y);
@@ -2631,7 +2631,7 @@ define('view/diagrams/line',[
 
     Line.prototype.update = function(){
         if(this.render){
-            var data = this.proceedData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
+            var data = this.processData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
             this.model.selectAll("path").remove();
             var path =this.model
                     .append("path")
@@ -2643,7 +2643,7 @@ define('view/diagrams/line',[
         }
     };
 
-    Line.prototype.proceedData = function(x_arr, y_arr, options){
+    Line.prototype.processData = function(x_arr, y_arr, options){
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
@@ -2892,7 +2892,7 @@ define('view/diagrams/venn',[
         var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
         var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
 
-        var data = this.proceedData(column_category, column_count, this.selected_category);
+        var data = this.processData(column_category, column_count, this.selected_category);
         var scales = this.getScales(data, this.scales);
         var circles = this.model.selectAll("circle").data(data.pos);
         var texts = this.model.selectAll("text").data(data.labels);
@@ -2905,7 +2905,7 @@ define('view/diagrams/venn',[
         this.updateLabels(texts, scales, this.options);
     };
 
-    Venn.prototype.proceedData = function(category_column, count_column, selected_category){
+    Venn.prototype.processData = function(category_column, count_column, selected_category){
         // decide overlapping areas
         var items = (function(){
             var table = [];
@@ -3165,7 +3165,7 @@ define('view/diagrams/multiple_venn',[
         };
 
         var df = Manager.getData(df_id);
-        var data = this.proceedData(df.column(options.category), df.column(options.count));
+        var data = this.processData(df.column(options.category), df.column(options.count));
         var new_scales = this.getScales(data, scales);
 
         var model = parent.append("g");
@@ -3204,7 +3204,7 @@ define('view/diagrams/multiple_venn',[
         return this;
     }
 
-    Venn.prototype.proceedData = function(category_column, count_column){
+    Venn.prototype.processData = function(category_column, count_column){
         var categories = _.uniq(category_column);
 
         // decide overlapping areas
@@ -3351,7 +3351,7 @@ define('view/diagrams/multiple_venn',[
     Venn.prototype.selected = function(data, row_nums){
         var selected_count = this.df.pickUpCells(this.options.count, row_nums);
         var selected_category = this.df.pickUpCells(this.options.category, row_nums);
-        var data = this.proceedData(selected_category, selected_count, this.options);
+        var data = this.processData(selected_category, selected_count, this.options);
         var scales = this.getScales(data, this.scales);
 
         var circles = this.model.selectAll("circle").data(data.pos);
@@ -3417,12 +3417,12 @@ define('view/diagrams/box.js',[
     // proceed data and build SVG dom node
     Box.prototype.update = function(){
         var uuid = this.uuid;
-        var proceedData = this.proceedData;
+        var processData = this.processData;
         var df = this.df;
         var data = [];
         _.each(this.options.value, function(column_name){
             var column = df.columnWithFilters(uuid, column_name);
-            data.push(_.extend(proceedData(column), {x: column_name}));
+            data.push(_.extend(processData(column), {x: column_name}));
         });
 
         var boxes = this.model.selectAll("g").data(data);
@@ -3433,7 +3433,7 @@ define('view/diagrams/box.js',[
     };
 
     // convert raw data into style information for box
-    Box.prototype.proceedData = function(column){
+    Box.prototype.processData = function(column){
         var getMed = function(arr){
             var n = arr.length;
             return (n%2==1 ? arr[Math.floor(n/2)] : (arr[n/2]+arr[n/2+1])/2);
@@ -3739,7 +3739,7 @@ define('view/diagrams/heatmap.js',[
     };
 
     HeatMap.prototype.update = function(){
-        var data = this.proceedData();
+        var data = this.processData();
         var models = this.model.selectAll("rect").data(data);
         models.each(function(){
             var event = document.createEvent("MouseEvents");
@@ -3750,7 +3750,7 @@ define('view/diagrams/heatmap.js',[
         this.updateModels(models, this.options);
     };
 
-    HeatMap.prototype.proceedData = function(){
+    HeatMap.prototype.processData = function(){
         var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
         var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
         var column_fill = this.df.columnWithFilters(this.uuid, this.options.fill);
@@ -3976,7 +3976,7 @@ define('view/components/tooltip',[
 
     // calcurate position, height and width of tool-tip, then update dom objects
     Tooltip.prototype.update = function(){
-        var style = this.proceedData(this.lists);
+        var style = this.processData(this.lists);
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);
     };
@@ -4044,7 +4044,7 @@ define('view/components/tooltip',[
     };
 
     // calcurate height and width that are necessary for rendering the tool-tip
-    Tooltip.prototype.proceedData = function(lists){
+    Tooltip.prototype.processData = function(lists){
         var options = this.options;
 
         // calcurate shape and center point of tool-tip
