@@ -21,11 +21,14 @@ define([
 
         // detect the nested column (that should be only one)
         var header = _.keys(data[0]);
-        var nested = _.filter(_.zip(_.map(data, function(row, i){var arr = _.toArray(row); arr.push(i); return arr;})), function(column){
-            _.all(_.isArray(column));
+        var rows = _.zip.apply(this, _.map(data, function(row, i){
+            return _.toArray(row);
+        }));
+        var nested = _.filter(rows, function(column){
+            return _.all(column, function(val){return _.isArray(val);});
         });
         if(nested.length == 1){
-            this.nested = header[_.last(nested[0])];
+            this.nested = header[rows.indexOf(nested[0])];
         }else this.nested = false;
 
         this.filters = {};
