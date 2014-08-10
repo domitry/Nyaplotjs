@@ -4172,7 +4172,9 @@ define('view/pane',[
             legend_stroke_color: '#000',
             legend_stroke_width: 0,
             font: "Helvetica, Arial, sans-serif",
-            scale: 'linear'
+            scale: 'linear',
+            scale_extra_options: {},
+            axis_extra_options: {}
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -4229,7 +4231,7 @@ define('view/pane',[
         var scales = (function(){
             var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            return scale(domains, ranges, {linear: options.scale});
+            return scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
         })();
 
         // add background
@@ -4256,7 +4258,8 @@ define('view/pane',[
             rotate_y_label:options.rotate_y_label,
             stroke_color: options.grid_color,
             pane_uuid: this.uuid,
-            z_index:100
+            z_index:100,
+            extra: options.axis_extra_options
         });
 
         // add context
@@ -4592,6 +4595,16 @@ define('utils/dataframe',[
             this.raw = {};
         }
         else this.raw = data;
+
+        // detect the nested column (that should be only one)
+        var header = _.keys(data[0]);
+        var nested = _.filter(_.zip(_.map(data, function(row, i){return _.toArray(row).push(i);})), function(column){
+            _.all(_.isObject(column));
+        });
+        if(nested.length == 1){
+            this.nested = header(nested[0].last);
+        }else this.nested = false;
+
         this.filters = {};
         return this;
     }
@@ -4641,6 +4654,12 @@ define('utils/dataframe',[
                 return memo;
             }, {});
         });
+    };
+
+    Dataframe.prototype.nested_column = function(row_num, name){
+        if(!this.nested)throw "Recieved dataframe is not nested.";
+        var df = new Dataframe('', this.row(row_num)[this.nested]);
+        return df.column(name);
     };
 
     Dataframe.prototype.columnRange = function(label){
@@ -4722,14 +4741,16 @@ define('core/parse',[
     return parse;
 });
 
-define('main',['require','exports','module','core/parse','core/manager','node-uuid'],function(require, exports, module){
+define('main',['require','exports','module','core/parse','core/stl','core/manager','node-uuid','underscore'],function(require, exports, module){
     var Nyaplot = {};
 
     Nyaplot.core = {};
     Nyaplot.core.parse = require('core/parse');
 
+    Nyaplot.STL = require('core/stl');
     Nyaplot.Manager = require('core/manager');
     Nyaplot.uuid = require('node-uuid');
+    Nyaplot._ = require('underscore');
 
     return Nyaplot;
 });

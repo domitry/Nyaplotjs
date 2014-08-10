@@ -34,7 +34,9 @@ define([
             legend_stroke_color: '#000',
             legend_stroke_width: 0,
             font: "Helvetica, Arial, sans-serif",
-            scale: 'linear'
+            scale: 'linear',
+            scale_extra_options: {},
+            axis_extra_options: {}
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -91,7 +93,7 @@ define([
         var scales = (function(){
             var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            return scale(domains, ranges, {linear: options.scale});
+            return scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
         })();
 
         // add background
@@ -118,7 +120,8 @@ define([
             rotate_y_label:options.rotate_y_label,
             stroke_color: options.grid_color,
             pane_uuid: this.uuid,
-            z_index:100
+            z_index:100,
+            extra: options.axis_extra_options
         });
 
         // add context

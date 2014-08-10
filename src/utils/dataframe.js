@@ -18,6 +18,16 @@ define([
             this.raw = {};
         }
         else this.raw = data;
+
+        // detect the nested column (that should be only one)
+        var header = _.keys(data[0]);
+        var nested = _.filter(_.zip(_.map(data, function(row, i){return _.toArray(row).push(i);})), function(column){
+            _.all(_.isObject(column));
+        });
+        if(nested.length == 1){
+            this.nested = header(nested[0].last);
+        }else this.nested = false;
+
         this.filters = {};
         return this;
     }
@@ -67,6 +77,12 @@ define([
                 return memo;
             }, {});
         });
+    };
+
+    Dataframe.prototype.nested_column = function(row_num, name){
+        if(!this.nested)throw "Recieved dataframe is not nested.";
+        var df = new Dataframe('', this.row(row_num)[this.nested]);
+        return df.column(name);
     };
 
     Dataframe.prototype.columnRange = function(label){
