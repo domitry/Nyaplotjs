@@ -10,5 +10,9 @@ define(function(require, exports, module){
     diagrams.box = require('view/diagrams/box.js');
     diagrams.heatmap = require('view/diagrams/heatmap.js');
 
+    diagrams.add = function(name, diagram){
+        diagrams[name] = diagram;
+    };
+
     return diagrams;
 });

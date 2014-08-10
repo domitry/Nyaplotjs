@@ -3832,6 +3832,10 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
     diagrams.box = require('view/diagrams/box.js');
     diagrams.heatmap = require('view/diagrams/heatmap.js');
 
+    diagrams.add = function(name, diagram){
+        diagrams[name] = diagram;
+    };
+
     return diagrams;
 });
 
@@ -4231,7 +4235,7 @@ define('view/pane',[
         var scales = (function(){
             var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            return scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
+            return new scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
         })();
 
         // add background
@@ -4548,8 +4552,9 @@ define('core/stl',['require','exports','module','view/pane','view/components/axi
 
 define('core/extension',[
     'underscore',
-    'core/stl'
-],function(_, STL){
+    'core/stl',
+    'view/diagrams/diagrams'
+],function(_, STL, diagrams){
     var Extension = {};
     var buffer={};
 
@@ -4564,6 +4569,12 @@ define('core/extension',[
             if(typeof ext_info[component] == "undefined")
                 ext_info[component] = STL[component];
         });
+
+        if(typeof ext_info['diagrams'] != "undefined"){
+            _.each(ext_info['diagrams'], function(content, name){
+                diagrams.add(name, content);
+            });
+        }
 
         buffer[extension_name] = ext_info;
     };
@@ -4598,11 +4609,14 @@ define('utils/dataframe',[
 
         // detect the nested column (that should be only one)
         var header = _.keys(data[0]);
-        var nested = _.filter(_.zip(_.map(data, function(row, i){var arr = _.toArray(row); arr.push(i); return arr;})), function(column){
-            _.all(_.isArray(column));
+        var rows = _.zip.apply(this, _.map(data, function(row, i){
+            return _.toArray(row);
+        }));
+        var nested = _.filter(rows, function(column){
+            return _.all(column, function(val){return _.isArray(val);});
         });
         if(nested.length == 1){
-            this.nested = header[_.last(nested[0])];
+            this.nested = header[rows.indexOf(nested[0])];
         }else this.nested = false;
 
         this.filters = {};

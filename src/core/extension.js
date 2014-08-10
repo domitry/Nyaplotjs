@@ -5,8 +5,9 @@
 
 define([
     'underscore',
-    'core/stl'
-],function(_, STL){
+    'core/stl',
+    'view/diagrams/diagrams'
+],function(_, STL, diagrams){
     var Extension = {};
     var buffer={};
 
@@ -21,6 +22,12 @@ define([
             if(typeof ext_info[component] == "undefined")
                 ext_info[component] = STL[component];
         });
+
+        if(typeof ext_info['diagrams'] != "undefined"){
+            _.each(ext_info['diagrams'], function(content, name){
+                diagrams.add(name, content);
+            });
+        }
 
         buffer[extension_name] = ext_info;
     };
