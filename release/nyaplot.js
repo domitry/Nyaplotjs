@@ -4598,11 +4598,11 @@ define('utils/dataframe',[
 
         // detect the nested column (that should be only one)
         var header = _.keys(data[0]);
-        var nested = _.filter(_.zip(_.map(data, function(row, i){return _.toArray(row).push(i);})), function(column){
-            _.all(_.isObject(column));
+        var nested = _.filter(_.zip(_.map(data, function(row, i){var arr = _.toArray(row); arr.push(i); return arr;})), function(column){
+            _.all(_.isArray(column));
         });
         if(nested.length == 1){
-            this.nested = header(nested[0].last);
+            this.nested = header[_.last(nested[0])];
         }else this.nested = false;
 
         this.filters = {};
