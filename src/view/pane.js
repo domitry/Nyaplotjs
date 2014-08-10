@@ -93,7 +93,7 @@ define([
         var scales = (function(){
             var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            return scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
+            return new scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
         })();
 
         // add background
