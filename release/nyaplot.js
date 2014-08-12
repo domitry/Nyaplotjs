@@ -4318,7 +4318,7 @@ define('view/pane',[
 
         this.diagrams = [];
         this.tooltip = tooltip;
-        this.context = model.select(".context");
+        this.context = model.select(".context").append("g").attr("class","context_child");
         this.model = model;
         this.scales = scales;
         this.options = options;
