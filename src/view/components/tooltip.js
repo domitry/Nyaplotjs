@@ -199,8 +199,9 @@ define([
             var tip_width = text_size.w + margin.left + margin.right;
             var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
 
-            var tip_x = (list.x == "left" ? 0 : scales.x(list.x));
-            var tip_y = (list.y == "bottom" ? context_height : scales.y(list.y));
+            var point = scales.get(list.x, list.y);
+            var tip_x = (list.x == "left" ? 0 : point.x);
+            var tip_y = (list.y == "bottom" ? context_height : point.y);
 
             var points = calcPoints(list.pos, tip_width, tip_height);
 

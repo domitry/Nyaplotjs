@@ -72,7 +72,7 @@ define([
             rects.enter()
                 .append("rect")
                 .attr("height", 0)
-                .attr("y", this.scales.y(0));
+                .attr("y", this.scales.get(0, 0).y);
         }
 
         this.updateModels(rects, this.scales, this.options);
@@ -105,16 +105,16 @@ define([
             options.tooltip.reset();
         };
 
-        var width = scales.x.rangeBand()*options.width;
-        var padding = scales.x.rangeBand()*((1-options.width)/2);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
 
         selector
-            .attr("x",function(d){return scales.x(d.x) + padding;})
+            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
             .transition().duration(200)
-            .attr("y", function(d){return scales.y(d.y);})
-            .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+            .attr("y", function(d){return scales.get(d.x, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
             .attr("id", uuid.v4());
 
         if(options.hover)selector

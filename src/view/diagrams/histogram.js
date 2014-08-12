@@ -41,7 +41,7 @@ define([
             models = models.enter()
                 .append("rect")
                 .attr("height", 0)
-                .attr("y", this.scales.y(0));
+                .attr("y", this.scales.get(0, 0).y);
         }
 
         this.updateModels(models,  this.scales, this.options);
@@ -49,7 +49,7 @@ define([
 
     Histogram.prototype.processData = function(column, options){
         return d3.layout.histogram()
-            .bins(this.scales.x.ticks(options.bin_num))(column);
+            .bins(this.scales.raw.x.ticks(options.bin_num))(column);
     };
 
     Histogram.prototype.updateModels = function(selector, scales, options){
@@ -71,14 +71,14 @@ define([
         };
 
         selector
-            .attr("x",function(d){return scales.x(d.x);})
-            .attr("width", function(d){return scales.x(d.dx) - scales.x(0);})
+            .attr("x",function(d){return scales.get(d.x, 0).x;})
+            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
             .transition().duration(200)
-            .attr("y", function(d){return scales.y(d.y);})
-            .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+            .attr("y", function(d){return scales.get(0, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
             .attr("id", uuid.v4());
         
         if(options.hover)selector

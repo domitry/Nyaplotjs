@@ -105,7 +105,7 @@ define([
 
         selector
             .attr("transform", function(d) {
-                return "translate(" + scales.x(d.x) + "," + scales.y(d.y) + ")"; })
+                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)

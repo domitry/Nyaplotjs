@@ -69,19 +69,12 @@ define([
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
-            if(typeof scales.x['invert'] === "undefined" && typeof scales.y['invert'] === "undefined"){
-                // ordinal scale
-                width = scales.x.rangeBand()*options.width;
-                height = scales.y.rangeBand()*options.height;
-                x = scales.x(row[0]);
-                y = scales.y(row[1]);
-            }else{
-                // linear scale
-                width = Math.abs(scales.x(options.width) - scales.x(0));
-                height = Math.abs(scales.y(options.height) - scales.y(0));
-                x = scales.x(row[0]) - width/2;
-                y = scales.y(row[1]) - height/2;
-            }
+            // linear scale
+            width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
+            height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
+            x = scales.get(row[0], 0).x - width/2;
+            y = scales.get(0, row[1]).y - height/2;
+
             return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
         });
     };

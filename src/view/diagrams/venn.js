@@ -93,8 +93,8 @@ define([
     }
 
     Venn.prototype.getScales = function(data, scales){
-        var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
-        var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
+        var r_w = _.max(scales.range().x) - _.min(scales.range().x);
+        var r_h = _.max(scales.range().y) - _.min(scales.range().y);
         var d_x = {
             min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
             max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
@@ -120,8 +120,8 @@ define([
             d_h.max += (new_d_h - d_h)/2;
         }
         var new_scales = {};
-        new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
-        new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
+        new_scales.x = d3.scale.linear().range(scales.range().x).domain([d_x.min, d_x.max]);
+        new_scales.y = d3.scale.linear().range(scales.range().y).domain([d_y.min, d_y.max]);
         new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
         return new_scales;
     };

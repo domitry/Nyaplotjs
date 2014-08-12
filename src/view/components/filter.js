@@ -12,8 +12,8 @@ define([
 
         var brushed = function(){
             var ranges = {
-                x: (brush.empty() ? scales.x.domain() : brush.extent()),
-                y: scales.y.domain()
+                x: (brush.empty() ? scales.domain().x : brush.extent()),
+                y: scales.domain().y
             };
             callback(ranges);
         };
@@ -23,8 +23,8 @@ define([
                 .on("brushend", brushed);
 
         var model = parent.append("g");
-        var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
-        var y = d3.min(scales.y.range());
+        var height = d3.max(scales.range().y) - d3.min(scales.range().y);
+        var y = d3.min(scales.range().y);
 
         model.call(brush)
             .selectAll("rect")

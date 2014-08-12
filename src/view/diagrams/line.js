@@ -72,8 +72,8 @@ define([
         };
 
         var line = d3.svg.line()
-                .x(function(d){return scales.x(d.x);})
-                .y(function(d){return scales.y(d.y);});
+                .x(function(d){return scales.get(d.x, d.y).x;})
+                .y(function(d){return scales.get(d.x, d.y).y;});
 
         selector
             .attr("d", line)

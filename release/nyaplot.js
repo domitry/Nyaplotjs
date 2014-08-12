@@ -2239,7 +2239,7 @@ define('view/diagrams/bar',[
             rects.enter()
                 .append("rect")
                 .attr("height", 0)
-                .attr("y", this.scales.y(0));
+                .attr("y", this.scales.get(0, 0).y);
         }
 
         this.updateModels(rects, this.scales, this.options);
@@ -2272,16 +2272,16 @@ define('view/diagrams/bar',[
             options.tooltip.reset();
         };
 
-        var width = scales.x.rangeBand()*options.width;
-        var padding = scales.x.rangeBand()*((1-options.width)/2);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
 
         selector
-            .attr("x",function(d){return scales.x(d.x) + padding;})
+            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
             .transition().duration(200)
-            .attr("y", function(d){return scales.y(d.y);})
-            .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+            .attr("y", function(d){return scales.get(d.x, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
             .attr("id", uuid.v4());
 
         if(options.hover)selector
@@ -2323,8 +2323,8 @@ define('view/components/filter',[
 
         var brushed = function(){
             var ranges = {
-                x: (brush.empty() ? scales.x.domain() : brush.extent()),
-                y: scales.y.domain()
+                x: (brush.empty() ? scales.domain().x : brush.extent()),
+                y: scales.domain().y
             };
             callback(ranges);
         };
@@ -2334,8 +2334,8 @@ define('view/components/filter',[
                 .on("brushend", brushed);
 
         var model = parent.append("g");
-        var height = d3.max(scales.y.range()) - d3.min(scales.y.range());
-        var y = d3.min(scales.y.range());
+        var height = d3.max(scales.range().y) - d3.min(scales.range().y);
+        var y = d3.min(scales.range().y);
 
         model.call(brush)
             .selectAll("rect")
@@ -2394,7 +2394,7 @@ define('view/diagrams/histogram',[
             models = models.enter()
                 .append("rect")
                 .attr("height", 0)
-                .attr("y", this.scales.y(0));
+                .attr("y", this.scales.get(0, 0).y);
         }
 
         this.updateModels(models,  this.scales, this.options);
@@ -2402,7 +2402,7 @@ define('view/diagrams/histogram',[
 
     Histogram.prototype.processData = function(column, options){
         return d3.layout.histogram()
-            .bins(this.scales.x.ticks(options.bin_num))(column);
+            .bins(this.scales.raw.x.ticks(options.bin_num))(column);
     };
 
     Histogram.prototype.updateModels = function(selector, scales, options){
@@ -2424,14 +2424,14 @@ define('view/diagrams/histogram',[
         };
 
         selector
-            .attr("x",function(d){return scales.x(d.x);})
-            .attr("width", function(d){return scales.x(d.dx) - scales.x(0);})
+            .attr("x",function(d){return scales.get(d.x, 0).x;})
+            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
             .transition().duration(200)
-            .attr("y", function(d){return scales.y(d.y);})
-            .attr("height", function(d){return scales.y(0) - scales.y(d.y);})
+            .attr("y", function(d){return scales.get(0, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
             .attr("id", uuid.v4());
         
         if(options.hover)selector
@@ -2564,7 +2564,7 @@ define('view/diagrams/scatter',[
 
         selector
             .attr("transform", function(d) {
-                return "translate(" + scales.x(d.x) + "," + scales.y(d.y) + ")"; })
+                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
             .attr("fill", options.color)
             .attr("stroke", options.stroke_color)
             .attr("stroke-width", options.stroke_width)
@@ -2661,8 +2661,8 @@ define('view/diagrams/line',[
         };
 
         var line = d3.svg.line()
-                .x(function(d){return scales.x(d.x);})
-                .y(function(d){return scales.y(d.y);});
+                .x(function(d){return scales.get(d.x, d.y).x;})
+                .y(function(d){return scales.get(d.x, d.y).y;});
 
         selector
             .attr("d", line)
@@ -2855,8 +2855,8 @@ define('view/diagrams/venn',[
     }
 
     Venn.prototype.getScales = function(data, scales){
-        var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
-        var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
+        var r_w = _.max(scales.range().x) - _.min(scales.range().x);
+        var r_h = _.max(scales.range().y) - _.min(scales.range().y);
         var d_x = {
             min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
             max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
@@ -2882,8 +2882,8 @@ define('view/diagrams/venn',[
             d_h.max += (new_d_h - d_h)/2;
         }
         var new_scales = {};
-        new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
-        new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
+        new_scales.x = d3.scale.linear().range(scales.range().x).domain([d_x.min, d_x.max]);
+        new_scales.y = d3.scale.linear().range(scales.range().y).domain([d_y.min, d_y.max]);
         new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
         return new_scales;
     };
@@ -3460,8 +3460,8 @@ define('view/diagrams/box.js',[
 
     // update SVG dom nodes based on data
     Box.prototype.updateModels = function(selector, scales, options){
-        var width = scales.x.rangeBand()*options.width;
-        var padding = scales.x.rangeBand()*((1-options.width)/2);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
         var color_scale = this.color_scale;
 
         var onMouse = function(){
@@ -3488,17 +3488,17 @@ define('view/diagrams/box.js',[
 
         selector
             .append("line")
-            .attr("x1", function(d){return scales.x(d.x) + width/2 + padding;})
-            .attr("y1", function(d){return scales.y(d.max);})
-            .attr("x2", function(d){return scales.x(d.x) + width/2 + padding;})
-            .attr("y2", function(d){return scales.y(d.min);})
+            .attr("x1", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.max).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.min).y;})
             .attr("stroke", options.stroke_color);
 
         selector
             .append("rect")
-            .attr("x", function(d){return scales.x(d.x) + padding;})
-            .attr("y", function(d){return scales.y(d.q3);})
-            .attr("height", function(d){return scales.y(d.q1) - scales.y(d.q3);})
+            .attr("x", function(d){return scales.get(d.x, 0).x + padding;})
+            .attr("y", function(d){return scales.get(d.x, d.q3).y;})
+            .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
             .attr("stroke", options.stroke_color)
@@ -3509,10 +3509,10 @@ define('view/diagrams/box.js',[
         // median line
         selector
             .append("line")
-            .attr("x1", function(d){return scales.x(d.x) + padding;})
-            .attr("y1", function(d){return scales.y(d.med);})
-            .attr("x2", function(d){return scales.x(d.x)+width + padding;})
-            .attr("y2", function(d){return scales.y(d.med);})
+            .attr("x1", function(d){return scales.get(d.x,0).x + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.med).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.med).y;})
             .attr("stroke", options.stroke_color);
 
         selector
@@ -3523,8 +3523,8 @@ define('view/diagrams/box.js',[
                     .data(d.outlier)
                     .enter()
                     .append("circle")
-                    .attr("cx", function(d1){return scales.x(d.x) + width/2 + padding;})
-                    .attr("cy", function(d1){return scales.y(d1);})
+                    .attr("cx", function(d1){return scales.get(d.x,0).x + width/2 + padding;})
+                    .attr("cy", function(d1){return scales.get(d.x,d1).y;})
                     .attr("r", options.outlier_r);
             });
     };
@@ -3760,19 +3760,12 @@ define('view/diagrams/heatmap.js',[
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
-            if(typeof scales.x['invert'] === "undefined" && typeof scales.y['invert'] === "undefined"){
-                // ordinal scale
-                width = scales.x.rangeBand()*options.width;
-                height = scales.y.rangeBand()*options.height;
-                x = scales.x(row[0]);
-                y = scales.y(row[1]);
-            }else{
-                // linear scale
-                width = Math.abs(scales.x(options.width) - scales.x(0));
-                height = Math.abs(scales.y(options.height) - scales.y(0));
-                x = scales.x(row[0]) - width/2;
-                y = scales.y(row[1]) - height/2;
-            }
+            // linear scale
+            width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
+            height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
+            x = scales.get(row[0], 0).x - width/2;
+            y = scales.get(0, row[1]).y - height/2;
+
             return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
         });
     };
@@ -4111,8 +4104,9 @@ define('view/components/tooltip',[
             var tip_width = text_size.w + margin.left + margin.right;
             var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
 
-            var tip_x = (list.x == "left" ? 0 : scales.x(list.x));
-            var tip_y = (list.y == "bottom" ? context_height : scales.y(list.y));
+            var point = scales.get(list.x, list.y);
+            var tip_x = (list.x == "left" ? 0 : point.x);
+            var tip_y = (list.y == "bottom" ? context_height : point.y);
 
             var points = calcPoints(list.pos, tip_width, tip_height);
 
@@ -4235,7 +4229,10 @@ define('view/pane',[
         var scales = (function(){
             var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
-            return new scale(domains, ranges, {linear: options.scale, extra: options.scale_extra_options});
+            return new scale(domains, ranges, {
+                linear: options.scale,
+                extra: options.scale_extra_options
+            });
         })();
 
         // add background
@@ -4404,11 +4401,11 @@ define('view/components/axis',[
         if(arguments.length>2)_.extend(options, _options);
 
         var xAxis = d3.svg.axis()
-                .scale(scales.x)
+                .scale(scales.raw.x)
                 .orient("bottom");
 
         var yAxis = d3.svg.axis()
-                .scale(scales.y)
+                .scale(scales.raw.y)
                 .orient("left");
 
         parent.append("g")
@@ -4483,8 +4480,8 @@ define('view/components/axis',[
 
         if(options.zoom){
             var zoom = d3.behavior.zoom()
-                    .x(scales.x)
-                    .y(scales.y)
+                    .x(scales.raw.x)
+                    .y(scales.raw.y)
                     .scaleExtent(options.zoom_range)
                     .on("zoom", update);
             parent.call(zoom);
@@ -4527,8 +4524,31 @@ define('view/components/scale',['underscore'], function(_){
                     .range(ranges[label]);
             }
         });
-        return scales;
+        this.scales = scales;
+        this.raw = scales;
+        return this;
     }
+
+    Scales.prototype.get = function(x, y){
+        return {
+            x: this.scales.x(x),
+            y: this.scales.y(y)
+        };
+    };
+
+    Scales.prototype.domain = function(){
+        return {
+            x: this.scales.x.domain(),
+            y: this.scales.y.domain()
+        };
+    };
+
+    Scales.prototype.range = function(){
+        return {
+            x: this.scales.x.range(),
+            y: this.scales.y.range()
+        };
+    };
 
     return Scales;
 });

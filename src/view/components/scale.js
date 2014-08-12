@@ -25,8 +25,31 @@ define(['underscore'], function(_){
                     .range(ranges[label]);
             }
         });
-        return scales;
+        this.scales = scales;
+        this.raw = scales;
+        return this;
     }
+
+    Scales.prototype.get = function(x, y){
+        return {
+            x: this.scales.x(x),
+            y: this.scales.y(y)
+        };
+    };
+
+    Scales.prototype.domain = function(){
+        return {
+            x: this.scales.x.domain(),
+            y: this.scales.y.domain()
+        };
+    };
+
+    Scales.prototype.range = function(){
+        return {
+            x: this.scales.x.range(),
+            y: this.scales.y.range()
+        };
+    };
 
     return Scales;
 });

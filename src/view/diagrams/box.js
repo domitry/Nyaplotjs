@@ -89,8 +89,8 @@ define([
 
     // update SVG dom nodes based on data
     Box.prototype.updateModels = function(selector, scales, options){
-        var width = scales.x.rangeBand()*options.width;
-        var padding = scales.x.rangeBand()*((1-options.width)/2);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
         var color_scale = this.color_scale;
 
         var onMouse = function(){
@@ -117,17 +117,17 @@ define([
 
         selector
             .append("line")
-            .attr("x1", function(d){return scales.x(d.x) + width/2 + padding;})
-            .attr("y1", function(d){return scales.y(d.max);})
-            .attr("x2", function(d){return scales.x(d.x) + width/2 + padding;})
-            .attr("y2", function(d){return scales.y(d.min);})
+            .attr("x1", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.max).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.min).y;})
             .attr("stroke", options.stroke_color);
 
         selector
             .append("rect")
-            .attr("x", function(d){return scales.x(d.x) + padding;})
-            .attr("y", function(d){return scales.y(d.q3);})
-            .attr("height", function(d){return scales.y(d.q1) - scales.y(d.q3);})
+            .attr("x", function(d){return scales.get(d.x, 0).x + padding;})
+            .attr("y", function(d){return scales.get(d.x, d.q3).y;})
+            .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
             .attr("stroke", options.stroke_color)
@@ -138,10 +138,10 @@ define([
         // median line
         selector
             .append("line")
-            .attr("x1", function(d){return scales.x(d.x) + padding;})
-            .attr("y1", function(d){return scales.y(d.med);})
-            .attr("x2", function(d){return scales.x(d.x)+width + padding;})
-            .attr("y2", function(d){return scales.y(d.med);})
+            .attr("x1", function(d){return scales.get(d.x,0).x + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.med).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.med).y;})
             .attr("stroke", options.stroke_color);
 
         selector
@@ -152,8 +152,8 @@ define([
                     .data(d.outlier)
                     .enter()
                     .append("circle")
-                    .attr("cx", function(d1){return scales.x(d.x) + width/2 + padding;})
-                    .attr("cy", function(d1){return scales.y(d1);})
+                    .attr("cx", function(d1){return scales.get(d.x,0).x + width/2 + padding;})
+                    .attr("cy", function(d1){return scales.get(d.x,d1).y;})
                     .attr("r", options.outlier_r);
             });
     };

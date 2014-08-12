@@ -27,11 +27,11 @@ define([
         if(arguments.length>2)_.extend(options, _options);
 
         var xAxis = d3.svg.axis()
-                .scale(scales.x)
+                .scale(scales.raw.x)
                 .orient("bottom");
 
         var yAxis = d3.svg.axis()
-                .scale(scales.y)
+                .scale(scales.raw.y)
                 .orient("left");
 
         parent.append("g")
@@ -106,8 +106,8 @@ define([
 
         if(options.zoom){
             var zoom = d3.behavior.zoom()
-                    .x(scales.x)
-                    .y(scales.y)
+                    .x(scales.raw.x)
+                    .y(scales.raw.y)
                     .scaleExtent(options.zoom_range)
                     .on("zoom", update);
             parent.call(zoom);
