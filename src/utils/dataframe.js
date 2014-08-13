@@ -52,7 +52,8 @@ define([
     Dataframe.prototype.scale = function(column_name, range){
         if(this.isContinuous(column_name)){
             var domain = this.columnRange(column_name);
-            return d3.scale.linear().domain([domain.min, domain.max]).range(range);
+            domain = _.range(domain.min, domain.max+1, (domain.max-domain.min)/(range.length-1));
+            return d3.scale.linear().domain(domain).range(range);
         }else{
             return d3.scale.ordinal().domain(_.uniq(this.column(column_name))).range(range);
         };

@@ -9,7 +9,7 @@
 <script>
 var data1 = [], MAX=50, MIN=0;
 for(var i=0;i<50;i++)data1.push({x: Math.random()*MAX, y: Math.random()*MAX, name: 'huga', nya:'nya', hoge: (Math.random()<0.5?'nya':'huga')})
-models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'scatter', data: 'data1', options: {x:'x', y:'y', size_by: 'y', fill_by: 'x', stroke_width:0, tooltip_contents:['name', 'nya']}}],options:{width:500, height:500, xrange: [MIN-5, MAX+5], yrange: [MIN-5, MAX+5], zoom:true}}]};
+models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type: 'scatter', data: 'data1', options: {x:'x', y:'y', size_by: 'y', fill_by: 'x', color: ["#000", "steelblue"], stroke_width:0, tooltip_contents:['name', 'nya']}}],options:{width:500, height:500, xrange: [MIN-5, MAX+5], yrange: [MIN-5, MAX+5], zoom:true}}]};
 window.onload = function(){Nyaplot.core.parse(models, '#vis');};
 </script>
 </body>
