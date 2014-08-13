@@ -15,6 +15,7 @@ define([
             title: 'scatter',
             x: null,
             y: null,
+            fill_by: null,
             size: 100,
             shape:'circle',
             color:'steelblue',
@@ -22,7 +23,7 @@ define([
             stroke_width: 1,
             hover: true,
             tooltip_contents:[],
-            tooltip:null
+            tooltip:null            
         };
         if(arguments.length>3)_.extend(options, _options);
 

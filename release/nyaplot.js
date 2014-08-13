@@ -2330,7 +2330,7 @@ define('view/components/filter',[
         };
 
         var brush = d3.svg.brush()
-                .x(scales.x)
+                .x(scales.raw.x)
                 .on("brushend", brushed);
 
         var model = parent.append("g");
@@ -2474,6 +2474,7 @@ define('view/diagrams/scatter',[
             title: 'scatter',
             x: null,
             y: null,
+            fill_by: null,
             size: 100,
             shape:'circle',
             color:'steelblue',
@@ -2481,7 +2482,7 @@ define('view/diagrams/scatter',[
             stroke_width: 1,
             hover: true,
             tooltip_contents:[],
-            tooltip:null
+            tooltip:null            
         };
         if(arguments.length>3)_.extend(options, _options);
 

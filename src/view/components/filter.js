@@ -19,7 +19,7 @@ define([
         };
 
         var brush = d3.svg.brush()
-                .x(scales.x)
+                .x(scales.raw.x)
                 .on("brushend", brushed);
 
         var model = parent.append("g");
