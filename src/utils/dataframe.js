@@ -48,6 +48,21 @@ define([
         return arr;
     };
 
+    // Get a scale
+    Dataframe.prototype.scale = function(column_name, range){
+        if(this.isContinuous(column_name)){
+            var domain = this.columnRange(column_name);
+            return d3.scale.linear().domain([domain.min, domain.max]).range(range);
+        }else{
+            return d3.scale.ordinal().domain(_.uniq(this.column(column_name))).range(range);
+        };
+    };
+
+    // Check if the specified column consists of continuous data
+    Dataframe.prototype.isContinuous = function(column_name){
+        return _.every(this.column(column_name), function(val){return _.isNumber(val);});
+    };
+
     // Add a filter function to the list
     Dataframe.prototype.addFilter = function(self_uuid, func, excepts){
         this.filters[self_uuid] = {func:func, excepts:excepts};
