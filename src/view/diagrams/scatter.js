@@ -90,8 +90,7 @@ define([
         }
 
         return _.map(_.zip.apply(null, columns), function(d){
-            var ret =  _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
-            return ret;
+            return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
         });
     };
 
