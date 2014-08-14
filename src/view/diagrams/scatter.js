@@ -58,7 +58,8 @@ define([
         var data = this.processData(this.options);
         this.options.tooltip.reset();
         if(this.render){
-            var shapes = this.model.selectAll("path").data(data).enter().append("path");
+            var shapes = this.model.selectAll("path").data(data);
+            shapes.enter().append("path");
             this.updateModels(shapes, this.scales, this.options);
         }else{
             this.model.selectAll("path").remove();
