@@ -9,6 +9,7 @@ define(function(require, exports, module){
     diagrams.multiple_venn = require('view/diagrams/multiple_venn');
     diagrams.box = require('view/diagrams/box.js');
     diagrams.heatmap = require('view/diagrams/heatmap.js');
+    diagrams.vectors = require('view/diagrams/vectors.js');
 
     diagrams.add = function(name, diagram){
         diagrams[name] = diagram;
