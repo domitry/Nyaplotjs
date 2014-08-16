@@ -1,3 +1,10 @@
+/*
+ * Venn: Venn diagram consisted in 3> circles
+ *
+ * Attention -- this chart is not supported yet. Please send pull-req if you are interested in re-implementing this chart.
+ *    See src/view/diagrams/venn.js to learn more.
+ */
+
 define([
     'underscore',
     'core/manager',

@@ -1,7 +1,20 @@
 /*
- * Heatmap or 2D Histogram
- * Heatmap creates rectangles from discrete data or continuous data. When creating heatmap from continuous
- * data, width and height values options should be specified.
+ * Heatmap: Heatmap or 2D Histogram
+ *
+ * Heatmap creates rectangles from continuous data. Width and height values should be specified.
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    x, y         -> String: column name. Both x and y should be continuous.
+ *    width, height-> Float : 0..1, width and height of each rectangle
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/eab8723ccb32fd3a6cd8
  */
 
 define([
@@ -23,7 +36,8 @@ define([
             color: colorset("RdBu").reverse(),
             stroke_color: "#fff",
             stroke_width: 1,
-            hover: true
+            hover: true,
+            tooltip: null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -47,6 +61,7 @@ define([
         return this;
     };
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     HeatMap.prototype.update = function(){
         var data = this.processData();
         var models = this.model.selectAll("rect").data(data);
@@ -59,6 +74,7 @@ define([
         this.updateModels(models, this.options);
     };
 
+    // pre-process data. convert data coorinates to dom coordinates with Scale.
     HeatMap.prototype.processData = function(){
         var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
         var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
@@ -69,16 +85,15 @@ define([
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
-            // linear scale
             width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
             height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
             x = scales.get(row[0], 0).x - width/2;
             y = scales.get(0, row[1]).y - height/2;
-
             return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
         });
     };
 
+    // update SVG dom nodes based on pre-processed data.
     HeatMap.prototype.updateModels = function(selector, options){
         var id = this.uuid;
         var onMouse = function(){
@@ -111,10 +126,12 @@ define([
             .on("mouseout", outMouse);
     };
 
+    // return legend object.
     HeatMap.prototype.getLegend = function(){
         return new ColorBar(this.color_scale);
     };    
 
+    // answer to callback coming from filter. not implemented yet.
     HeatMap.prototype.checkSelectedData = function(ranges){
         return;
     };

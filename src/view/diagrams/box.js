@@ -1,6 +1,23 @@
 /*
- * Box: Implementation of Boxplot for Nyaplot.
+ * Box: Boxplot
+ *
+ * This chart is generated from 'value' columns. Box calculates median and other parameters and create box plot using rect and line.
+ * Each box is placed in the position on x-axis, corresponds to column name.
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    value        -> Array : Array of String (column name)
+ *    width        -> Float : 0..1, width of each box
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    outlier_r    -> Float : radius of outliers
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/5a89296dfb23f0ea2ffd
  */
+
 
 define([
     'underscore',
@@ -43,7 +60,7 @@ define([
         return this;
     }
 
-    // proceed data and build SVG dom node
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Box.prototype.update = function(){
         var uuid = this.uuid;
         var processData = this.processData;
@@ -158,11 +175,12 @@ define([
             });
     };
 
+    // return legend object based on data prepared by initializer
     Box.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
-    // answer to callback coming from filter
+    // answer to callback coming from filter. not implemented yet.
     Box.prototype.checkSelectedData = function(ranges){
         return;
     };

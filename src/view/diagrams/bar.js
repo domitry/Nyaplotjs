@@ -1,7 +1,21 @@
 /*
  * Bar chart
+ *
  * This diagram has two mode, ordinal-mode and count-mode. The former creates bar from x and y column.
  * The latter counts unique value in 'value' column and generates bar from the result.
+ * 
+ *
+ * options:
+ *    value   -> String: column name. set when you'd like to build bar chart based on one-dimention data
+ *    x, y    -> String: column name. x should be discrete. y should be continuous.
+ *    width   -> Float : 0..1, width of each bar.
+ *    color   -> Array : color in which bars filled.
+ *    hover   -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    specified 'value' option : http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ *    specified 'x' and 'y' : http://bl.ocks.org/domitry/2f53781449025f772676
  */
 
 define([
@@ -55,6 +69,7 @@ define([
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Bar.prototype.update = function(){
         var data;
         if(this.options.value !== null){
@@ -68,23 +83,20 @@ define([
         }
 
         var rects = this.model.selectAll("rect").data(data);
-        if(rects[0][0]==undefined){
-            rects.enter()
-                .append("rect")
-                .attr("height", 0)
-                .attr("y", this.scales.get(0, 0).y);
-        }
+        rects.enter().append("rect")
+            .attr("height", 0)
+            .attr("y", this.scales.get(0, 0).y);
 
         this.updateModels(rects, this.scales, this.options);
     };
     
+    // process data as:
+    //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
     Bar.prototype.processData = function(x, y, options){
-        return _.map(
-            _.zip(x,y),
-            function(d, i){return {x:d[0], y:d[1]};}
-        );
+        return _.map(_.zip(x,y),function(d, i){return {x:d[0], y:d[1]};});
     };
 
+    // update dom object
     Bar.prototype.updateModels = function(selector, scales, options){
         var color_scale = this.color_scale;
 
@@ -122,10 +134,12 @@ define([
             .on("mouseout", outMouse);
     };
 
+    // return legend object based on data prepared by initializer
     Bar.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // count unique value. called when 'value' option was specified insead of 'x' and 'y'
     Bar.prototype.countData = function(values){
         var hash = {};
         _.each(values, function(val){
@@ -135,6 +149,7 @@ define([
         return {x: _.keys(hash), y: _.values(hash)};
     };
 
+    // not implemented yet.
     Bar.prototype.checkSelectedData = function(ranges){
         return;
     };

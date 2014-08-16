@@ -1,3 +1,24 @@
+/*
+ * Histogram: Histogram
+ *
+ * Caluculate hights of each bar from column specified by 'value' option and create histogram.
+ * See the page of 'd3.layout.histogram' on d3.js's website to learn more. (https://github.com/mbostock/d3/wiki/Histogram-Layout)
+ * 
+ *
+ * options:
+ *    value        -> String: column name. Build histogram based on this data.
+ *    bin_num      -> Float : number of bin
+ *    width        -> Float : 0..1, width of each bar.
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
+ */
+
 define([
     'underscore',
     'node-uuid',
@@ -32,26 +53,23 @@ define([
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Histogram.prototype.update = function(){
         var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
         var data = this.processData(column_value, this.options);
 
         var models = this.model.selectAll("rect").data(data);
-        if(models[0][0]==undefined){
-            models = models.enter()
-                .append("rect")
-                .attr("height", 0)
-                .attr("y", this.scales.get(0, 0).y);
-        }
-
+        models.enter().append("rect").attr("height", 0).attr("y", this.scales.get(0, 0).y);
         this.updateModels(models,  this.scales, this.options);
     };
 
+    // pre-process data using function embeded in d3.js.
     Histogram.prototype.processData = function(column, options){
         return d3.layout.histogram()
             .bins(this.scales.raw.x.ticks(options.bin_num))(column);
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Histogram.prototype.updateModels = function(selector, scales, options){
         var onMouse = function(){
             d3.select(this).transition()
@@ -86,10 +104,12 @@ define([
             .on("mouseout", outMouse);
     };
 
+    // return legend object.
     Histogram.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // answer to callback coming from filter.
     Histogram.prototype.checkSelectedData = function(ranges){
         var label_value = this.options.value;
         var filter = function(row){

@@ -16,7 +16,7 @@ define([
             color:['steelblue', '#000000'],
             stroke_color: '#000',
             stroke_width: 2,
-            hover: false,
+            hover: true,
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);

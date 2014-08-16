@@ -1,3 +1,10 @@
+/*
+ * Diagrams: Diagrams Factory
+ *
+ * Diagrams manages all diagrams bundled by Nyaplotjs. Extension registers their own diagrams through this module.
+ *
+ */
+
 define(function(require, exports, module){
     var diagrams = {};
 
@@ -11,6 +18,7 @@ define(function(require, exports, module){
     diagrams.heatmap = require('view/diagrams/heatmap.js');
     diagrams.vectors = require('view/diagrams/vectors.js');
 
+    // Add diagrams. Called by other extensions
     diagrams.add = function(name, diagram){
         diagrams[name] = diagram;
     };
