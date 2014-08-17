@@ -1,3 +1,25 @@
+/*
+ * Venn: 3-way venn diagram
+ *
+ * The implementation of traditional 3-way venn diagram. This chart is designed to work with histogram and bar chart. (See example at the bottom of this comment.)
+ * The overlapping areas are automatically changed according to common values in each pair of group. The calculation is excuted with downhill simplex method.
+ * Attention: This is still experimental implementation and should be modernized. Feel free to re-write the code below and send pull-request.
+ *
+ *
+ * options:
+ *    category, count-> String: Column name.
+ *    color          -> Array : Array of String. Colors in which circles are filled.
+ *    stroke_color   -> String: stroke color.
+ *    stroke_width   -> Float : stroke width.
+ *    hover          -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    area_names     -> Array : Array of String. Names for each groups.
+ *    filter_control -> Bool  : Wheter to display controller for filtering. See the second example below.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/d70dff56885218c7ad9a
+ *    http://www.domitry.com/gsoc/multi_pane2.html
+ */
+
 define([
     'underscore',
     'core/manager',
@@ -92,6 +114,7 @@ define([
         return this;
     }
 
+    // X->x, Y->y scales given by pane is useless when creating venn diagram, so create new scale consists of x, y, and r.
     Venn.prototype.getScales = function(data, scales){
         var r_w = _.max(scales.range().x) - _.min(scales.range().x);
         var r_h = _.max(scales.range().y) - _.min(scales.range().y);
@@ -126,6 +149,7 @@ define([
         return new_scales;
     };
 
+    // fetch data and update dom objects.
     Venn.prototype.update = function(){
         var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
         var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
@@ -143,6 +167,7 @@ define([
         this.updateLabels(texts, scales, this.options);
     };
 
+    // Calculate overlapping areas at first, and then decide center point of each circle with simplex module.
     Venn.prototype.processData = function(category_column, count_column, selected_category){
         // decide overlapping areas
         var items = (function(){
@@ -251,6 +276,7 @@ define([
         return {pos:pos, labels:labels, counted_items:counted_items};
     };
 
+    // update dom objects according to pre-processed data.
     Venn.prototype.updateModels = function(selector, scales, options){
         var color_scale = this.color_scale;
         var area_names = this.options.area_names;
@@ -285,6 +311,7 @@ define([
         }
     };
 
+    // update labels placed the center point between each pair of circle.
     Venn.prototype.updateLabels = function(selector, scales, options){
         selector
             .attr("x", function(d){return scales.x(d.x);})
@@ -293,10 +320,12 @@ define([
             .text(function(d){return String(d.val);});
     };
 
+    // return legend object.
     Venn.prototype.getLegend = function(){
         return this.legend_data;
     };
 
+    // tell update to Manager when venn recieved change from filter controller.
     Venn.prototype.tellUpdate = function(){
         var rows=[], selected_category = this.selected_category;
         var counted_items = this.counted_items;

@@ -1,5 +1,27 @@
 /*
- * Scatter
+ * Scatter: Scatter and Bubble chart
+ *
+ * Scatter chart. This can create bubble chart when specified 'size_by' option.
+ * Tooltip, fill_by, size_by options should be implemented to other charts refering to this chart.
+ *
+ *
+ * options:
+ *    x,y             -> String: column name. both of continuous and descrete data are allowed.
+ *    fill_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    shape_by        -> String: column name. Fill vectors according to this column. (d is allowd.)
+ *    size_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    color           -> Array : Array of String.
+ *    shape           -> Array : Array of String.
+ *    size            -> Array : Array of Float. specified when creating bubble chart.
+ *    stroke_color    -> String: stroke color.
+ *    stroke_width    -> Float : stroke width.
+ *    hover           -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip-contents-> Array : Array of column name. Used to create tooltip on points when hovering them.
+ *    tooltip         -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
+ *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
  */
 
 define([
@@ -54,6 +76,7 @@ define([
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Scatter.prototype.update = function(){
         var data = this.processData(this.options);
         this.options.tooltip.reset();
@@ -66,6 +89,7 @@ define([
         }
     };
 
+    // pre-process data like: [{x: 1, y: 2, fill: '#000', size: 20, shape: 'triangle-up'}, {},...,{}]
     Scatter.prototype.processData = function(options){
         var df = this.df;
         var labels = ['x', 'y', 'fill', 'size', 'shape'];
@@ -95,6 +119,7 @@ define([
         });
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Scatter.prototype.updateModels = function(selector, scales, options){
         var id = this.uuid;
 
@@ -131,10 +156,12 @@ define([
             .on("mouseout", outMouse);
     };
 
+    // return legend object.
     Scatter.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // answer to callback coming from filter.
     Scatter.prototype.checkSelectedData = function(ranges){
         return;
     };

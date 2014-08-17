@@ -1,3 +1,23 @@
+/*
+ * Vectors: Vector Field
+ *
+ * Draw vector field from x, y, dx, dy column. This chart is designed to visualize wind vector data.
+ * See Nyaplot's notebook: http://nbviewer.ipython.org/github/domitry/nyaplot/blob/master/examples/notebook/Mapnya2.ipynb
+ *
+ *
+ * options:
+ *    x,y,dx,dy    -> String: column name.
+ *    fill_by      -> String: column name. Fill vectors according to this column. (both of continuous and descrete data are allowed.)
+ *    color        -> Array : color in which vectors are filled.
+ *    stroke_color -> String: stroke color.
+ *    stroke_width -> Float : stroke width.
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/1e1222cbc48ab3880849
+ */
+
 define([
     'underscore',
     'node-uuid',
@@ -47,6 +67,7 @@ define([
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Vectors.prototype.update = function(){
         var data = this.processData(this.options);
         this.options.tooltip.reset();
@@ -59,6 +80,7 @@ define([
         }
     };
 
+    // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
     Vectors.prototype.processData = function(options){
         var df = this.df;
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
@@ -82,6 +104,7 @@ define([
         });
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Vectors.prototype.updateModels = function(selector, scales, options){
         selector
             .attr({
@@ -94,10 +117,12 @@ define([
             });
     };
 
+    // return legend object.
     Vectors.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // answer to callback coming from filter.
     Vectors.prototype.checkSelectedData = function(ranges){
         return;
     };

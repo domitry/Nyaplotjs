@@ -1,3 +1,21 @@
+/*
+ * Line: Line chart
+ *
+ * Attention: 'Line' is totally designed to be used to visualize line chart for Mathematics. So it is not useful to visualize statistical data like stock price.
+ * If you feel so, feel free to add options like 'shape', 'shape_by' and 'fill_by' to this chart and send pull-request.
+ * Please be sure to refer to the code of other chart like scatter at that time.
+ *
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    x,y          -> String: column name.
+ *    color        -> Array : color in which line is filled.
+ *    stroke_width -> Float : stroke width.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
+ */
+
 define([
     'underscore',
     'core/manager',
@@ -6,9 +24,9 @@ define([
 ],function(_, Manager, Filter, SimpleLegend){
     function Line(parent, scales, df_id, _options){
         var options = {
+            title: 'line',
             x: null,
             y: null,
-            title: 'line',
             color:'steelblue',
             stroke_width: 2
         };
@@ -40,6 +58,7 @@ define([
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Line.prototype.update = function(){
         if(this.render){
             var data = this.processData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
@@ -54,10 +73,12 @@ define([
         }
     };
 
+    // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
     Line.prototype.processData = function(x_arr, y_arr, options){
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Line.prototype.updateModels = function(selector, scales, options){
         var onMouse = function(){
             d3.select(this).transition()
@@ -82,11 +103,13 @@ define([
             .attr("fill", "none");
     };
 
+    // return legend object.
     Line.prototype.getLegend = function(){
         var legend = new SimpleLegend(this.legend_data);
         return legend;
     };
 
+    // answer to callback coming from filter.
     Line.prototype.checkSelectedData = function(ranges){
         return;
     };
