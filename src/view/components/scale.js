@@ -1,11 +1,20 @@
 /*
- * the wrapper for d3.scales.ordinal and d3.scales.linear
+ * Scales: The wrapper for d3.scales
+ *
+ * Scales for x-y coordinates system. Other types of scales are implemented by extension system like Bionya and Mapnya.
+ * If you are interested in writing extension for Nyaplot, see the code of extensions.
+ * This module is implemented using d3.scales.ordinal and d3.scales.linear. See the document of d3.js to learn more about scales: 
+ *    - https://github.com/mbostock/d3/wiki/Ordinal-Scales
+ *    - https://github.com/mbostock/d3/wiki/Quantitative-Scales
+ * 
+ * options:
+ *     linear -> String: The type of linear scale. 'linear', 'power', and 'log' are allowed.
  */
 
 define(['underscore'], function(_){
     function Scales(domains, ranges, _options){
         var options = {
-            linear: 'linear' //linear, power, and log
+            linear: 'linear'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -30,6 +39,7 @@ define(['underscore'], function(_){
         return this;
     }
 
+    // convert from data points to svg dom coordiantes like: ['nya', 'hoge'] -> {x: 23, y:56}]
     Scales.prototype.get = function(x, y){
         return {
             x: this.scales.x(x),
@@ -37,6 +47,7 @@ define(['underscore'], function(_){
         };
     };
 
+    // domain: the word unique to d3.js. See the website of d3.js.
     Scales.prototype.domain = function(){
         return {
             x: this.scales.x.domain(),
@@ -44,6 +55,7 @@ define(['underscore'], function(_){
         };
     };
 
+    // range: the word unique to d3.js. See the website of d3.js.
     Scales.prototype.range = function(){
         return {
             x: this.scales.x.range(),
