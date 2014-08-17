@@ -1,3 +1,17 @@
+/*
+ * Filter:
+ * 
+ * Filtering data according to box on context area. Filter is implemented using d3.svg.brush().
+ * See the website of d3.js to learn more: https://github.com/mbostock/d3/wiki/SVG-Controls
+ *
+ * options (summary) :
+ *    opacity -> Float : Opacity of filtering area
+ *    color   -> String: Color of filtering area
+ *
+ * example :
+ *    http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ */
+
 define([
     'underscore',
     'core/manager'
