@@ -1,6 +1,20 @@
 /*
- * Tooltip is an interface for generating small tool-tips and rendering them.
+ * Tooltip:
+ *
+ * Tooltip is an module to generate small tool-tips and rendering them.
  * Pane generate its instance and keep it. Then each diagrams send requests to it.
+ *
+ * options (summary):
+ *    arrow_width   -> Float : Width of arrow. See diagram below.
+ *    arrow_height  -> Float : Height of arrow.
+ *    tooltip_margin-> Object: Margin inside of tool-tip box.
+ *
+ *    ------
+ *    |_  _ |
+ *      \/     <=== arrow
+ *
+ * example: 
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
  */
 
 define([
@@ -72,7 +86,6 @@ define([
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);
     };
-
 
     // generate dom objects for new tool-tips, and delete old ones
     Tooltip.prototype.updateModels = function(model){
