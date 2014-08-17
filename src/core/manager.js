@@ -1,6 +1,8 @@
 /*
- * Manager is the overall frame manager that holds plots and data
- * sources (DataFrame).
+ * Manager:
+ *
+ * Manager is the overall frame manager that holds plots and datasources (DataFrame).
+ *
  */
 
 define([

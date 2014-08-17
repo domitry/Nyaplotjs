@@ -1,4 +1,6 @@
 /*
+ * Extension:
+ *
  * Extension keeps information about extensions for Nyaplot.
  *
  */
