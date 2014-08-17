@@ -1,6 +1,17 @@
 /*
- * Pane keeps a dom object which diagrams, filter, and legend will be placed on.
- * It also calcurate scales and each diagram and axis will be rendered base on the scales.
+ * Pane: 
+ *
+ * Pane keeps dom objects which diagrams, filter, and legend will be placed on. Pane will tell each diagram, axis, and scale to update.
+ * It also calcurate scales and each diagram and axis will be rendered according to the scales.
+ *
+ * options (summary) :
+ *    rotate_x_label      -> (Float) : rotate labels placed on x-axis (radian)
+ *    zoom                -> (Bool)  : Decide whether to allow zooming and pan
+ *    grid                -> (Bool)  : Decide whether to draw grid line on pane.
+ *    legend_position     -> (Object): String like 'right', 'left', 'top' and 'bottom', or Array like [0, 19] are allowed. The latter is coordinates in the plotting area.
+ *    scale:              -> (String): The type of axis. 'linear', 'log' and 'power' are allowed.
+ *    scale_extra_options -> (Object): extra options for extension which has different coordinates system except x-y.
+ *    axis_extra_options  -> (Object): extra options for extension.
  */
 
 define([
