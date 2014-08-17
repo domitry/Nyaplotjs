@@ -1,5 +1,14 @@
 /*
+ * SimpleLegend: The simplest legend objects
+ *
  * SimpleLegend provides legend consists of simple circle buttons and labels.
+ *
+ * options(summary)
+ *    title_height -> Float : height of title text.
+ *    mode         -> String: 'normal' and 'radio' are allowed.
+ *
+ * example: 
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
  */
 
 define([
@@ -12,7 +21,7 @@ define([
             width: 150,
             height: 22,
             title_height: 15,
-            mode: 'normal' // or 'radio'
+            mode: 'normal'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -31,6 +40,7 @@ define([
         return this.options.height * (this.data.length + 1);
     };
 
+    // Create dom object independent form pane or context and return it. called by each diagram.o
     SimpleLegend.prototype.getDomObject = function(){
         var model = this.model;
         var options = this.options;
