@@ -1,5 +1,12 @@
+/*
+ * Simplex:
+ *
+ * Implementation of downhill simplex method.
+ * See Wikipedia: http://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method
+ */
+
+
 define(['underscore'], function(_){
-    // constant values
     var l_1 = 0.7, l_2 = 1.5;
     var EPS = 1.0e-20;
     var count = 0, COUNT_LIMIT=2000;

@@ -1,4 +1,6 @@
 /*
+ * Dataframe:
+ *
  * Dataframe loads (JSON) data or through a URI and allows
  * a plot to query that data
  */
@@ -98,12 +100,14 @@ define([
         });
     };
 
+    // experimental implementation of accessor to nested dataframe.
     Dataframe.prototype.nested_column = function(row_num, name){
         if(!this.nested)throw "Recieved dataframe is not nested.";
         var df = new Dataframe('', this.row(row_num)[this.nested]);
         return df.column(name);
     };
 
+    // return the range of values in specified column
     Dataframe.prototype.columnRange = function(label){
         var column = this.column(label);
         return {

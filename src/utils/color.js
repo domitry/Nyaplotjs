@@ -1,3 +1,10 @@
+/*
+ * Colorset: The wrapper for colorbrewer
+ *
+ * Return colorset that have required name and number.
+ * See the website of colorbrewer to learn more: http://colorbrewer2.org/
+ */
+
 define([
     'underscore',
     'colorbrewer'
