@@ -1,6 +1,15 @@
 /*
- * Colorset provides colorbar filled with gradient for continuous data.
+ * ColorBar: 
+ *
+ * ColorBar provides colorbar filled with gradient for continuous data.
  * Each diagram create an instance of Colorset and Pane append it to itself.
+ *
+ * options:
+ *    width -> Float: width of the whole area for colorset (not noly for bar)
+ *    height-> Float: height of the area for colorset
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/11322618
  */
 
 define([
@@ -26,6 +35,7 @@ define([
         return this.options.height;
     };
 
+    // Create dom object independent form pane or context and return it. called by each diagram.o
     ColorBar.prototype.getDomObject = function(){
         var model = this.model;
 	    var color_scale = this.color_scale;
