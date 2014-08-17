@@ -1,6 +1,15 @@
 /*
- * LegendArea keep a dom object which legends will be placed on and
- * add legends on the best place in it.
+ * LegendArea: Space for legends
+ *
+ * LegendArea keep a dom object which legends will be placed on and add legends on the best place in it.
+ *
+ * options (summary):
+ *    width -> Float : width of legend area
+ *    height-> Float : height of legend area
+ *    margin-> Object: margin inside of legend area
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
  */
 
 define([
