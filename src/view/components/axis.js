@@ -1,6 +1,15 @@
 /*
+ * Axis:
+ *
  * Axis generates x and y axies for plot. It also controlls grids.
  * Have a look at documents on d3.svg.axis and d3.behavior.zoom to learn more.
+ *
+ * options (summary) :
+ *    width     -> (Float) : Width of *context area*.
+ *    height    -> (Float) : Height of *context area*.
+ *    margin    -> (Object): Margin outside of context area. used when adding axis labels.
+ *    pane_uuid -> (Float) : Given by pane itself. used to tell update information to Manager.
+ *    z_index   -> (Float) : Given by pane. Usually axis are placed below context and over backgroupd.
  */
 
 define([
