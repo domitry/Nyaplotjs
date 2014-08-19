@@ -92,7 +92,7 @@ define([
                 var scale = df.scale(options[info.column], options[info.val]);
                 columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
             }else{
-                columns.push(_.map(_.range(1, length, 1), function(d){
+                columns.push(_.map(_.range(1, length+1, 1), function(d){
                     if(_.isArray(options[info.val]))return options[info.val][0];
                     else return options[info.val];
                 }));

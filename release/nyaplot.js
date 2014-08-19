@@ -1771,8 +1771,10 @@ define("../contrib/almond/almond", function(){});
 }).call(this);
 
 /*
- * Manager is the overall frame manager that holds plots and data
- * sources (DataFrame).
+ * Manager:
+ *
+ * Manager is the overall frame manager that holds plots and datasources (DataFrame).
+ *
  */
 
 define('core/manager',[
@@ -2061,7 +2063,16 @@ define('core/manager',[
 }).call(this);
 
 /*
+ * SimpleLegend: The simplest legend objects
+ *
  * SimpleLegend provides legend consists of simple circle buttons and labels.
+ *
+ * options(summary)
+ *    title_height -> Float : height of title text.
+ *    mode         -> String: 'normal' and 'radio' are allowed.
+ *
+ * example: 
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
  */
 
 define('view/components/legend/simple_legend',[
@@ -2074,7 +2085,7 @@ define('view/components/legend/simple_legend',[
             width: 150,
             height: 22,
             title_height: 15,
-            mode: 'normal' // or 'radio'
+            mode: 'normal'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -2093,6 +2104,7 @@ define('view/components/legend/simple_legend',[
         return this.options.height * (this.data.length + 1);
     };
 
+    // Create dom object independent form pane or context and return it. called by each diagram.o
     SimpleLegend.prototype.getDomObject = function(){
         var model = this.model;
         var options = this.options;
@@ -2167,8 +2179,22 @@ define('view/components/legend/simple_legend',[
 
 /*
  * Bar chart
+ *
  * This diagram has two mode, ordinal-mode and count-mode. The former creates bar from x and y column.
  * The latter counts unique value in 'value' column and generates bar from the result.
+ * 
+ *
+ * options:
+ *    value   -> String: column name. set when you'd like to build bar chart based on one-dimention data
+ *    x, y    -> String: column name. x should be discrete. y should be continuous.
+ *    width   -> Float : 0..1, width of each bar.
+ *    color   -> Array : color in which bars filled.
+ *    hover   -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    specified 'value' option : http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ *    specified 'x' and 'y' : http://bl.ocks.org/domitry/2f53781449025f772676
  */
 
 define('view/diagrams/bar',[
@@ -2222,6 +2248,7 @@ define('view/diagrams/bar',[
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Bar.prototype.update = function(){
         var data;
         if(this.options.value !== null){
@@ -2235,23 +2262,20 @@ define('view/diagrams/bar',[
         }
 
         var rects = this.model.selectAll("rect").data(data);
-        if(rects[0][0]==undefined){
-            rects.enter()
-                .append("rect")
-                .attr("height", 0)
-                .attr("y", this.scales.get(0, 0).y);
-        }
+        rects.enter().append("rect")
+            .attr("height", 0)
+            .attr("y", this.scales.get(0, 0).y);
 
         this.updateModels(rects, this.scales, this.options);
     };
     
+    // process data as:
+    //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
     Bar.prototype.processData = function(x, y, options){
-        return _.map(
-            _.zip(x,y),
-            function(d, i){return {x:d[0], y:d[1]};}
-        );
+        return _.map(_.zip(x,y),function(d, i){return {x:d[0], y:d[1]};});
     };
 
+    // update dom object
     Bar.prototype.updateModels = function(selector, scales, options){
         var color_scale = this.color_scale;
 
@@ -2289,10 +2313,12 @@ define('view/diagrams/bar',[
             .on("mouseout", outMouse);
     };
 
+    // return legend object based on data prepared by initializer
     Bar.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // count unique value. called when 'value' option was specified insead of 'x' and 'y'
     Bar.prototype.countData = function(values){
         var hash = {};
         _.each(values, function(val){
@@ -2302,12 +2328,27 @@ define('view/diagrams/bar',[
         return {x: _.keys(hash), y: _.values(hash)};
     };
 
+    // not implemented yet.
     Bar.prototype.checkSelectedData = function(ranges){
         return;
     };
 
     return Bar;
 });
+
+/*
+ * Filter:
+ * 
+ * Filtering data according to box on context area. Filter is implemented using d3.svg.brush().
+ * See the website of d3.js to learn more: https://github.com/mbostock/d3/wiki/SVG-Controls
+ *
+ * options (summary) :
+ *    opacity -> Float : Opacity of filtering area
+ *    color   -> String: Color of filtering area
+ *
+ * example :
+ *    http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ */
 
 define('view/components/filter',[
     'underscore',
@@ -2351,6 +2392,27 @@ define('view/components/filter',[
     return Filter;
 });
 
+/*
+ * Histogram: Histogram
+ *
+ * Caluculate hights of each bar from column specified by 'value' option and create histogram.
+ * See the page of 'd3.layout.histogram' on d3.js's website to learn more. (https://github.com/mbostock/d3/wiki/Histogram-Layout)
+ * 
+ *
+ * options:
+ *    value        -> String: column name. Build histogram based on this data.
+ *    bin_num      -> Float : number of bin
+ *    width        -> Float : 0..1, width of each bar.
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
+ */
+
 define('view/diagrams/histogram',[
     'underscore',
     'node-uuid',
@@ -2385,26 +2447,23 @@ define('view/diagrams/histogram',[
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Histogram.prototype.update = function(){
         var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
         var data = this.processData(column_value, this.options);
 
         var models = this.model.selectAll("rect").data(data);
-        if(models[0][0]==undefined){
-            models = models.enter()
-                .append("rect")
-                .attr("height", 0)
-                .attr("y", this.scales.get(0, 0).y);
-        }
-
+        models.enter().append("rect").attr("height", 0).attr("y", this.scales.get(0, 0).y);
         this.updateModels(models,  this.scales, this.options);
     };
 
+    // pre-process data using function embeded in d3.js.
     Histogram.prototype.processData = function(column, options){
         return d3.layout.histogram()
             .bins(this.scales.raw.x.ticks(options.bin_num))(column);
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Histogram.prototype.updateModels = function(selector, scales, options){
         var onMouse = function(){
             d3.select(this).transition()
@@ -2439,10 +2498,12 @@ define('view/diagrams/histogram',[
             .on("mouseout", outMouse);
     };
 
+    // return legend object.
     Histogram.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // answer to callback coming from filter.
     Histogram.prototype.checkSelectedData = function(ranges){
         var label_value = this.options.value;
         var filter = function(row){
@@ -2458,7 +2519,29 @@ define('view/diagrams/histogram',[
 });
 
 /*
- * Scatter
+ * Scatter: Scatter and Bubble chart
+ *
+ * Scatter chart. This can create bubble chart when specified 'size_by' option.
+ * Tooltip, fill_by, size_by options should be implemented to other charts refering to this chart.
+ *
+ *
+ * options:
+ *    x,y             -> String: column name. both of continuous and descrete data are allowed.
+ *    fill_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    shape_by        -> String: column name. Fill vectors according to this column. (d is allowd.)
+ *    size_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    color           -> Array : Array of String.
+ *    shape           -> Array : Array of String.
+ *    size            -> Array : Array of Float. specified when creating bubble chart.
+ *    stroke_color    -> String: stroke color.
+ *    stroke_width    -> Float : stroke width.
+ *    hover           -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip-contents-> Array : Array of column name. Used to create tooltip on points when hovering them.
+ *    tooltip         -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
+ *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
  */
 
 define('view/diagrams/scatter',[
@@ -2513,6 +2596,7 @@ define('view/diagrams/scatter',[
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Scatter.prototype.update = function(){
         var data = this.processData(this.options);
         this.options.tooltip.reset();
@@ -2525,6 +2609,7 @@ define('view/diagrams/scatter',[
         }
     };
 
+    // pre-process data like: [{x: 1, y: 2, fill: '#000', size: 20, shape: 'triangle-up'}, {},...,{}]
     Scatter.prototype.processData = function(options){
         var df = this.df;
         var labels = ['x', 'y', 'fill', 'size', 'shape'];
@@ -2536,7 +2621,7 @@ define('view/diagrams/scatter',[
                 var scale = df.scale(options[info.column], options[info.val]);
                 columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
             }else{
-                columns.push(_.map(_.range(1, length, 1), function(d){
+                columns.push(_.map(_.range(1, length+1, 1), function(d){
                     if(_.isArray(options[info.val]))return options[info.val][0];
                     else return options[info.val];
                 }));
@@ -2554,6 +2639,7 @@ define('view/diagrams/scatter',[
         });
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Scatter.prototype.updateModels = function(selector, scales, options){
         var id = this.uuid;
 
@@ -2590,16 +2676,36 @@ define('view/diagrams/scatter',[
             .on("mouseout", outMouse);
     };
 
+    // return legend object.
     Scatter.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // answer to callback coming from filter.
     Scatter.prototype.checkSelectedData = function(ranges){
         return;
     };
 
     return Scatter;
 });
+
+/*
+ * Line: Line chart
+ *
+ * Attention: 'Line' is totally designed to be used to visualize line chart for Mathematics. So it is not useful to visualize statistical data like stock price.
+ * If you feel so, feel free to add options like 'shape', 'shape_by' and 'fill_by' to this chart and send pull-request.
+ * Please be sure to refer to the code of other chart like scatter at that time.
+ *
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    x,y          -> String: column name.
+ *    color        -> Array : color in which line is filled.
+ *    stroke_width -> Float : stroke width.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
+ */
 
 define('view/diagrams/line',[
     'underscore',
@@ -2609,9 +2715,9 @@ define('view/diagrams/line',[
 ],function(_, Manager, Filter, SimpleLegend){
     function Line(parent, scales, df_id, _options){
         var options = {
+            title: 'line',
             x: null,
             y: null,
-            title: 'line',
             color:'steelblue',
             stroke_width: 2
         };
@@ -2643,6 +2749,7 @@ define('view/diagrams/line',[
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Line.prototype.update = function(){
         if(this.render){
             var data = this.processData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
@@ -2657,10 +2764,12 @@ define('view/diagrams/line',[
         }
     };
 
+    // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
     Line.prototype.processData = function(x_arr, y_arr, options){
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Line.prototype.updateModels = function(selector, scales, options){
         var onMouse = function(){
             d3.select(this).transition()
@@ -2685,11 +2794,13 @@ define('view/diagrams/line',[
             .attr("fill", "none");
     };
 
+    // return legend object.
     Line.prototype.getLegend = function(){
         var legend = new SimpleLegend(this.legend_data);
         return legend;
     };
 
+    // answer to callback coming from filter.
     Line.prototype.checkSelectedData = function(ranges){
         return;
     };
@@ -2697,8 +2808,15 @@ define('view/diagrams/line',[
     return Line;
 });
 
+/*
+ * Simplex:
+ *
+ * Implementation of downhill simplex method.
+ * See Wikipedia: http://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method
+ */
+
+
 define('utils/simplex',['underscore'], function(_){
-    // constant values
     var l_1 = 0.7, l_2 = 1.5;
     var EPS = 1.0e-20;
     var count = 0, COUNT_LIMIT=2000;
@@ -2773,6 +2891,28 @@ define('utils/simplex',['underscore'], function(_){
 
     return simplex;
 });
+
+/*
+ * Venn: 3-way venn diagram
+ *
+ * The implementation of traditional 3-way venn diagram. This chart is designed to work with histogram and bar chart. (See example at the bottom of this comment.)
+ * The overlapping areas are automatically changed according to common values in each pair of group. The calculation is excuted with downhill simplex method.
+ * Attention: This is still experimental implementation and should be modernized. Feel free to re-write the code below and send pull-request.
+ *
+ *
+ * options:
+ *    category, count-> String: Column name.
+ *    color          -> Array : Array of String. Colors in which circles are filled.
+ *    stroke_color   -> String: stroke color.
+ *    stroke_width   -> Float : stroke width.
+ *    hover          -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    area_names     -> Array : Array of String. Names for each groups.
+ *    filter_control -> Bool  : Wheter to display controller for filtering. See the second example below.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/d70dff56885218c7ad9a
+ *    http://www.domitry.com/gsoc/multi_pane2.html
+ */
 
 define('view/diagrams/venn',[
     'underscore',
@@ -2868,6 +3008,7 @@ define('view/diagrams/venn',[
         return this;
     }
 
+    // X->x, Y->y scales given by pane is useless when creating venn diagram, so create new scale consists of x, y, and r.
     Venn.prototype.getScales = function(data, scales){
         var r_w = _.max(scales.range().x) - _.min(scales.range().x);
         var r_h = _.max(scales.range().y) - _.min(scales.range().y);
@@ -2902,6 +3043,7 @@ define('view/diagrams/venn',[
         return new_scales;
     };
 
+    // fetch data and update dom objects.
     Venn.prototype.update = function(){
         var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
         var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
@@ -2919,6 +3061,7 @@ define('view/diagrams/venn',[
         this.updateLabels(texts, scales, this.options);
     };
 
+    // Calculate overlapping areas at first, and then decide center point of each circle with simplex module.
     Venn.prototype.processData = function(category_column, count_column, selected_category){
         // decide overlapping areas
         var items = (function(){
@@ -3027,6 +3170,7 @@ define('view/diagrams/venn',[
         return {pos:pos, labels:labels, counted_items:counted_items};
     };
 
+    // update dom objects according to pre-processed data.
     Venn.prototype.updateModels = function(selector, scales, options){
         var color_scale = this.color_scale;
         var area_names = this.options.area_names;
@@ -3061,6 +3205,7 @@ define('view/diagrams/venn',[
         }
     };
 
+    // update labels placed the center point between each pair of circle.
     Venn.prototype.updateLabels = function(selector, scales, options){
         selector
             .attr("x", function(d){return scales.x(d.x);})
@@ -3069,10 +3214,12 @@ define('view/diagrams/venn',[
             .text(function(d){return String(d.val);});
     };
 
+    // return legend object.
     Venn.prototype.getLegend = function(){
         return this.legend_data;
     };
 
+    // tell update to Manager when venn recieved change from filter controller.
     Venn.prototype.tellUpdate = function(){
         var rows=[], selected_category = this.selected_category;
         var counted_items = this.counted_items;
@@ -3125,6 +3272,13 @@ define('view/diagrams/venn',[
 
     return Venn;
 });
+
+/*
+ * Venn: Venn diagram consisted in 3> circles
+ *
+ * Attention -- this chart is not supported yet. Please send pull-req if you are interested in re-implementing this chart.
+ *    See src/view/diagrams/venn.js to learn more.
+ */
 
 define('view/diagrams/multiple_venn',[
     'underscore',
@@ -3384,8 +3538,25 @@ define('view/diagrams/multiple_venn',[
 });
 
 /*
- * Box: Implementation of Boxplot for Nyaplot.
+ * Box: Boxplot
+ *
+ * This chart is generated from 'value' columns. Box calculates median and other parameters and create box plot using rect and line.
+ * Each box is placed in the position on x-axis, corresponds to column name.
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    value        -> Array : Array of String (column name)
+ *    width        -> Float : 0..1, width of each box
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    outlier_r    -> Float : radius of outliers
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/5a89296dfb23f0ea2ffd
  */
+
 
 define('view/diagrams/box.js',[
     'underscore',
@@ -3428,7 +3599,7 @@ define('view/diagrams/box.js',[
         return this;
     }
 
-    // proceed data and build SVG dom node
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Box.prototype.update = function(){
         var uuid = this.uuid;
         var processData = this.processData;
@@ -3543,11 +3714,12 @@ define('view/diagrams/box.js',[
             });
     };
 
+    // return legend object based on data prepared by initializer
     Box.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
-    // answer to callback coming from filter
+    // answer to callback coming from filter. not implemented yet.
     Box.prototype.checkSelectedData = function(ranges){
         return;
     };
@@ -3556,8 +3728,17 @@ define('view/diagrams/box.js',[
 });
 
 /*
- * Colorset provides colorbar filled with gradient for continuous data.
+ * ColorBar: 
+ *
+ * ColorBar provides colorbar filled with gradient for continuous data.
  * Each diagram create an instance of Colorset and Pane append it to itself.
+ *
+ * options:
+ *    width -> Float: width of the whole area for colorset (not noly for bar)
+ *    height-> Float: height of the area for colorset
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/11322618
  */
 
 define('view/components/legend/color_bar',[
@@ -3583,6 +3764,7 @@ define('view/components/legend/color_bar',[
         return this.options.height;
     };
 
+    // Create dom object independent form pane or context and return it. called by each diagram.o
     ColorBar.prototype.getDomObject = function(){
         var model = this.model;
 	    var color_scale = this.color_scale;
@@ -3687,6 +3869,13 @@ return{
 }
 });
 
+/*
+ * Colorset: The wrapper for colorbrewer
+ *
+ * Return colorset that have required name and number.
+ * See the website of colorbrewer to learn more: http://colorbrewer2.org/
+ */
+
 define('utils/color',[
     'underscore',
     'colorbrewer'
@@ -3704,9 +3893,22 @@ define('utils/color',[
 });
 
 /*
- * Heatmap or 2D Histogram
- * Heatmap creates rectangles from discrete data or continuous data. When creating heatmap from continuous
- * data, width and height values options should be specified.
+ * Heatmap: Heatmap or 2D Histogram
+ *
+ * Heatmap creates rectangles from continuous data. Width and height values should be specified.
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    x, y         -> String: column name. Both x and y should be continuous.
+ *    width, height-> Float : 0..1, width and height of each rectangle
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/eab8723ccb32fd3a6cd8
  */
 
 define('view/diagrams/heatmap.js',[
@@ -3728,7 +3930,8 @@ define('view/diagrams/heatmap.js',[
             color: colorset("RdBu").reverse(),
             stroke_color: "#fff",
             stroke_width: 1,
-            hover: true
+            hover: true,
+            tooltip: null
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -3752,6 +3955,7 @@ define('view/diagrams/heatmap.js',[
         return this;
     };
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     HeatMap.prototype.update = function(){
         var data = this.processData();
         var models = this.model.selectAll("rect").data(data);
@@ -3764,6 +3968,7 @@ define('view/diagrams/heatmap.js',[
         this.updateModels(models, this.options);
     };
 
+    // pre-process data. convert data coorinates to dom coordinates with Scale.
     HeatMap.prototype.processData = function(){
         var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
         var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
@@ -3774,16 +3979,15 @@ define('view/diagrams/heatmap.js',[
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
-            // linear scale
             width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
             height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
             x = scales.get(row[0], 0).x - width/2;
             y = scales.get(0, row[1]).y - height/2;
-
             return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
         });
     };
 
+    // update SVG dom nodes based on pre-processed data.
     HeatMap.prototype.updateModels = function(selector, options){
         var id = this.uuid;
         var onMouse = function(){
@@ -3816,16 +4020,38 @@ define('view/diagrams/heatmap.js',[
             .on("mouseout", outMouse);
     };
 
+    // return legend object.
     HeatMap.prototype.getLegend = function(){
         return new ColorBar(this.color_scale);
     };    
 
+    // answer to callback coming from filter. not implemented yet.
     HeatMap.prototype.checkSelectedData = function(ranges){
         return;
     };
 
     return HeatMap;
 });
+
+/*
+ * Vectors: Vector Field
+ *
+ * Draw vector field from x, y, dx, dy column. This chart is designed to visualize wind vector data.
+ * See Nyaplot's notebook: http://nbviewer.ipython.org/github/domitry/nyaplot/blob/master/examples/notebook/Mapnya2.ipynb
+ *
+ *
+ * options:
+ *    x,y,dx,dy    -> String: column name.
+ *    fill_by      -> String: column name. Fill vectors according to this column. (both of continuous and descrete data are allowed.)
+ *    color        -> Array : color in which vectors are filled.
+ *    stroke_color -> String: stroke color.
+ *    stroke_width -> Float : stroke width.
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/1e1222cbc48ab3880849
+ */
 
 define('view/diagrams/vectors.js',[
     'underscore',
@@ -3845,7 +4071,7 @@ define('view/diagrams/vectors.js',[
             color:['steelblue', '#000000'],
             stroke_color: '#000',
             stroke_width: 2,
-            hover: false,
+            hover: true,
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
@@ -3876,6 +4102,7 @@ define('view/diagrams/vectors.js',[
         return this;
     }
 
+    // fetch data and update dom object. called by pane which this chart belongs to.
     Vectors.prototype.update = function(){
         var data = this.processData(this.options);
         this.options.tooltip.reset();
@@ -3888,6 +4115,7 @@ define('view/diagrams/vectors.js',[
         }
     };
 
+    // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
     Vectors.prototype.processData = function(options){
         var df = this.df;
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
@@ -3899,7 +4127,7 @@ define('view/diagrams/vectors.js',[
                 var scale = df.scale(options[info.column], options[info.val]);
                 columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
             }else{
-                columns.push(_.map(_.range(1, length, 1), function(d){
+                columns.push(_.map(_.range(1, length+1, 1), function(d){
                     if(_.isArray(options[info.val]))return options[info.val][0];
                     else return options[info.val];
                 }));
@@ -3911,6 +4139,7 @@ define('view/diagrams/vectors.js',[
         });
     };
 
+    // update SVG dom nodes based on pre-processed data.
     Vectors.prototype.updateModels = function(selector, scales, options){
         selector
             .attr({
@@ -3923,16 +4152,25 @@ define('view/diagrams/vectors.js',[
             });
     };
 
+    // return legend object.
     Vectors.prototype.getLegend = function(){
         return new SimpleLegend(this.legend_data);
     };
 
+    // answer to callback coming from filter.
     Vectors.prototype.checkSelectedData = function(ranges){
         return;
     };
 
     return Vectors;
 });
+
+/*
+ * Diagrams: Diagrams Factory
+ *
+ * Diagrams manages all diagrams bundled by Nyaplotjs. Extension registers their own diagrams through this module.
+ *
+ */
 
 define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar','view/diagrams/histogram','view/diagrams/scatter','view/diagrams/line','view/diagrams/venn','view/diagrams/multiple_venn','view/diagrams/box.js','view/diagrams/heatmap.js','view/diagrams/vectors.js'],function(require, exports, module){
     var diagrams = {};
@@ -3947,6 +4185,7 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
     diagrams.heatmap = require('view/diagrams/heatmap.js');
     diagrams.vectors = require('view/diagrams/vectors.js');
 
+    // Add diagrams. Called by other extensions
     diagrams.add = function(name, diagram){
         diagrams[name] = diagram;
     };
@@ -3955,8 +4194,17 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
 });
 
 /*
- * LegendArea keep a dom object which legends will be placed on and
- * add legends on the best place in it.
+ * LegendArea: Space for legends
+ *
+ * LegendArea keep a dom object which legends will be placed on and add legends on the best place in it.
+ *
+ * options (summary):
+ *    width -> Float : width of legend area
+ *    height-> Float : height of legend area
+ *    margin-> Object: margin inside of legend area
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
  */
 
 define('view/components/legend_area',[
@@ -4026,8 +4274,22 @@ define('utils/ua_info',['underscore'], function(_){
 });
 
 /*
- * Tooltip is an interface for generating small tool-tips and rendering them.
+ * Tooltip:
+ *
+ * Tooltip is an module to generate small tool-tips and rendering them.
  * Pane generate its instance and keep it. Then each diagrams send requests to it.
+ *
+ * options (summary):
+ *    arrow_width   -> Float : Width of arrow. See diagram below.
+ *    arrow_height  -> Float : Height of arrow.
+ *    tooltip_margin-> Object: Margin inside of tool-tip box.
+ *
+ *    ------
+ *    |_  _ |
+ *      \/     <=== arrow
+ *
+ * example: 
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
  */
 
 define('view/components/tooltip',[
@@ -4099,7 +4361,6 @@ define('view/components/tooltip',[
         var model = this.model.selectAll("g").data(style);
         this.updateModels(model);
     };
-
 
     // generate dom objects for new tool-tips, and delete old ones
     Tooltip.prototype.updateModels = function(model){
@@ -4257,8 +4518,19 @@ define('view/components/tooltip',[
 });
 
 /*
- * Pane keeps a dom object which diagrams, filter, and legend will be placed on.
- * It also calcurate scales and each diagram and axis will be rendered base on the scales.
+ * Pane: 
+ *
+ * Pane keeps dom objects which diagrams, filter, and legend will be placed on. Pane will tell each diagram, axis, and scale to update.
+ * It also calcurate scales and each diagram and axis will be rendered according to the scales.
+ *
+ * options (summary) :
+ *    rotate_x_label      -> (Float) : rotate labels placed on x-axis (radian)
+ *    zoom                -> (Bool)  : Decide whether to allow zooming and pan
+ *    grid                -> (Bool)  : Decide whether to draw grid line on pane.
+ *    legend_position     -> (Object): String like 'right', 'left', 'top' and 'bottom', or Array like [0, 19] are allowed. The latter is coordinates in the plotting area.
+ *    scale:              -> (String): The type of axis. 'linear', 'log' and 'power' are allowed.
+ *    scale_extra_options -> (Object): extra options for extension which has different coordinates system except x-y.
+ *    axis_extra_options  -> (Object): extra options for extension.
  */
 
 define('view/pane',[
@@ -4495,8 +4767,17 @@ define('view/pane',[
 });
 
 /*
+ * Axis:
+ *
  * Axis generates x and y axies for plot. It also controlls grids.
  * Have a look at documents on d3.svg.axis and d3.behavior.zoom to learn more.
+ *
+ * options (summary) :
+ *    width     -> (Float) : Width of *context area*.
+ *    height    -> (Float) : Height of *context area*.
+ *    margin    -> (Object): Margin outside of context area. used when adding axis labels.
+ *    pane_uuid -> (Float) : Given by pane itself. used to tell update information to Manager.
+ *    z_index   -> (Float) : Given by pane. Usually axis are placed below context and over backgroupd.
  */
 
 define('view/components/axis',[
@@ -4620,13 +4901,22 @@ define('view/components/axis',[
 });
 
 /*
- * the wrapper for d3.scales.ordinal and d3.scales.linear
+ * Scales: The wrapper for d3.scales
+ *
+ * Scales for x-y coordinates system. Other types of scales are implemented by extension system like Bionya and Mapnya.
+ * If you are interested in writing extension for Nyaplot, see the code of extensions.
+ * This module is implemented using d3.scales.ordinal and d3.scales.linear. See the document of d3.js to learn more about scales: 
+ *    - https://github.com/mbostock/d3/wiki/Ordinal-Scales
+ *    - https://github.com/mbostock/d3/wiki/Quantitative-Scales
+ * 
+ * options:
+ *     linear -> String: The type of linear scale. 'linear', 'power', and 'log' are allowed.
  */
 
 define('view/components/scale',['underscore'], function(_){
     function Scales(domains, ranges, _options){
         var options = {
-            linear: 'linear' //linear, power, and log
+            linear: 'linear'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -4651,6 +4941,7 @@ define('view/components/scale',['underscore'], function(_){
         return this;
     }
 
+    // convert from data points to svg dom coordiantes like: ['nya', 'hoge'] -> {x: 23, y:56}]
     Scales.prototype.get = function(x, y){
         return {
             x: this.scales.x(x),
@@ -4658,6 +4949,7 @@ define('view/components/scale',['underscore'], function(_){
         };
     };
 
+    // domain: the word unique to d3.js. See the website of d3.js.
     Scales.prototype.domain = function(){
         return {
             x: this.scales.x.domain(),
@@ -4665,6 +4957,7 @@ define('view/components/scale',['underscore'], function(_){
         };
     };
 
+    // range: the word unique to d3.js. See the website of d3.js.
     Scales.prototype.range = function(){
         return {
             x: this.scales.x.range(),
@@ -4676,6 +4969,8 @@ define('view/components/scale',['underscore'], function(_){
 });
 
 /*
+ * STL:
+ *
  * Standard library for Nyaplot
  */
 
@@ -4688,6 +4983,8 @@ define('core/stl',['require','exports','module','view/pane','view/components/axi
 });
 
 /*
+ * Extension:
+ *
  * Extension keeps information about extensions for Nyaplot.
  *
  */
@@ -4729,6 +5026,8 @@ define('core/extension',[
 });
 
 /*
+ * Dataframe:
+ *
  * Dataframe loads (JSON) data or through a URI and allows
  * a plot to query that data
  */
@@ -4828,12 +5127,14 @@ define('utils/dataframe',[
         });
     };
 
+    // experimental implementation of accessor to nested dataframe.
     Dataframe.prototype.nested_column = function(row_num, name){
         if(!this.nested)throw "Recieved dataframe is not nested.";
         var df = new Dataframe('', this.row(row_num)[this.nested]);
         return df.column(name);
     };
 
+    // return the range of values in specified column
     Dataframe.prototype.columnRange = function(label){
         var column = this.column(label);
         return {
@@ -4846,6 +5147,8 @@ define('utils/dataframe',[
 });
 
 /*
+ * parse:
+ *
  * parse JSON model and generate plots based on the order.
  *
  */
