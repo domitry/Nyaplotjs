@@ -28,7 +28,9 @@ define([
             x: null,
             y: null,
             color:'steelblue',
-            stroke_width: 2
+            fill_by : null,
+            stroke_width: 2,
+            legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -75,6 +77,19 @@ define([
 
     // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
     Line.prototype.processData = function(x_arr, y_arr, options){
+        var df = this.df, length = x_arr.length;
+        /*
+        var color_arr = (function(column, colors){
+            if(options['fill_by']){
+                var scale = df.scale(options[column], options[colors]);
+                return _.map(df.column(options[column]), function(val){return scale(val);});
+            }else{
+                return _.map(_.range(1, length+1, 1), function(d){
+                    if(_.isArray(options[colors]))return options[colors][0];
+                    else return options[colors];
+                });
+            }
+        })('fill_by', 'color');*/
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
@@ -105,7 +120,7 @@ define([
 
     // return legend object.
     Line.prototype.getLegend = function(){
-        var legend = new SimpleLegend(this.legend_data);
+        var legend = new SimpleLegend((this.options.legend ? this.legend_data : []));
         return legend;
     };
 

@@ -37,7 +37,7 @@ define([
     };
 
     SimpleLegend.prototype.height = function(){
-        return this.options.height * (this.data.length + 1);
+        return this.options.height * (this.data.length);
     };
 
     // Create dom object independent form pane or context and return it. called by each diagram.o

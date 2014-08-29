@@ -46,7 +46,8 @@ define([
             stroke_width: 1,
             hover: true,
             tooltip_contents:[],
-            tooltip:null
+            tooltip:null,
+            legend :true
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -107,6 +108,20 @@ define([
                 }));
             }
         });
+/*
+        this.optional_scales = _.reduce([{column: 'fill_by', val: 'color'}, {column: 'size_by', val: 'size'}, {column: 'shape_by', val: 'shape'}], function(memo, info){
+            if(options[info.column]){
+                var scale = df.scale(options[info.column], options[info.val]);
+                columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
+                memo[info.val] = scale;
+            }else{
+                columns.push(_.map(_.range(1, length+1, 1), function(d){
+                    if(_.isArray(options[info.val]))return options[info.val][0];
+                    else return options[info.val];
+                }));
+                memo[info.val] = d3.scale.ordinal().range(columns.last[0]);
+            }
+        }, {});*/
 
         if(options.tooltip_contents.length > 0){
             var tt_arr = df.getPartialDf(options.tooltip_contents);
@@ -158,7 +173,22 @@ define([
 
     // return legend object.
     Scatter.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
+        /*
+        var opt_data = this.optional_scales, color='';
+        var defaults = _.map([{name: 'color', default: '#fff'}, {name: 'shape', default: 'shape'}, {name: 'size', default: 30}], function(info){
+            if(opt_data[info.name].range().length == 1)return opt_data[info.name].range()[0];
+            else return info.default;
+        });
+        // color
+        switch(opt_data['color'].range().length){
+            
+        }
+        
+        // size
+        */
+
+        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
+        return legend;
     };
 
     // answer to callback coming from filter.

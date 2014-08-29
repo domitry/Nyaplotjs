@@ -33,7 +33,8 @@ define([
             color: null,
             hover: true,
             tooltip_contents:null,
-            tooltip:null
+            tooltip:null,
+            legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -136,7 +137,8 @@ define([
 
     // return legend object based on data prepared by initializer
     Bar.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
+        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
+        return legend;
     };
 
     // count unique value. called when 'value' option was specified insead of 'x' and 'y'

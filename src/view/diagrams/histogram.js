@@ -36,7 +36,8 @@ define([
             stroke_color: 'black',
             stroke_width: 1,
             hover: true,
-            tooltip:null
+            tooltip:null,
+            legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -106,7 +107,8 @@ define([
 
     // return legend object.
     Histogram.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
+        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
+        return legend;
     };
 
     // answer to callback coming from filter.
