@@ -25,9 +25,8 @@
  */
 
 define([
-    'underscore',
-    'core/manager'
-],function(_, Manager){
+    'underscore'
+],function(_){
     var processData = function(df, options){
         var labels = ['x', 'y', 'fill', 'size', 'shape'];
         var columns = _.map(['x', 'y'], function(label){return df.column(options[label]);});
@@ -68,7 +67,7 @@ define([
             .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'scatter',
             x: null,
@@ -87,8 +86,6 @@ define([
             legend :true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var data = processData(df, options);
         var shapes = context.selectAll("path").data(data);

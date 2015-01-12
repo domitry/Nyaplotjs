@@ -20,9 +20,8 @@
 
 define([
     'underscore',
-    'node-uuid',
-    'core/manager'
-],function(_, uuid, Manager){
+    'node-uuid'
+],function(_, uuid){
     // process data as:
     //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
     var processData = function(x, y, options){
@@ -54,7 +53,7 @@ define([
         return {x: _.keys(hash), y: _.values(hash)};
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             value: null,
             x: null,
@@ -67,8 +66,6 @@ define([
             legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var color_scale;
         if(options.color == null) color_scale = d3.scale.category20b();

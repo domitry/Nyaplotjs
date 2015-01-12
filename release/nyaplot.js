@@ -2084,9 +2084,8 @@ define('core/manager',[
 
 define('view/diagrams/bar',[
     'underscore',
-    'node-uuid',
-    'core/manager'
-],function(_, uuid, Manager){
+    'node-uuid'
+],function(_, uuid){
     // process data as:
     //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
     var processData = function(x, y, options){
@@ -2118,7 +2117,7 @@ define('view/diagrams/bar',[
         return {x: _.keys(hash), y: _.values(hash)};
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             value: null,
             x: null,
@@ -2131,8 +2130,6 @@ define('view/diagrams/bar',[
             legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var color_scale;
         if(options.color == null) color_scale = d3.scale.category20b();
@@ -2240,9 +2237,8 @@ define('view/components/filter',[
 define('view/diagrams/histogram',[
     'underscore',
     'node-uuid',
-    'core/manager',
     'view/components/filter'
-],function(_, uuid, Manager, Filter){
+],function(_, uuid, Filter){
     // pre-process data using function embeded in d3.js.
     var processData = function(column, scales, options){
         return d3.layout.histogram()
@@ -2263,7 +2259,7 @@ define('view/diagrams/histogram',[
             .attr("id", uuid.v4());
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'histogram',
             value: null,
@@ -2277,8 +2273,6 @@ define('view/diagrams/histogram',[
             legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var column_value = df.columnWithFilters(uuid, options.value);
         var data = processData(column_value, scales, options);
@@ -2318,9 +2312,8 @@ define('view/diagrams/histogram',[
  */
 
 define('view/diagrams/scatter',[
-    'underscore',
-    'core/manager'
-],function(_, Manager){
+    'underscore'
+],function(_){
     var processData = function(df, options){
         var labels = ['x', 'y', 'fill', 'size', 'shape'];
         var columns = _.map(['x', 'y'], function(label){return df.column(options[label]);});
@@ -2361,7 +2354,7 @@ define('view/diagrams/scatter',[
             .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'scatter',
             x: null,
@@ -2380,8 +2373,6 @@ define('view/diagrams/scatter',[
             legend :true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var data = processData(df, options);
         var shapes = context.selectAll("path").data(data);
@@ -2562,7 +2553,7 @@ define('view/diagrams/line',[
             .attr("fill", "none");
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'line',
             x: null,
@@ -2573,8 +2564,6 @@ define('view/diagrams/line',[
             legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var data = processData(df.column(options.x), df.column(options.y), options);
         context.selectAll("path").remove();
@@ -2611,9 +2600,8 @@ define('view/diagrams/line',[
 
 define('view/diagrams/box.js',[
     'underscore',
-    'node-uuid',
-    'core/manager'
-],function(_, uuid, Manager){
+    'node-uuid'
+],function(_, uuid){
     // convert raw data into style information for box
     var processData = function(column){
         var getMed = function(arr){
@@ -2685,7 +2673,7 @@ define('view/diagrams/box.js',[
             });
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: '',
             value: [],
@@ -2698,8 +2686,6 @@ define('view/diagrams/box.js',[
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var color_scale;
         if(options.color == null){
@@ -2811,10 +2797,8 @@ define('utils/color',[
 define('view/diagrams/heatmap.js',[
     'underscore',
     'node-uuid',
-    'core/manager',
-    'view/components/filter',
     'utils/color'
-],function(_, uuid, Manager, Filter, colorset){
+],function(_, uuid, colorset){
     // pre-process data. convert data coorinates to dom coordinates with Scale.
     var processData = function(df, scales, color_scale, options){
         var column_x = df.columnWithFilters(uuid, options.x);
@@ -2843,7 +2827,7 @@ define('view/diagrams/heatmap.js',[
             .attr("stroke-width", options.stroke_width);
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'heatmap',
             x: null,
@@ -2858,8 +2842,6 @@ define('view/diagrams/heatmap.js',[
             tooltip: null
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var color_scale = (function(){
             var column_fill = df.columnWithFilters(options.uuid, options.fill);
@@ -2906,11 +2888,8 @@ define('view/diagrams/heatmap.js',[
 
 define('view/diagrams/vectors.js',[
     'underscore',
-    'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, Filter, SimpleLegend){
+    'node-uuid'
+],function(_, uuid){
     // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
     var processData = function(df, options){
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
@@ -2947,7 +2926,7 @@ define('view/diagrams/vectors.js',[
             });
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'vectors',
             x: null,
@@ -2962,8 +2941,6 @@ define('view/diagrams/vectors.js',[
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var data = processData(df, options);
 
@@ -3347,8 +3324,9 @@ define('view/pane',[
     'view/diagrams/diagrams',
     'view/components/filter',
     'view/components/legend_area',
-    'view/components/tooltip'
-],function(_, uuid, diagrams, Filter, LegendArea, Tooltip){
+    'view/components/tooltip',
+    'core/manager'
+],function(_, uuid, diagrams, Filter, LegendArea, Tooltip, Manager){
     function Pane(parent, scale, Axis, _options){
         var options = {
             width: 700,
@@ -3528,12 +3506,13 @@ define('view/pane',[
     }
 
     // Add diagram to pane
-    Pane.prototype.addDiagram = function(type, data, options){
+    Pane.prototype.addDiagram = function(type, df_id, options){
         _.extend(options, {
             uuid: uuid.v4(),
             tooltip: this.tooltip
         });
 
+        var data = Manager.getData(df_id);
         var diagram = diagrams[type](this.context.append("g"), this.scales, data, options);
 	    this.diagrams.push(diagram);
     };

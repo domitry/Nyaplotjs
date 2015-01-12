@@ -53,7 +53,7 @@ define([
             .attr("fill", "none");
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'line',
             x: null,
@@ -64,8 +64,6 @@ define([
             legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var data = processData(df.column(options.x), df.column(options.y), options);
         context.selectAll("path").remove();

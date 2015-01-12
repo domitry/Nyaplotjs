@@ -21,9 +21,8 @@
 
 define([
     'underscore',
-    'node-uuid',
-    'core/manager'
-],function(_, uuid, Manager){
+    'node-uuid'
+],function(_, uuid){
     // convert raw data into style information for box
     var processData = function(column){
         var getMed = function(arr){
@@ -95,7 +94,7 @@ define([
             });
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: '',
             value: [],
@@ -108,8 +107,6 @@ define([
             tooltip:null
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var color_scale;
         if(options.color == null){

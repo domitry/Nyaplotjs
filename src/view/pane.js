@@ -20,8 +20,9 @@ define([
     'view/diagrams/diagrams',
     'view/components/filter',
     'view/components/legend_area',
-    'view/components/tooltip'
-],function(_, uuid, diagrams, Filter, LegendArea, Tooltip){
+    'view/components/tooltip',
+    'core/manager'
+],function(_, uuid, diagrams, Filter, LegendArea, Tooltip, Manager){
     function Pane(parent, scale, Axis, _options){
         var options = {
             width: 700,
@@ -201,12 +202,13 @@ define([
     }
 
     // Add diagram to pane
-    Pane.prototype.addDiagram = function(type, data, options){
+    Pane.prototype.addDiagram = function(type, df_id, options){
         _.extend(options, {
             uuid: uuid.v4(),
             tooltip: this.tooltip
         });
 
+        var data = Manager.getData(df_id);
         var diagram = diagrams[type](this.context.append("g"), this.scales, data, options);
 	    this.diagrams.push(diagram);
     };

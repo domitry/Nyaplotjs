@@ -22,9 +22,8 @@
 define([
     'underscore',
     'node-uuid',
-    'core/manager',
     'view/components/filter'
-],function(_, uuid, Manager, Filter){
+],function(_, uuid, Filter){
     // pre-process data using function embeded in d3.js.
     var processData = function(column, scales, options){
         return d3.layout.histogram()
@@ -45,7 +44,7 @@ define([
             .attr("id", uuid.v4());
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'histogram',
             value: null,
@@ -59,8 +58,6 @@ define([
             legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var column_value = df.columnWithFilters(uuid, options.value);
         var data = processData(column_value, scales, options);

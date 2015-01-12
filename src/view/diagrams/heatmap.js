@@ -20,10 +20,8 @@
 define([
     'underscore',
     'node-uuid',
-    'core/manager',
-    'view/components/filter',
     'utils/color'
-],function(_, uuid, Manager, Filter, colorset){
+],function(_, uuid, colorset){
     // pre-process data. convert data coorinates to dom coordinates with Scale.
     var processData = function(df, scales, color_scale, options){
         var column_x = df.columnWithFilters(uuid, options.x);
@@ -52,7 +50,7 @@ define([
             .attr("stroke-width", options.stroke_width);
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'heatmap',
             x: null,
@@ -67,8 +65,6 @@ define([
             tooltip: null
         };
         if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
 
         var color_scale = (function(){
             var column_fill = df.columnWithFilters(options.uuid, options.fill);

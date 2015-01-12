@@ -20,11 +20,8 @@
 
 define([
     'underscore',
-    'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, Filter, SimpleLegend){
+    'node-uuid'
+],function(_, uuid){
     // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
     var processData = function(df, options){
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
@@ -61,7 +58,7 @@ define([
             });
     };
 
-    return function(context, scales, df_id, _options){
+    return function(context, scales, df, _options){
         var options = {
             title: 'vectors',
             x: null,
@@ -77,10 +74,7 @@ define([
         };
         if(arguments.length>3)_.extend(options, _options);
 
-        var df = Manager.getData(df_id);
-
         var data = processData(df, options);
-
         var shapes = context.selectAll("line").data(data);
         shapes.enter().append("line");
         updateModels(shapes, scales, options);
