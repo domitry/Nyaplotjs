@@ -30,10 +30,6 @@ define([
             margin: {top: 30, bottom: 80, left: 80, right: 30},
             xrange: [0,0],
             yrange: [0,0],
-            x_label:'X',
-            y_label:'Y',
-            rotate_x_label: 0,
-            rotate_y_label:0,
             zoom: false,
             grid: true,
             zoom_range: [0.5, 5],
@@ -52,8 +48,6 @@ define([
         };
         if(arguments.length>1)_.extend(options, _options);
 
-        this.uuid = uuid.v4();
-
         var model = parent.append("svg")
                 .attr("width", options.width)
                 .attr("height", options.height);
@@ -64,41 +58,6 @@ define([
             areas.plot_y = options.margin.top;
             areas.plot_width = options.width - options.margin.left - options.margin.right;
             areas.plot_height = options.height - options.margin.top - options.margin.bottom;
-            
-            if(options.legend){
-                switch(options.legend_position){
-                case 'top':
-                    areas.plot_width -= options.legend_width;
-                    areas.plot_y += options.legend_height;
-                    areas.legend_x = (options.width - options.legend_width)/2;
-                    areas.legend_y = options.margin.top;
-                    break;
-
-                case 'bottom':
-                    areas.plot_height -= options.legend_height;
-                    areas.legend_x = (options.width - options.legend_width)/2;
-                    areas.legend_y = options.margin.top + options.height;
-                    break;
-
-                case 'left':
-                    areas.plot_x += options.legend_width;
-                    areas.plot_width -= options.legend_width;
-                    areas.legend_x = options.margin.left;
-                    areas.legend_y = options.margin.top;
-                    break;
-
-                case 'right':
-                    areas.plot_width -= options.legend_width;
-                    areas.legend_x = areas.plot_width + options.margin.left;
-                    areas.legend_y = options.margin.top;
-                    break;
-
-                case _.isArray(options.legend_position):
-                    areas.legend_x = options.width * options.legend_position[0];
-                    areas.legend_y = options.height * options.legend_position[1];
-                    break;
-                }
-            }
             return areas;
         })();
 
@@ -165,35 +124,7 @@ define([
             .attr("stroke-width", 1)
             .style("z-index", 200);
 
-        // add tooltip
-        var tooltip = new Tooltip(model.select("g"), scales, {
-            font: options.font,
-            context_width: areas.plot_width,
-            context_height: areas.plot_height,
-            context_margin: {
-                top: areas.plot_x,
-                left: areas.plot_y,
-                bottom: options.margin.bottom,
-                right: options.margin.right
-            }
-        });
-
-        // add legend
-        if(options.legend){
-            model.append("g")
-                .attr("class", "legend_area")
-                .attr("transform", "translate(" + areas.legend_x + "," + areas.legend_y + ")");
-
-            this.legend_area = new LegendArea(model.select(".legend_area"), {
-                width: options.legend_width,
-                height: options.legend_height,
-                stroke_color: options.legend_stroke_color,
-                stroke_width: options.legend_stroke_width
-            });
-        }
-
         this.diagrams = [];
-        this.tooltip = tooltip;
         this.context = model.select(".context").append("g").attr("class","context_child");
         this.model = model;
         this.scales = scales;
@@ -209,19 +140,13 @@ define([
         });
 
         var data = Manager.getData(df_id);
-        var diagram = diagrams[type](this.context.append("g"), this.scales, data, options);
+        var context = this.context.append("g");
+        var diagram = diagrams[type](context, this.scales, data, options);
+
+        context.selectAll("text")
+            .style("font-family", this.options.font);
+
 	    this.diagrams.push(diagram);
-    };
-
-    // Update all diagrams belong to the pane
-    Pane.prototype.update = function(){
-        var font = this.options.font;
-	    _.each(this.diagrams, function(diagram){
-	        diagram.update();
-	    });
-
-        this.model.selectAll("text")
-            .style("font-family", font);
     };
 
     return Pane;

@@ -12,6 +12,7 @@
  *    size_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
  *    color           -> Array : Array of String.
  *    shape           -> Array : Array of String.
+ *                       ['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross']
  *    size            -> Array : Array of Float. specified when creating bubble chart.
  *    stroke_color    -> String: stroke color.
  *    stroke_width    -> Float : stroke width.
@@ -27,61 +28,34 @@
 define([
     'underscore'
 ],function(_){
-    var processData = function(df, options){
-        var labels = ['x', 'y', 'fill', 'size', 'shape'];
-        var columns = _.map(['x', 'y'], function(label){return df.column(options[label]);});
-        var length = columns[0].length;
+    return {
+        func: function(context, data, position, options){
+            if(arguments.length>3)_.extend(options, options);
 
-        _.each([{column: 'fill_by', val: 'color'}, {column: 'size_by', val: 'size'}, {column: 'shape_by', val: 'shape'}], function(info){
-            if(options[info.column]){
-                var scale = df.scale(options[info.column], options[info.val]);
-                columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
-            }else{
-                columns.push(_.map(_.range(1, length+1, 1), function(d){
-                    if(_.isArray(options[info.val]))return options[info.val][0];
-                    else return options[info.val];
-                }));
-            }
-        });
+            var shapes = context.selectAll("path").data(data);
 
-        return _.map(_.zip.apply(null, columns), function(d){
-            return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
-        });
-    };
+            shapes
+                .enter()
+                .append("path")
+                .attr("transform", function(row) {
+                    var d = position(row);
+                    return "translate(" + d.x + "," + d.y + ")"; })
+                .attr("fill", options.color)
+                .attr("stroke", options.stroke_color)
+                .attr("stroke-width", options.stroke_width)
+                .transition().duration(200)
+                .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
 
-    return function(context, scales, df, _options){
-        var options = {
-            title: 'scatter',
-            x: null,
-            y: null,
-            fill_by: null,
-            shape_by: null,
-            size_by: null,
-            color:['#4682B4', '#000000'],
-            shape:['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross'],
-            size: [100, 1000],
+            return shapes;
+        },
+        required_args: ["context", "data", "position"],
+        optional_args: {
+            color: "steelblue",
+            shape: "circle",
+            size: 100,
             stroke_color: 'black',
             stroke_width: 1,
-            hover: true,
-            tooltip_contents:[],
-            tooltip:null,
-            legend :true
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        var data = processData(df, options);
-        var shapes = context.selectAll("path").data(data);
-        shapes
-            .enter()
-            .append("path")
-            .attr("transform", function(d) {
-                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
-
-        return shapes;
+            hover: true
+        }
     };
 });
