@@ -9,17 +9,7 @@ define([
     'underscore'  // module
 ],function(_){
     function Dataframe(name, data){
-        // load data from a String containing a URL or
-        // use the (raw) data
-        if(data instanceof String && /url(.+)/g.test(data)){
-            var url = data.match(/url\((.+)\)/)[1];
-            var df = this;
-            d3.json(url, function(error, json){
-                df.raw = JSON.parse(json);
-            });
-            this.raw = {};
-        }
-        else this.raw = data;
+        this.raw = data;
 
         // detect the nested column (that should be only one)
         var header = _.keys(data[0]);
