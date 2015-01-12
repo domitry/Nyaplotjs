@@ -45,19 +45,6 @@ define([
         });
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        selector
-            .attr({
-                'x1':function(d){return scales.get(d.x, d.y).x;},
-                'x2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).x;},
-                'y1':function(d){return scales.get(d.x, d.y).y;},
-                'y2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).y;},
-                'stroke':function(d){return d.fill;},
-                'stroke-width':options.stroke_width
-            });
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'vectors',
@@ -76,8 +63,16 @@ define([
 
         var data = processData(df, options);
         var shapes = context.selectAll("line").data(data);
-        shapes.enter().append("line");
-        updateModels(shapes, scales, options);
+        shapes.enter()
+            .append("line")
+            .attr({
+                'x1':function(d){return scales.get(d.x, d.y).x;},
+                'x2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).x;},
+                'y1':function(d){return scales.get(d.x, d.y).y;},
+                'y2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).y;},
+                'stroke':function(d){return d.fill;},
+                'stroke-width':options.stroke_width
+            });
 
         return shapes;
     };

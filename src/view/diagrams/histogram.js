@@ -30,20 +30,6 @@ define([
             .bins(scales.raw.x.ticks(options.bin_num))(column);
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        selector
-            .attr("x",function(d){return scales.get(d.x, 0).x;})
-            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
-            .attr("fill", options.color)
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(0, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'histogram',
@@ -62,10 +48,20 @@ define([
         var column_value = df.columnWithFilters(uuid, options.value);
         var data = processData(column_value, scales, options);
 
-        var models = context.selectAll("rect").data(data);
-        models.enter().append("rect").attr("height", 0).attr("y", scales.get(0, 0).y);
-        updateModels(models,  scales, options);
+        var rects = context.selectAll("rect").data(data);
+        rects.enter().append("rect").attr("height", 0).attr("y", scales.get(0, 0).y);
 
-        return models;
+        rects
+            .attr("x",function(d){return scales.get(d.x, 0).x;})
+            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
+            .attr("fill", options.color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .transition().duration(200)
+            .attr("y", function(d){return scales.get(0, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
+            .attr("id", uuid.v4());
+
+        return rects;
     };
 });

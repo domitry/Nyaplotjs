@@ -38,18 +38,6 @@ define([
         });
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, options){
-        selector
-            .attr("x", function(d){return d.x;})
-            .attr("width", function(d){return d.width;})
-            .attr("y", function(d){return d.y;})
-            .attr("height", function(d){return d.height;})
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width);
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'heatmap',
@@ -76,15 +64,25 @@ define([
         })();
 
         var data = processData(df, scales, color_scale, options);
-        var models = context.selectAll("rect").data(data);
-        models.each(function(){
+        var rects = context.selectAll("rect").data(data);
+
+        rects.each(function(){
             var event = document.createEvent("MouseEvents");
             event.initEvent("mouseout", false, true);
             this.dispatchEvent(event);
         });
-        models.enter().append("rect");
-        updateModels(models, options);
 
-        return models;
+        rects.enter().append("rect");
+
+        rects
+            .attr("x", function(d){return d.x;})
+            .attr("width", function(d){return d.width;})
+            .attr("y", function(d){return d.y;})
+            .attr("height", function(d){return d.height;})
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width);
+
+        return rects;
     };
 });

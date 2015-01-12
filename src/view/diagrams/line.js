@@ -28,31 +28,6 @@ define([
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", d3.rgb(options.color).darker(1));
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", options.color);
-        };
-
-        var line = d3.svg.line()
-                .x(function(d){return scales.get(d.x, d.y).x;})
-                .y(function(d){return scales.get(d.x, d.y).y;});
-
-        selector
-            .attr("d", line)
-            .attr("stroke", options.color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("fill", "none");
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'line',
@@ -66,12 +41,20 @@ define([
         if(arguments.length>3)_.extend(options, _options);
 
         var data = processData(df.column(options.x), df.column(options.y), options);
-        context.selectAll("path").remove();
+
         var path = context
                 .append("path")
                 .datum(data);
-        
-        updateModels(path, scales, options);
+
+        var line = d3.svg.line()
+                .x(function(d){return scales.get(d.x, d.y).x;})
+                .y(function(d){return scales.get(d.x, d.y).y;});
+
+        path
+            .attr("d", line)
+            .attr("stroke", options.color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("fill", "none");
 
         return path;
     };

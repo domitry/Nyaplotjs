@@ -28,21 +28,6 @@ define([
         return _.map(_.zip(x,y),function(d, i){return {x:d[0], y:d[1]};});
     };
 
-    // update dom object
-    var updateModels = function(selector, scales, options, color_scale){
-        var width = scales.raw.x.rangeBand()*options.width;
-        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-
-        selector
-            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
-            .attr("width", width)
-            .attr("fill", function(d){return color_scale(d.x);})
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(d.x, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
-    };
-
     // count unique value. called when 'value' option was specified insead of 'x' and 'y'
     var countData = function(values){
         var hash = {};
@@ -83,12 +68,20 @@ define([
         }
 
         var rects = context.selectAll("rect").data(data);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
+
         rects.enter().append("rect")
             .attr("height", 0)
-            .attr("y", scales.get(0, 0).y);
+            .attr("y", scales.get(0, 0).y)
+            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
+            .attr("width", width)
+            .attr("fill", function(d){return color_scale(d.x);})
+            .transition().duration(200)
+            .attr("y", function(d){return scales.get(d.x, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
+            .attr("id", uuid.v4());
 
-        updateModels(rects, scales, options, color_scale);
-
-        return ;
+        return rects;
     };
 });

@@ -44,27 +44,9 @@ define([
             }
         });
 
-        if(options.tooltip_contents.length > 0){
-            var tt_arr = df.getPartialDf(options.tooltip_contents);
-            labels.push('tt');
-            columns.push(tt_arr);
-        }
-
         return _.map(_.zip.apply(null, columns), function(d){
             return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
         });
-    };
-
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        selector
-            .attr("transform", function(d) {
-                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
     };
 
     return function(context, scales, df, _options){
@@ -89,8 +71,16 @@ define([
 
         var data = processData(df, options);
         var shapes = context.selectAll("path").data(data);
-        shapes.enter().append("path");
-        updateModels(shapes, scales, options);
+        shapes
+            .enter()
+            .append("path")
+            .attr("transform", function(d) {
+                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .transition().duration(200)
+            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
 
         return shapes;
     };

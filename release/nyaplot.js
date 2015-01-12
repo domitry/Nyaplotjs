@@ -2092,21 +2092,6 @@ define('view/diagrams/bar',[
         return _.map(_.zip(x,y),function(d, i){return {x:d[0], y:d[1]};});
     };
 
-    // update dom object
-    var updateModels = function(selector, scales, options, color_scale){
-        var width = scales.raw.x.rangeBand()*options.width;
-        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-
-        selector
-            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
-            .attr("width", width)
-            .attr("fill", function(d){return color_scale(d.x);})
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(d.x, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
-    };
-
     // count unique value. called when 'value' option was specified insead of 'x' and 'y'
     var countData = function(values){
         var hash = {};
@@ -2147,13 +2132,21 @@ define('view/diagrams/bar',[
         }
 
         var rects = context.selectAll("rect").data(data);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
+
         rects.enter().append("rect")
             .attr("height", 0)
-            .attr("y", scales.get(0, 0).y);
+            .attr("y", scales.get(0, 0).y)
+            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
+            .attr("width", width)
+            .attr("fill", function(d){return color_scale(d.x);})
+            .transition().duration(200)
+            .attr("y", function(d){return scales.get(d.x, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
+            .attr("id", uuid.v4());
 
-        updateModels(rects, scales, options, color_scale);
-
-        return ;
+        return rects;
     };
 });
 
@@ -2245,20 +2238,6 @@ define('view/diagrams/histogram',[
             .bins(scales.raw.x.ticks(options.bin_num))(column);
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        selector
-            .attr("x",function(d){return scales.get(d.x, 0).x;})
-            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
-            .attr("fill", options.color)
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(0, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'histogram',
@@ -2277,11 +2256,21 @@ define('view/diagrams/histogram',[
         var column_value = df.columnWithFilters(uuid, options.value);
         var data = processData(column_value, scales, options);
 
-        var models = context.selectAll("rect").data(data);
-        models.enter().append("rect").attr("height", 0).attr("y", scales.get(0, 0).y);
-        updateModels(models,  scales, options);
+        var rects = context.selectAll("rect").data(data);
+        rects.enter().append("rect").attr("height", 0).attr("y", scales.get(0, 0).y);
 
-        return models;
+        rects
+            .attr("x",function(d){return scales.get(d.x, 0).x;})
+            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
+            .attr("fill", options.color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .transition().duration(200)
+            .attr("y", function(d){return scales.get(0, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
+            .attr("id", uuid.v4());
+
+        return rects;
     };
 });
 
@@ -2331,27 +2320,9 @@ define('view/diagrams/scatter',[
             }
         });
 
-        if(options.tooltip_contents.length > 0){
-            var tt_arr = df.getPartialDf(options.tooltip_contents);
-            labels.push('tt');
-            columns.push(tt_arr);
-        }
-
         return _.map(_.zip.apply(null, columns), function(d){
             return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
         });
-    };
-
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        selector
-            .attr("transform", function(d) {
-                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
     };
 
     return function(context, scales, df, _options){
@@ -2376,8 +2347,16 @@ define('view/diagrams/scatter',[
 
         var data = processData(df, options);
         var shapes = context.selectAll("path").data(data);
-        shapes.enter().append("path");
-        updateModels(shapes, scales, options);
+        shapes
+            .enter()
+            .append("path")
+            .attr("transform", function(d) {
+                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .transition().duration(200)
+            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
 
         return shapes;
     };
@@ -2528,31 +2507,6 @@ define('view/diagrams/line',[
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", d3.rgb(options.color).darker(1));
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", options.color);
-        };
-
-        var line = d3.svg.line()
-                .x(function(d){return scales.get(d.x, d.y).x;})
-                .y(function(d){return scales.get(d.x, d.y).y;});
-
-        selector
-            .attr("d", line)
-            .attr("stroke", options.color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("fill", "none");
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'line',
@@ -2566,12 +2520,20 @@ define('view/diagrams/line',[
         if(arguments.length>3)_.extend(options, _options);
 
         var data = processData(df.column(options.x), df.column(options.y), options);
-        context.selectAll("path").remove();
+
         var path = context
                 .append("path")
                 .datum(data);
-        
-        updateModels(path, scales, options);
+
+        var line = d3.svg.line()
+                .x(function(d){return scales.get(d.x, d.y).x;})
+                .y(function(d){return scales.get(d.x, d.y).y;});
+
+        path
+            .attr("d", line)
+            .attr("stroke", options.color)
+            .attr("stroke-width", options.stroke_width)
+            .attr("fill", "none");
 
         return path;
     };
@@ -2628,51 +2590,6 @@ define('view/diagrams/box.js',[
         };
     };
 
-    // update SVG dom nodes based on data
-    var updateModels = function(selector, scales, options, color_scale){
-        var width = scales.raw.x.rangeBand()*options.width;
-        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-
-        selector
-            .append("line")
-            .attr("x1", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
-            .attr("y1", function(d){return scales.get(d.x, d.max).y;})
-            .attr("x2", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
-            .attr("y2", function(d){return scales.get(d.x, d.min).y;})
-            .attr("stroke", options.stroke_color);
-
-        selector
-            .append("rect")
-            .attr("x", function(d){return scales.get(d.x, 0).x + padding;})
-            .attr("y", function(d){return scales.get(d.x, d.q3).y;})
-            .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
-            .attr("width", width)
-            .attr("fill", function(d){return color_scale(d.x);})
-            .attr("stroke", options.stroke_color);
-
-        // median line
-        selector
-            .append("line")
-            .attr("x1", function(d){return scales.get(d.x,0).x + padding;})
-            .attr("y1", function(d){return scales.get(d.x, d.med).y;})
-            .attr("x2", function(d){return scales.get(d.x, 0).x + width + padding;})
-            .attr("y2", function(d){return scales.get(d.x, d.med).y;})
-            .attr("stroke", options.stroke_color);
-
-        selector
-            .append("g")
-            .each(function(d,i){
-                d3.select(this)
-                    .selectAll("circle")
-                    .data(d.outlier)
-                    .enter()
-                    .append("circle")
-                    .attr("cx", function(d1){return scales.get(d.x,0).x + width/2 + padding;})
-                    .attr("cy", function(d1){return scales.get(d.x,d1).y;})
-                    .attr("r", options.outlier_r);
-            });
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: '',
@@ -2701,10 +2618,49 @@ define('view/diagrams/box.js',[
         });
 
         var boxes = context.selectAll("g").data(data);
-        boxes.enter()
-            .append("g");
+        boxes.enter().append("g");
 
-        updateModels(boxes, scales, options, color_scale);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
+
+        boxes
+            .append("line")
+            .attr("x1", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.max).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.min).y;})
+            .attr("stroke", options.stroke_color);
+
+        boxes
+            .append("rect")
+            .attr("x", function(d){return scales.get(d.x, 0).x + padding;})
+            .attr("y", function(d){return scales.get(d.x, d.q3).y;})
+            .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
+            .attr("width", width)
+            .attr("fill", function(d){return color_scale(d.x);})
+            .attr("stroke", options.stroke_color);
+
+        // median line
+        boxes
+            .append("line")
+            .attr("x1", function(d){return scales.get(d.x,0).x + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.med).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.med).y;})
+            .attr("stroke", options.stroke_color);
+
+        boxes
+            .append("g")
+            .each(function(d,i){
+                d3.select(this)
+                    .selectAll("circle")
+                    .data(d.outlier)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", function(d1){return scales.get(d.x,0).x + width/2 + padding;})
+                    .attr("cy", function(d1){return scales.get(d.x,d1).y;})
+                    .attr("r", options.outlier_r);
+            });
 
         return boxes;
     };
@@ -2815,18 +2771,6 @@ define('view/diagrams/heatmap.js',[
         });
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, options){
-        selector
-            .attr("x", function(d){return d.x;})
-            .attr("width", function(d){return d.width;})
-            .attr("y", function(d){return d.y;})
-            .attr("height", function(d){return d.height;})
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width);
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'heatmap',
@@ -2853,16 +2797,26 @@ define('view/diagrams/heatmap.js',[
         })();
 
         var data = processData(df, scales, color_scale, options);
-        var models = context.selectAll("rect").data(data);
-        models.each(function(){
+        var rects = context.selectAll("rect").data(data);
+
+        rects.each(function(){
             var event = document.createEvent("MouseEvents");
             event.initEvent("mouseout", false, true);
             this.dispatchEvent(event);
         });
-        models.enter().append("rect");
-        updateModels(models, options);
 
-        return models;
+        rects.enter().append("rect");
+
+        rects
+            .attr("x", function(d){return d.x;})
+            .attr("width", function(d){return d.width;})
+            .attr("y", function(d){return d.y;})
+            .attr("height", function(d){return d.height;})
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width);
+
+        return rects;
     };
 });
 
@@ -2913,19 +2867,6 @@ define('view/diagrams/vectors.js',[
         });
     };
 
-    // update SVG dom nodes based on pre-processed data.
-    var updateModels = function(selector, scales, options){
-        selector
-            .attr({
-                'x1':function(d){return scales.get(d.x, d.y).x;},
-                'x2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).x;},
-                'y1':function(d){return scales.get(d.x, d.y).y;},
-                'y2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).y;},
-                'stroke':function(d){return d.fill;},
-                'stroke-width':options.stroke_width
-            });
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: 'vectors',
@@ -2943,10 +2884,17 @@ define('view/diagrams/vectors.js',[
         if(arguments.length>3)_.extend(options, _options);
 
         var data = processData(df, options);
-
         var shapes = context.selectAll("line").data(data);
-        shapes.enter().append("line");
-        updateModels(shapes, scales, options);
+        shapes.enter()
+            .append("line")
+            .attr({
+                'x1':function(d){return scales.get(d.x, d.y).x;},
+                'x2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).x;},
+                'y1':function(d){return scales.get(d.x, d.y).y;},
+                'y2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).y;},
+                'stroke':function(d){return d.fill;},
+                'stroke-width':options.stroke_width
+            });
 
         return shapes;
     };

@@ -49,51 +49,6 @@ define([
         };
     };
 
-    // update SVG dom nodes based on data
-    var updateModels = function(selector, scales, options, color_scale){
-        var width = scales.raw.x.rangeBand()*options.width;
-        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-
-        selector
-            .append("line")
-            .attr("x1", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
-            .attr("y1", function(d){return scales.get(d.x, d.max).y;})
-            .attr("x2", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
-            .attr("y2", function(d){return scales.get(d.x, d.min).y;})
-            .attr("stroke", options.stroke_color);
-
-        selector
-            .append("rect")
-            .attr("x", function(d){return scales.get(d.x, 0).x + padding;})
-            .attr("y", function(d){return scales.get(d.x, d.q3).y;})
-            .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
-            .attr("width", width)
-            .attr("fill", function(d){return color_scale(d.x);})
-            .attr("stroke", options.stroke_color);
-
-        // median line
-        selector
-            .append("line")
-            .attr("x1", function(d){return scales.get(d.x,0).x + padding;})
-            .attr("y1", function(d){return scales.get(d.x, d.med).y;})
-            .attr("x2", function(d){return scales.get(d.x, 0).x + width + padding;})
-            .attr("y2", function(d){return scales.get(d.x, d.med).y;})
-            .attr("stroke", options.stroke_color);
-
-        selector
-            .append("g")
-            .each(function(d,i){
-                d3.select(this)
-                    .selectAll("circle")
-                    .data(d.outlier)
-                    .enter()
-                    .append("circle")
-                    .attr("cx", function(d1){return scales.get(d.x,0).x + width/2 + padding;})
-                    .attr("cy", function(d1){return scales.get(d.x,d1).y;})
-                    .attr("r", options.outlier_r);
-            });
-    };
-
     return function(context, scales, df, _options){
         var options = {
             title: '',
@@ -122,10 +77,49 @@ define([
         });
 
         var boxes = context.selectAll("g").data(data);
-        boxes.enter()
-            .append("g");
+        boxes.enter().append("g");
 
-        updateModels(boxes, scales, options, color_scale);
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
+
+        boxes
+            .append("line")
+            .attr("x1", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.max).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width/2 + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.min).y;})
+            .attr("stroke", options.stroke_color);
+
+        boxes
+            .append("rect")
+            .attr("x", function(d){return scales.get(d.x, 0).x + padding;})
+            .attr("y", function(d){return scales.get(d.x, d.q3).y;})
+            .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
+            .attr("width", width)
+            .attr("fill", function(d){return color_scale(d.x);})
+            .attr("stroke", options.stroke_color);
+
+        // median line
+        boxes
+            .append("line")
+            .attr("x1", function(d){return scales.get(d.x,0).x + padding;})
+            .attr("y1", function(d){return scales.get(d.x, d.med).y;})
+            .attr("x2", function(d){return scales.get(d.x, 0).x + width + padding;})
+            .attr("y2", function(d){return scales.get(d.x, d.med).y;})
+            .attr("stroke", options.stroke_color);
+
+        boxes
+            .append("g")
+            .each(function(d,i){
+                d3.select(this)
+                    .selectAll("circle")
+                    .data(d.outlier)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", function(d1){return scales.get(d.x,0).x + width/2 + padding;})
+                    .attr("cy", function(d1){return scales.get(d.x,d1).y;})
+                    .attr("r", options.outlier_r);
+            });
 
         return boxes;
     };
