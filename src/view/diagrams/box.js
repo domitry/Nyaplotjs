@@ -20,9 +20,8 @@
 
 
 define([
-    'underscore',
-    'node-uuid'
-],function(_, uuid){
+    'underscore'
+],function(_){
     // convert raw data into style information for box
     var processData = function(column){
         var getMed = function(arr){
@@ -72,7 +71,7 @@ define([
 
         var data = [];
         _.each(options.value, function(column_name){
-            var column = df.columnWithFilters(uuid, column_name);
+            var column = df.columnWithFilters("123", column_name);
             data.push(_.extend(processData(column), {x: column_name}));
         });
 

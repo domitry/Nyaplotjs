@@ -17,11 +17,8 @@
  */
 
 define([
-    'underscore',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, Manager, Filter, SimpleLegend){
+    'underscore'
+],function(_){
     // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
     var processData = function(x_arr, y_arr, options){
         var df = df, length = x_arr.length;

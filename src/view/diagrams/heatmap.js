@@ -19,14 +19,13 @@
 
 define([
     'underscore',
-    'node-uuid',
     'utils/color'
-],function(_, uuid, colorset){
+],function(_, colorset){
     // pre-process data. convert data coorinates to dom coordinates with Scale.
     var processData = function(df, scales, color_scale, options){
-        var column_x = df.columnWithFilters(uuid, options.x);
-        var column_y = df.columnWithFilters(uuid, options.y);
-        var column_fill = df.columnWithFilters(uuid, options.fill);
+        var column_x = df.columnWithFilters("123", options.x);
+        var column_y = df.columnWithFilters("123", options.y);
+        var column_fill = df.columnWithFilters("123", options.fill);
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
@@ -55,7 +54,7 @@ define([
         if(arguments.length>3)_.extend(options, _options);
 
         var color_scale = (function(){
-            var column_fill = df.columnWithFilters(options.uuid, options.fill);
+            var column_fill = df.columnWithFilters("123", options.fill);
             var min_max = d3.extent(column_fill);
             var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
             return d3.scale.linear()

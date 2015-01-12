@@ -20,10 +20,8 @@
  */
 
 define([
-    'underscore',
-    'node-uuid',
-    'view/components/filter'
-],function(_, uuid, Filter){
+    'underscore'
+],function(_){
     // pre-process data using function embeded in d3.js.
     var processData = function(column, scales, options){
         return d3.layout.histogram()
@@ -45,7 +43,7 @@ define([
         };
         if(arguments.length>3)_.extend(options, _options);
 
-        var column_value = df.columnWithFilters(uuid, options.value);
+        var column_value = df.columnWithFilters("123", options.value);
         var data = processData(column_value, scales, options);
 
         var rects = context.selectAll("rect").data(data);
@@ -59,8 +57,7 @@ define([
             .attr("stroke-width", options.stroke_width)
             .transition().duration(200)
             .attr("y", function(d){return scales.get(0, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;});
 
         return rects;
     };

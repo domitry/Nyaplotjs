@@ -19,9 +19,8 @@
  */
 
 define([
-    'underscore',
-    'node-uuid'
-],function(_, uuid){
+    'underscore'
+],function(_){
     // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
     var processData = function(df, options){
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
@@ -56,8 +55,7 @@ define([
             color:['steelblue', '#000000'],
             stroke_color: '#000',
             stroke_width: 2,
-            hover: true,
-            tooltip:null
+            hover: true
         };
         if(arguments.length>3)_.extend(options, _options);
 

@@ -19,9 +19,8 @@
  */
 
 define([
-    'underscore',
-    'node-uuid'
-],function(_, uuid){
+    'underscore'
+],function(_){
     // process data as:
     //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
     var processData = function(x, y, options){
@@ -58,12 +57,12 @@ define([
 
         var data;
         if(options.value !== null){
-            var column_value = df.columnWithFilters(uuid, options.value);
+            var column_value = df.columnWithFilters("123", options.value);
             var raw = countData(column_value);
             data = processData(raw.x, raw.y, options);
         }else{
-            var column_x = df.columnWithFilters(uuid, options.x);
-            var column_y = df.columnWithFilters(uuid, options.y);
+            var column_x = df.columnWithFilters("123", options.x);
+            var column_y = df.columnWithFilters("123", options.y);
             data = processData(column_x, column_y, options);
         }
 
@@ -79,8 +78,7 @@ define([
             .attr("fill", function(d){return color_scale(d.x);})
             .transition().duration(200)
             .attr("y", function(d){return scales.get(d.x, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;});
 
         return rects;
     };

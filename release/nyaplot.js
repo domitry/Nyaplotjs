@@ -2083,9 +2083,8 @@ define('core/manager',[
  */
 
 define('view/diagrams/bar',[
-    'underscore',
-    'node-uuid'
-],function(_, uuid){
+    'underscore'
+],function(_){
     // process data as:
     //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
     var processData = function(x, y, options){
@@ -2122,12 +2121,12 @@ define('view/diagrams/bar',[
 
         var data;
         if(options.value !== null){
-            var column_value = df.columnWithFilters(uuid, options.value);
+            var column_value = df.columnWithFilters("123", options.value);
             var raw = countData(column_value);
             data = processData(raw.x, raw.y, options);
         }else{
-            var column_x = df.columnWithFilters(uuid, options.x);
-            var column_y = df.columnWithFilters(uuid, options.y);
+            var column_x = df.columnWithFilters("123", options.x);
+            var column_y = df.columnWithFilters("123", options.y);
             data = processData(column_x, column_y, options);
         }
 
@@ -2143,67 +2142,10 @@ define('view/diagrams/bar',[
             .attr("fill", function(d){return color_scale(d.x);})
             .transition().duration(200)
             .attr("y", function(d){return scales.get(d.x, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;});
 
         return rects;
     };
-});
-
-/*
- * Filter:
- * 
- * Filtering data according to box on context area. Filter is implemented using d3.svg.brush().
- * See the website of d3.js to learn more: https://github.com/mbostock/d3/wiki/SVG-Controls
- *
- * options (summary) :
- *    opacity -> Float : Opacity of filtering area
- *    color   -> String: Color of filtering area
- *
- * example :
- *    http://bl.ocks.org/domitry/b8785f02f36deef567ce
- */
-
-define('view/components/filter',[
-    'underscore',
-    'core/manager'
-],function(_, Manager){
-
-    function Filter(parent, scales, callback, _options){
-        var options = {
-            opacity: 0.125,
-            color: 'gray'
-        };
-        if(arguments.length>2)_.extend(options, _options);
-
-        var brushed = function(){
-            var ranges = {
-                x: (brush.empty() ? scales.domain().x : brush.extent()),
-                y: scales.domain().y
-            };
-            callback(ranges);
-        };
-
-        var brush = d3.svg.brush()
-                .x(scales.raw.x)
-                .on("brushend", brushed);
-
-        var model = parent.append("g");
-        var height = d3.max(scales.range().y) - d3.min(scales.range().y);
-        var y = d3.min(scales.range().y);
-
-        model.call(brush)
-            .selectAll("rect")
-            .attr("y", y)
-            .attr("height", height)
-            .style("fill-opacity", options.opacity)
-            .style("fill", options.color)
-            .style("shape-rendering", "crispEdges");
-        
-        return this;
-    }
-
-    return Filter;
 });
 
 /*
@@ -2228,10 +2170,8 @@ define('view/components/filter',[
  */
 
 define('view/diagrams/histogram',[
-    'underscore',
-    'node-uuid',
-    'view/components/filter'
-],function(_, uuid, Filter){
+    'underscore'
+],function(_){
     // pre-process data using function embeded in d3.js.
     var processData = function(column, scales, options){
         return d3.layout.histogram()
@@ -2253,7 +2193,7 @@ define('view/diagrams/histogram',[
         };
         if(arguments.length>3)_.extend(options, _options);
 
-        var column_value = df.columnWithFilters(uuid, options.value);
+        var column_value = df.columnWithFilters("123", options.value);
         var data = processData(column_value, scales, options);
 
         var rects = context.selectAll("rect").data(data);
@@ -2267,8 +2207,7 @@ define('view/diagrams/histogram',[
             .attr("stroke-width", options.stroke_width)
             .transition().duration(200)
             .attr("y", function(d){return scales.get(0, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;});
 
         return rects;
     };
@@ -2363,121 +2302,6 @@ define('view/diagrams/scatter',[
 });
 
 /*
- * SimpleLegend: The simplest legend objects
- *
- * SimpleLegend provides legend consists of simple circle buttons and labels.
- *
- * options(summary)
- *    title_height -> Float : height of title text.
- *    mode         -> String: 'normal' and 'radio' are allowed.
- *
- * example: 
- *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
- */
-
-define('view/components/legend/simple_legend',[
-    'underscore',
-    'core/manager'
-],function(_, Manager){
-    function SimpleLegend(data, _options){
-        var options = {
-            title: '',
-            width: 150,
-            height: 22,
-            title_height: 15,
-            mode: 'normal'
-        };
-        if(arguments.length>1)_.extend(options, _options);
-
-        this.model = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
-        this.options = options;
-        this.data = data;
-
-        return this;
-    }
-
-    SimpleLegend.prototype.width = function(){
-        return this.options.width;
-    };
-
-    SimpleLegend.prototype.height = function(){
-        return this.options.height * (this.data.length);
-    };
-
-    // Create dom object independent form pane or context and return it. called by each diagram.o
-    SimpleLegend.prototype.getDomObject = function(){
-        var model = this.model;
-        var options = this.options;
-
-        model.append("text")
-            .attr("x", 12)
-            .attr("y", options.height)
-            .attr("font-size","14")
-            .text(options.title);
-
-        var entries = this.model.selectAll("g")
-                .data(this.data)
-                .enter()
-                .append("g");
-
-        var circle = entries
-                .append("circle")
-                .attr("cx","8")
-                .attr("cy",function(d, i){return options.height*(i+1);})
-                .attr("r","6")
-                .attr("stroke", function(d){return d.color;})
-                .attr("stroke-width","2")
-                .attr("fill",function(d){return d.color;})
-                .attr("fill-opacity", function(d){return (d.mode=='off' ? 0 : 1);});
-
-        switch(options.mode){
-            case 'normal':
-            circle
-                .on("click", function(d){
-                    if(!(!d['on'] && !d['off'])){
-                        var el = d3.select(this);
-                        if(el.attr("fill-opacity")==1){
-                            el.attr("fill-opacity", 0);
-                            d.off();
-                        }else{
-                            el.attr("fill-opacity", 1);
-                            d.on();
-                        };
-                    }
-                });
-            break;
-            case 'radio':
-            circle.on("click", function(d){
-                var el = d3.select(this);
-                if(el.attr("fill-opacity")==0){
-                    var thisObj = this;
-                    circle.filter(function(d){return (this!=thisObj && !(!d['on'] && !d['off']));})
-                        .attr("fill-opacity", 0);
-                    el.attr("fill-opacity", 1);
-                    d.on();
-                }
-            });
-            break;
-        }
-
-        circle.style("cursor", function(d){
-            if(d['on'] == undefined && d['off'] == undefined)return "default";
-            else return "pointer";
-        });
-        
-        entries.append("text")
-            .attr("x","18")
-            .attr("y",function(d,i){return options.height*(i+1)+4;})
-            .attr("font-size","12")
-            .text(function(d){return d.label;});
-
-        return model;
-    };
-
-    return SimpleLegend;
-});
-
-/*
  * Line: Line chart
  *
  * Attention: 'Line' is totally designed to be used to visualize line chart for Mathematics. So it is not useful to visualize statistical data like stock price.
@@ -2496,11 +2320,8 @@ define('view/components/legend/simple_legend',[
  */
 
 define('view/diagrams/line',[
-    'underscore',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, Manager, Filter, SimpleLegend){
+    'underscore'
+],function(_){
     // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
     var processData = function(x_arr, y_arr, options){
         var df = df, length = x_arr.length;
@@ -2561,9 +2382,8 @@ define('view/diagrams/line',[
 
 
 define('view/diagrams/box.js',[
-    'underscore',
-    'node-uuid'
-],function(_, uuid){
+    'underscore'
+],function(_){
     // convert raw data into style information for box
     var processData = function(column){
         var getMed = function(arr){
@@ -2613,7 +2433,7 @@ define('view/diagrams/box.js',[
 
         var data = [];
         _.each(options.value, function(column_name){
-            var column = df.columnWithFilters(uuid, column_name);
+            var column = df.columnWithFilters("123", column_name);
             data.push(_.extend(processData(column), {x: column_name}));
         });
 
@@ -2752,14 +2572,13 @@ define('utils/color',[
 
 define('view/diagrams/heatmap.js',[
     'underscore',
-    'node-uuid',
     'utils/color'
-],function(_, uuid, colorset){
+],function(_, colorset){
     // pre-process data. convert data coorinates to dom coordinates with Scale.
     var processData = function(df, scales, color_scale, options){
-        var column_x = df.columnWithFilters(uuid, options.x);
-        var column_y = df.columnWithFilters(uuid, options.y);
-        var column_fill = df.columnWithFilters(uuid, options.fill);
+        var column_x = df.columnWithFilters("123", options.x);
+        var column_y = df.columnWithFilters("123", options.y);
+        var column_fill = df.columnWithFilters("123", options.fill);
 
         return _.map(_.zip(column_x, column_y, column_fill), function(row){
             var x, y, width, height;
@@ -2788,7 +2607,7 @@ define('view/diagrams/heatmap.js',[
         if(arguments.length>3)_.extend(options, _options);
 
         var color_scale = (function(){
-            var column_fill = df.columnWithFilters(options.uuid, options.fill);
+            var column_fill = df.columnWithFilters("123", options.fill);
             var min_max = d3.extent(column_fill);
             var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
             return d3.scale.linear()
@@ -2841,9 +2660,8 @@ define('view/diagrams/heatmap.js',[
  */
 
 define('view/diagrams/vectors.js',[
-    'underscore',
-    'node-uuid'
-],function(_, uuid){
+    'underscore'
+],function(_){
     // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
     var processData = function(df, options){
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
@@ -2878,8 +2696,7 @@ define('view/diagrams/vectors.js',[
             color:['steelblue', '#000000'],
             stroke_color: '#000',
             stroke_width: 2,
-            hover: true,
-            tooltip:null
+            hover: true
         };
         if(arguments.length>3)_.extend(options, _options);
 
@@ -2924,6 +2741,62 @@ define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar
     };
 
     return diagrams;
+});
+
+/*
+ * Filter:
+ * 
+ * Filtering data according to box on context area. Filter is implemented using d3.svg.brush().
+ * See the website of d3.js to learn more: https://github.com/mbostock/d3/wiki/SVG-Controls
+ *
+ * options (summary) :
+ *    opacity -> Float : Opacity of filtering area
+ *    color   -> String: Color of filtering area
+ *
+ * example :
+ *    http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ */
+
+define('view/components/filter',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+
+    function Filter(parent, scales, callback, _options){
+        var options = {
+            opacity: 0.125,
+            color: 'gray'
+        };
+        if(arguments.length>2)_.extend(options, _options);
+
+        var brushed = function(){
+            var ranges = {
+                x: (brush.empty() ? scales.domain().x : brush.extent()),
+                y: scales.domain().y
+            };
+            callback(ranges);
+        };
+
+        var brush = d3.svg.brush()
+                .x(scales.raw.x)
+                .on("brushend", brushed);
+
+        var model = parent.append("g");
+        var height = d3.max(scales.range().y) - d3.min(scales.range().y);
+        var y = d3.min(scales.range().y);
+
+        model.call(brush)
+            .selectAll("rect")
+            .attr("y", y)
+            .attr("height", height)
+            .style("fill-opacity", options.opacity)
+            .style("fill", options.color)
+            .style("shape-rendering", "crispEdges");
+        
+        return this;
+    }
+
+    return Filter;
 });
 
 /*
