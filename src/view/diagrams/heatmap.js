@@ -22,10 +22,37 @@ define([
     'node-uuid',
     'core/manager',
     'view/components/filter',
-    'view/components/legend/color_bar',
     'utils/color'
-],function(_, uuid, Manager, Filter, ColorBar, colorset){
-    function HeatMap(parent, scales, df_id, _options){
+],function(_, uuid, Manager, Filter, colorset){
+    // pre-process data. convert data coorinates to dom coordinates with Scale.
+    var processData = function(df, scales, color_scale, options){
+        var column_x = df.columnWithFilters(uuid, options.x);
+        var column_y = df.columnWithFilters(uuid, options.y);
+        var column_fill = df.columnWithFilters(uuid, options.fill);
+
+        return _.map(_.zip(column_x, column_y, column_fill), function(row){
+            var x, y, width, height;
+            width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
+            height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
+            x = scales.get(row[0], 0).x - width/2;
+            y = scales.get(0, row[1]).y - height/2;
+            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
+        });
+    };
+
+    // update SVG dom nodes based on pre-processed data.
+    var updateModels = function(selector, options){
+        selector
+            .attr("x", function(d){return d.x;})
+            .attr("width", function(d){return d.width;})
+            .attr("y", function(d){return d.y;})
+            .attr("height", function(d){return d.height;})
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width);
+    };
+
+    return function(context, scales, df_id, _options){
         var options = {
             title: 'heatmap',
             x: null,
@@ -42,9 +69,8 @@ define([
         if(arguments.length>3)_.extend(options, _options);
 
         var df = Manager.getData(df_id);
-        var model = parent.append("g");
 
-        this.color_scale = (function(){
+        var color_scale = (function(){
             var column_fill = df.columnWithFilters(options.uuid, options.fill);
             var min_max = d3.extent(column_fill);
             var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
@@ -53,88 +79,16 @@ define([
                 .domain(domain);
         })();
 
-        this.scales = scales;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-        return this;
-    };
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    HeatMap.prototype.update = function(){
-        var data = this.processData();
-        var models = this.model.selectAll("rect").data(data);
+        var data = processData(df, scales, color_scale, options);
+        var models = context.selectAll("rect").data(data);
         models.each(function(){
             var event = document.createEvent("MouseEvents");
             event.initEvent("mouseout", false, true);
             this.dispatchEvent(event);
         });
         models.enter().append("rect");
-        this.updateModels(models, this.options);
+        updateModels(models, options);
+
+        return models;
     };
-
-    // pre-process data. convert data coorinates to dom coordinates with Scale.
-    HeatMap.prototype.processData = function(){
-        var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
-        var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
-        var column_fill = this.df.columnWithFilters(this.uuid, this.options.fill);
-        var scales = this.scales;
-        var options = this.options;
-        var color_scale = this.color_scale;
-
-        return _.map(_.zip(column_x, column_y, column_fill), function(row){
-            var x, y, width, height;
-            width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
-            height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
-            x = scales.get(row[0], 0).x - width/2;
-            y = scales.get(0, row[1]).y - height/2;
-            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
-        });
-    };
-
-    // update SVG dom nodes based on pre-processed data.
-    HeatMap.prototype.updateModels = function(selector, options){
-        var id = this.uuid;
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(d.fill).darker(1);});
-            options.tooltip.addToXAxis(id, this.__data__.x_raw, 3);
-            options.tooltip.addToYAxis(id, this.__data__.y_raw, 3);
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d.fill;});
-            options.tooltip.reset();
-        };
-
-        selector
-            .attr("x", function(d){return d.x;})
-            .attr("width", function(d){return d.width;})
-            .attr("y", function(d){return d.y;})
-            .attr("height", function(d){return d.height;})
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width);
-
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
-    };
-
-    // return legend object.
-    HeatMap.prototype.getLegend = function(){
-        return new ColorBar(this.color_scale);
-    };    
-
-    // answer to callback coming from filter. not implemented yet.
-    HeatMap.prototype.checkSelectedData = function(ranges){
-        return;
-    };
-
-    return HeatMap;
 });

@@ -26,73 +26,9 @@
 
 define([
     'underscore',
-    'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, Filter, SimpleLegend){
-    function Scatter(parent, scales, df_id, _options){
-        var options = {
-            title: 'scatter',
-            x: null,
-            y: null,
-            fill_by: null,
-            shape_by: null,
-            size_by: null,
-            color:['#4682B4', '#000000'],
-            shape:['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross'],
-            size: [100, 1000],
-            stroke_color: 'black',
-            stroke_width: 1,
-            hover: true,
-            tooltip_contents:[],
-            tooltip:null,
-            legend :true
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        this.scales = scales;
-        var df = Manager.getData(df_id);
-        var model = parent.append("g");
-
-        this.legend_data = (function(thisObj){
-            var on = function(){
-                thisObj.render = true;
-                thisObj.update();
-            };
-
-            var off = function(){
-                thisObj.render = false;
-                thisObj.update();
-            };
-            return [{label: options.title, color:options.color, on:on, off:off}];
-        })(this);
-
-        this.render = true;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Scatter.prototype.update = function(){
-        var data = this.processData(this.options);
-        this.options.tooltip.reset();
-        if(this.render){
-            var shapes = this.model.selectAll("path").data(data);
-            shapes.enter().append("path");
-            this.updateModels(shapes, this.scales, this.options);
-        }else{
-            this.model.selectAll("path").remove();
-        }
-    };
-
-    // pre-process data like: [{x: 1, y: 2, fill: '#000', size: 20, shape: 'triangle-up'}, {},...,{}]
-    Scatter.prototype.processData = function(options){
-        var df = this.df;
+    'core/manager'
+],function(_, Manager){
+    var processData = function(df, options){
         var labels = ['x', 'y', 'fill', 'size', 'shape'];
         var columns = _.map(['x', 'y'], function(label){return df.column(options[label]);});
         var length = columns[0].length;
@@ -121,28 +57,7 @@ define([
     };
 
     // update SVG dom nodes based on pre-processed data.
-    Scatter.prototype.updateModels = function(selector, scales, options){
-        var id = this.uuid;
-
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(d.fill).darker(1);});
-            options.tooltip.addToXAxis(id, this.__data__.x, 3);
-            options.tooltip.addToYAxis(id, this.__data__.y, 3);
-            if(options.tooltip_contents.length > 0){
-                options.tooltip.add(id, this.__data__.x, this.__data__.y, 'top', this.__data__.tt);
-            }
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d.fill;});
-            options.tooltip.reset();
-        };
-
+    var updateModels = function(selector, scales, options){
         selector
             .attr("transform", function(d) {
                 return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
@@ -151,22 +66,35 @@ define([
             .attr("stroke-width", options.stroke_width)
             .transition().duration(200)
             .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
-
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
     };
 
-    // return legend object.
-    Scatter.prototype.getLegend = function(){
-        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
-        return legend;
-    };
+    return function(context, scales, df_id, _options){
+        var options = {
+            title: 'scatter',
+            x: null,
+            y: null,
+            fill_by: null,
+            shape_by: null,
+            size_by: null,
+            color:['#4682B4', '#000000'],
+            shape:['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross'],
+            size: [100, 1000],
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: true,
+            tooltip_contents:[],
+            tooltip:null,
+            legend :true
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-    // answer to callback coming from filter.
-    Scatter.prototype.checkSelectedData = function(ranges){
-        return;
-    };
+        var df = Manager.getData(df_id);
 
-    return Scatter;
+        var data = processData(df, options);
+        var shapes = context.selectAll("path").data(data);
+        shapes.enter().append("path");
+        updateModels(shapes, scales, options);
+
+        return shapes;
+    };
 });

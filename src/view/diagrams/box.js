@@ -22,64 +22,10 @@
 define([
     'underscore',
     'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, SimpleLegend){
-    function Box(parent, scales, df_id, _options){
-        var options = {
-            title: '',
-            value: [],
-            width: 0.9,
-            color:null,
-            stroke_color: 'black',
-            stroke_width: 1,
-            outlier_r: 3,
-            tooltip_contents:[],
-            tooltip:null
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        var model = parent.append("g");
-        var df = Manager.getData(df_id);
-
-        var color_scale;
-        if(options.color == null){
-            color_scale = d3.scale.category20b();
-        }else{
-            color_scale = d3.scale.ordinal().range(options.color);
-        }
-
-        this.model = model;
-        this.scales = scales;
-        this.options = options;
-        this.df = df;
-        this.color_scale = color_scale;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Box.prototype.update = function(){
-        var uuid = this.uuid;
-        var processData = this.processData;
-        var df = this.df;
-        var data = [];
-        _.each(this.options.value, function(column_name){
-            var column = df.columnWithFilters(uuid, column_name);
-            data.push(_.extend(processData(column), {x: column_name}));
-        });
-
-        var boxes = this.model.selectAll("g").data(data);
-        boxes.enter()
-            .append("g");
-
-        this.updateModels(boxes, this.scales, this.options);
-    };
-
+    'core/manager'
+],function(_, uuid, Manager){
     // convert raw data into style information for box
-    Box.prototype.processData = function(column){
+    var processData = function(column){
         var getMed = function(arr){
             var n = arr.length;
             return (n%2==1 ? arr[Math.floor(n/2)] : (arr[n/2]+arr[n/2+1])/2);
@@ -105,32 +51,9 @@ define([
     };
 
     // update SVG dom nodes based on data
-    Box.prototype.updateModels = function(selector, scales, options){
+    var updateModels = function(selector, scales, options, color_scale){
         var width = scales.raw.x.rangeBand()*options.width;
         var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-        var color_scale = this.color_scale;
-
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
-            var id = d3.select(this).attr("id");
-
-            options.tooltip.addToYAxis(id, this.__data__.min, 3);
-            options.tooltip.addToYAxis(id, this.__data__.q1, 3);
-            options.tooltip.addToYAxis(id, this.__data__.med, 3);
-            options.tooltip.addToYAxis(id, this.__data__.q3, 3);
-            options.tooltip.addToYAxis(id, this.__data__.max, 3);
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.x));});
-            var id = d3.select(this).attr("id");
-            options.tooltip.reset();
-        };
 
         selector
             .append("line")
@@ -147,10 +70,7 @@ define([
             .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
-            .attr("stroke", options.stroke_color)
-            .attr("id", uuid.v4())
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
+            .attr("stroke", options.stroke_color);
 
         // median line
         selector
@@ -175,15 +95,41 @@ define([
             });
     };
 
-    // return legend object based on data prepared by initializer
-    Box.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
-    };
+    return function(context, scales, df_id, _options){
+        var options = {
+            title: '',
+            value: [],
+            width: 0.9,
+            color:null,
+            stroke_color: 'black',
+            stroke_width: 1,
+            outlier_r: 3,
+            tooltip_contents:[],
+            tooltip:null
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-    // answer to callback coming from filter. not implemented yet.
-    Box.prototype.checkSelectedData = function(ranges){
-        return;
-    };
+        var df = Manager.getData(df_id);
 
-    return Box;
+        var color_scale;
+        if(options.color == null){
+            color_scale = d3.scale.category20b();
+        }else{
+            color_scale = d3.scale.ordinal().range(options.color);
+        }
+
+        var data = [];
+        _.each(options.value, function(column_name){
+            var column = df.columnWithFilters(uuid, column_name);
+            data.push(_.extend(processData(column), {x: column_name}));
+        });
+
+        var boxes = context.selectAll("g").data(data);
+        boxes.enter()
+            .append("g");
+
+        updateModels(boxes, scales, options, color_scale);
+
+        return boxes;
+    };
 });

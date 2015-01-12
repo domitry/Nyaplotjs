@@ -2063,6 +2063,336 @@ define('core/manager',[
 }).call(this);
 
 /*
+ * Bar chart
+ *
+ * This diagram has two mode, ordinal-mode and count-mode. The former creates bar from x and y column.
+ * The latter counts unique value in 'value' column and generates bar from the result.
+ * 
+ *
+ * options:
+ *    value   -> String: column name. set when you'd like to build bar chart based on one-dimention data
+ *    x, y    -> String: column name. x should be discrete. y should be continuous.
+ *    width   -> Float : 0..1, width of each bar.
+ *    color   -> Array : color in which bars filled.
+ *    hover   -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    specified 'value' option : http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ *    specified 'x' and 'y' : http://bl.ocks.org/domitry/2f53781449025f772676
+ */
+
+define('view/diagrams/bar',[
+    'underscore',
+    'node-uuid',
+    'core/manager'
+],function(_, uuid, Manager){
+    // process data as:
+    //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
+    var processData = function(x, y, options){
+        return _.map(_.zip(x,y),function(d, i){return {x:d[0], y:d[1]};});
+    };
+
+    // update dom object
+    var updateModels = function(selector, scales, options, color_scale){
+        var width = scales.raw.x.rangeBand()*options.width;
+        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
+
+        selector
+            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
+            .attr("width", width)
+            .attr("fill", function(d){return color_scale(d.x);})
+            .transition().duration(200)
+            .attr("y", function(d){return scales.get(d.x, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
+            .attr("id", uuid.v4());
+    };
+
+    // count unique value. called when 'value' option was specified insead of 'x' and 'y'
+    var countData = function(values){
+        var hash = {};
+        _.each(values, function(val){
+            hash[val] = hash[val] || 0;
+            hash[val] += 1;
+        });
+        return {x: _.keys(hash), y: _.values(hash)};
+    };
+
+    return function(context, scales, df_id, _options){
+        var options = {
+            value: null,
+            x: null,
+            y: null,
+            width: 0.9,
+            color: null,
+            hover: true,
+            tooltip_contents:null,
+            tooltip:null,
+            legend: true
+        };
+        if(arguments.length>3)_.extend(options, _options);
+
+        var df = Manager.getData(df_id);
+
+        var color_scale;
+        if(options.color == null) color_scale = d3.scale.category20b();
+        else color_scale = d3.scale.ordinal().range(options.color);
+
+        var data;
+        if(options.value !== null){
+            var column_value = df.columnWithFilters(uuid, options.value);
+            var raw = countData(column_value);
+            data = processData(raw.x, raw.y, options);
+        }else{
+            var column_x = df.columnWithFilters(uuid, options.x);
+            var column_y = df.columnWithFilters(uuid, options.y);
+            data = processData(column_x, column_y, options);
+        }
+
+        var rects = context.selectAll("rect").data(data);
+        rects.enter().append("rect")
+            .attr("height", 0)
+            .attr("y", scales.get(0, 0).y);
+
+        updateModels(rects, scales, options, color_scale);
+
+        return ;
+    };
+});
+
+/*
+ * Filter:
+ * 
+ * Filtering data according to box on context area. Filter is implemented using d3.svg.brush().
+ * See the website of d3.js to learn more: https://github.com/mbostock/d3/wiki/SVG-Controls
+ *
+ * options (summary) :
+ *    opacity -> Float : Opacity of filtering area
+ *    color   -> String: Color of filtering area
+ *
+ * example :
+ *    http://bl.ocks.org/domitry/b8785f02f36deef567ce
+ */
+
+define('view/components/filter',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+
+    function Filter(parent, scales, callback, _options){
+        var options = {
+            opacity: 0.125,
+            color: 'gray'
+        };
+        if(arguments.length>2)_.extend(options, _options);
+
+        var brushed = function(){
+            var ranges = {
+                x: (brush.empty() ? scales.domain().x : brush.extent()),
+                y: scales.domain().y
+            };
+            callback(ranges);
+        };
+
+        var brush = d3.svg.brush()
+                .x(scales.raw.x)
+                .on("brushend", brushed);
+
+        var model = parent.append("g");
+        var height = d3.max(scales.range().y) - d3.min(scales.range().y);
+        var y = d3.min(scales.range().y);
+
+        model.call(brush)
+            .selectAll("rect")
+            .attr("y", y)
+            .attr("height", height)
+            .style("fill-opacity", options.opacity)
+            .style("fill", options.color)
+            .style("shape-rendering", "crispEdges");
+        
+        return this;
+    }
+
+    return Filter;
+});
+
+/*
+ * Histogram: Histogram
+ *
+ * Caluculate hights of each bar from column specified by 'value' option and create histogram.
+ * See the page of 'd3.layout.histogram' on d3.js's website to learn more. (https://github.com/mbostock/d3/wiki/Histogram-Layout)
+ * 
+ *
+ * options:
+ *    value        -> String: column name. Build histogram based on this data.
+ *    bin_num      -> Float : number of bin
+ *    width        -> Float : 0..1, width of each bar.
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
+ */
+
+define('view/diagrams/histogram',[
+    'underscore',
+    'node-uuid',
+    'core/manager',
+    'view/components/filter'
+],function(_, uuid, Manager, Filter){
+    // pre-process data using function embeded in d3.js.
+    var processData = function(column, scales, options){
+        return d3.layout.histogram()
+            .bins(scales.raw.x.ticks(options.bin_num))(column);
+    };
+
+    // update SVG dom nodes based on pre-processed data.
+    var updateModels = function(selector, scales, options){
+        selector
+            .attr("x",function(d){return scales.get(d.x, 0).x;})
+            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
+            .attr("fill", options.color)
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .transition().duration(200)
+            .attr("y", function(d){return scales.get(0, d.y).y;})
+            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
+            .attr("id", uuid.v4());
+    };
+
+    return function(context, scales, df_id, _options){
+        var options = {
+            title: 'histogram',
+            value: null,
+            bin_num: 20,
+            width: 0.9,
+            color:'steelblue',
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: true,
+            tooltip:null,
+            legend: true
+        };
+        if(arguments.length>3)_.extend(options, _options);
+
+        var df = Manager.getData(df_id);
+
+        var column_value = df.columnWithFilters(uuid, options.value);
+        var data = processData(column_value, scales, options);
+
+        var models = context.selectAll("rect").data(data);
+        models.enter().append("rect").attr("height", 0).attr("y", scales.get(0, 0).y);
+        updateModels(models,  scales, options);
+
+        return models;
+    };
+});
+
+/*
+ * Scatter: Scatter and Bubble chart
+ *
+ * Scatter chart. This can create bubble chart when specified 'size_by' option.
+ * Tooltip, fill_by, size_by options should be implemented to other charts refering to this chart.
+ *
+ *
+ * options:
+ *    x,y             -> String: column name. both of continuous and descrete data are allowed.
+ *    fill_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    shape_by        -> String: column name. Fill vectors according to this column. (d is allowd.)
+ *    size_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    color           -> Array : Array of String.
+ *    shape           -> Array : Array of String.
+ *    size            -> Array : Array of Float. specified when creating bubble chart.
+ *    stroke_color    -> String: stroke color.
+ *    stroke_width    -> Float : stroke width.
+ *    hover           -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip-contents-> Array : Array of column name. Used to create tooltip on points when hovering them.
+ *    tooltip         -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
+ *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
+ */
+
+define('view/diagrams/scatter',[
+    'underscore',
+    'core/manager'
+],function(_, Manager){
+    var processData = function(df, options){
+        var labels = ['x', 'y', 'fill', 'size', 'shape'];
+        var columns = _.map(['x', 'y'], function(label){return df.column(options[label]);});
+        var length = columns[0].length;
+
+        _.each([{column: 'fill_by', val: 'color'}, {column: 'size_by', val: 'size'}, {column: 'shape_by', val: 'shape'}], function(info){
+            if(options[info.column]){
+                var scale = df.scale(options[info.column], options[info.val]);
+                columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
+            }else{
+                columns.push(_.map(_.range(1, length+1, 1), function(d){
+                    if(_.isArray(options[info.val]))return options[info.val][0];
+                    else return options[info.val];
+                }));
+            }
+        });
+
+        if(options.tooltip_contents.length > 0){
+            var tt_arr = df.getPartialDf(options.tooltip_contents);
+            labels.push('tt');
+            columns.push(tt_arr);
+        }
+
+        return _.map(_.zip.apply(null, columns), function(d){
+            return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
+        });
+    };
+
+    // update SVG dom nodes based on pre-processed data.
+    var updateModels = function(selector, scales, options){
+        selector
+            .attr("transform", function(d) {
+                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width)
+            .transition().duration(200)
+            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
+    };
+
+    return function(context, scales, df_id, _options){
+        var options = {
+            title: 'scatter',
+            x: null,
+            y: null,
+            fill_by: null,
+            shape_by: null,
+            size_by: null,
+            color:['#4682B4', '#000000'],
+            shape:['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross'],
+            size: [100, 1000],
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: true,
+            tooltip_contents:[],
+            tooltip:null,
+            legend :true
+        };
+        if(arguments.length>3)_.extend(options, _options);
+
+        var df = Manager.getData(df_id);
+
+        var data = processData(df, options);
+        var shapes = context.selectAll("path").data(data);
+        shapes.enter().append("path");
+        updateModels(shapes, scales, options);
+
+        return shapes;
+    };
+});
+
+/*
  * SimpleLegend: The simplest legend objects
  *
  * SimpleLegend provides legend consists of simple circle buttons and labels.
@@ -2178,552 +2508,6 @@ define('view/components/legend/simple_legend',[
 });
 
 /*
- * Bar chart
- *
- * This diagram has two mode, ordinal-mode and count-mode. The former creates bar from x and y column.
- * The latter counts unique value in 'value' column and generates bar from the result.
- * 
- *
- * options:
- *    value   -> String: column name. set when you'd like to build bar chart based on one-dimention data
- *    x, y    -> String: column name. x should be discrete. y should be continuous.
- *    width   -> Float : 0..1, width of each bar.
- *    color   -> Array : color in which bars filled.
- *    hover   -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *    tooltip -> Object: instance of Tooltip. set by pane.
- *
- * example:
- *    specified 'value' option : http://bl.ocks.org/domitry/b8785f02f36deef567ce
- *    specified 'x' and 'y' : http://bl.ocks.org/domitry/2f53781449025f772676
- */
-
-define('view/diagrams/bar',[
-    'underscore',
-    'node-uuid',
-    'core/manager',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, SimpleLegend){
-    function Bar(parent, scales, df_id, _options){
-        var options = {
-            value: null,
-            x: null,
-            y: null,
-            width: 0.9,
-            color: null,
-            hover: true,
-            tooltip_contents:null,
-            tooltip:null,
-            legend: true
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
-
-        var color_scale;
-        if(options.color == null) color_scale = d3.scale.category20b();
-        else color_scale = d3.scale.ordinal().range(options.color);
-        this.color_scale = color_scale;
-
-        var model = parent.append("g");
-
-        var legend_data = [], labels;
-
-        if(options.value != null){
-            var column_value = df.column(options.value);
-            labels = _.uniq(column_value);
-        }else
-            labels = df.column(options.x);
-        
-        _.each(labels, function(label){
-            legend_data.push({label: label, color:color_scale(label)});
-        });
-
-        this.model = model;
-        this.scales = scales;
-        this.options = options;
-        this.legend_data = legend_data;
-        this.df = df;
-        this.df_id = df_id;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Bar.prototype.update = function(){
-        var data;
-        if(this.options.value !== null){
-            var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
-            var raw = this.countData(column_value);
-            data = this.processData(raw.x, raw.y, this.options);
-        }else{
-            var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
-            var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
-            data = this.processData(column_x, column_y, this.options);
-        }
-
-        var rects = this.model.selectAll("rect").data(data);
-        rects.enter().append("rect")
-            .attr("height", 0)
-            .attr("y", this.scales.get(0, 0).y);
-
-        this.updateModels(rects, this.scales, this.options);
-    };
-    
-    // process data as:
-    //     x: [1,2,3,...], y: [4,5,6,...] -> [{x: 1, y: 4},{x: 2, y: 5},...]
-    Bar.prototype.processData = function(x, y, options){
-        return _.map(_.zip(x,y),function(d, i){return {x:d[0], y:d[1]};});
-    };
-
-    // update dom object
-    Bar.prototype.updateModels = function(selector, scales, options){
-        var color_scale = this.color_scale;
-
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
-            var id = d3.select(this).attr("id");
-            options.tooltip.addToYAxis(id, this.__data__.y);
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return color_scale(d.x);});
-            var id = d3.select(this).attr("id");
-            options.tooltip.reset();
-        };
-
-        var width = scales.raw.x.rangeBand()*options.width;
-        var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-
-        selector
-            .attr("x",function(d){return scales.get(d.x, d.y).x + padding;})
-            .attr("width", width)
-            .attr("fill", function(d){return color_scale(d.x);})
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(d.x, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
-
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
-    };
-
-    // return legend object based on data prepared by initializer
-    Bar.prototype.getLegend = function(){
-        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
-        return legend;
-    };
-
-    // count unique value. called when 'value' option was specified insead of 'x' and 'y'
-    Bar.prototype.countData = function(values){
-        var hash = {};
-        _.each(values, function(val){
-            hash[val] = hash[val] || 0;
-            hash[val] += 1;
-        });
-        return {x: _.keys(hash), y: _.values(hash)};
-    };
-
-    // not implemented yet.
-    Bar.prototype.checkSelectedData = function(ranges){
-        return;
-    };
-
-    return Bar;
-});
-
-/*
- * Filter:
- * 
- * Filtering data according to box on context area. Filter is implemented using d3.svg.brush().
- * See the website of d3.js to learn more: https://github.com/mbostock/d3/wiki/SVG-Controls
- *
- * options (summary) :
- *    opacity -> Float : Opacity of filtering area
- *    color   -> String: Color of filtering area
- *
- * example :
- *    http://bl.ocks.org/domitry/b8785f02f36deef567ce
- */
-
-define('view/components/filter',[
-    'underscore',
-    'core/manager'
-],function(_, Manager){
-
-    function Filter(parent, scales, callback, _options){
-        var options = {
-            opacity: 0.125,
-            color: 'gray'
-        };
-        if(arguments.length>2)_.extend(options, _options);
-
-        var brushed = function(){
-            var ranges = {
-                x: (brush.empty() ? scales.domain().x : brush.extent()),
-                y: scales.domain().y
-            };
-            callback(ranges);
-        };
-
-        var brush = d3.svg.brush()
-                .x(scales.raw.x)
-                .on("brushend", brushed);
-
-        var model = parent.append("g");
-        var height = d3.max(scales.range().y) - d3.min(scales.range().y);
-        var y = d3.min(scales.range().y);
-
-        model.call(brush)
-            .selectAll("rect")
-            .attr("y", y)
-            .attr("height", height)
-            .style("fill-opacity", options.opacity)
-            .style("fill", options.color)
-            .style("shape-rendering", "crispEdges");
-        
-        return this;
-    }
-
-    return Filter;
-});
-
-/*
- * Histogram: Histogram
- *
- * Caluculate hights of each bar from column specified by 'value' option and create histogram.
- * See the page of 'd3.layout.histogram' on d3.js's website to learn more. (https://github.com/mbostock/d3/wiki/Histogram-Layout)
- * 
- *
- * options:
- *    value        -> String: column name. Build histogram based on this data.
- *    bin_num      -> Float : number of bin
- *    width        -> Float : 0..1, width of each bar.
- *    color        -> Array : color in which bars filled.
- *    stroke_color -> String: stroke color
- *    stroke_width -> Float : stroke width
- *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *    tooltip      -> Object: instance of Tooltip. set by pane.
- *
- * example:
- *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
- */
-
-define('view/diagrams/histogram',[
-    'underscore',
-    'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, Filter, SimpleLegend){
-    function Histogram(parent, scales, df_id, _options){
-        var options = {
-            title: 'histogram',
-            value: null,
-            bin_num: 20,
-            width: 0.9,
-            color:'steelblue',
-            stroke_color: 'black',
-            stroke_width: 1,
-            hover: true,
-            tooltip:null,
-            legend: true
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        var df = Manager.getData(df_id);
-        var model = parent.append("g");
-
-        this.scales = scales;
-        this.legends = [{label: options.title, color:options.color}];
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-        
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Histogram.prototype.update = function(){
-        var column_value = this.df.columnWithFilters(this.uuid, this.options.value);
-        var data = this.processData(column_value, this.options);
-
-        var models = this.model.selectAll("rect").data(data);
-        models.enter().append("rect").attr("height", 0).attr("y", this.scales.get(0, 0).y);
-        this.updateModels(models,  this.scales, this.options);
-    };
-
-    // pre-process data using function embeded in d3.js.
-    Histogram.prototype.processData = function(column, options){
-        return d3.layout.histogram()
-            .bins(this.scales.raw.x.ticks(options.bin_num))(column);
-    };
-
-    // update SVG dom nodes based on pre-processed data.
-    Histogram.prototype.updateModels = function(selector, scales, options){
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", d3.rgb(options.color).darker(1));
-            var id = d3.select(this).attr("id");
-            options.tooltip.addToYAxis(id, this.__data__.y, 3);
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", options.color);
-            var id = d3.select(this).attr("id");
-            options.tooltip.reset();
-        };
-
-        selector
-            .attr("x",function(d){return scales.get(d.x, 0).x;})
-            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
-            .attr("fill", options.color)
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(0, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;})
-            .attr("id", uuid.v4());
-        
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
-    };
-
-    // return legend object.
-    Histogram.prototype.getLegend = function(){
-        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
-        return legend;
-    };
-
-    // answer to callback coming from filter.
-    Histogram.prototype.checkSelectedData = function(ranges){
-        var label_value = this.options.value;
-        var filter = function(row){
-            var val = row[label_value];
-            if(val > ranges.x[0] && val < ranges.x[1])return true;
-            else return false;
-        };
-        this.df.addFilter(this.uuid, filter, ['self']);
-        Manager.update();
-    };
-
-    return Histogram;
-});
-
-/*
- * Scatter: Scatter and Bubble chart
- *
- * Scatter chart. This can create bubble chart when specified 'size_by' option.
- * Tooltip, fill_by, size_by options should be implemented to other charts refering to this chart.
- *
- *
- * options:
- *    x,y             -> String: column name. both of continuous and descrete data are allowed.
- *    fill_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
- *    shape_by        -> String: column name. Fill vectors according to this column. (d is allowd.)
- *    size_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
- *    color           -> Array : Array of String.
- *    shape           -> Array : Array of String.
- *    size            -> Array : Array of Float. specified when creating bubble chart.
- *    stroke_color    -> String: stroke color.
- *    stroke_width    -> Float : stroke width.
- *    hover           -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *    tooltip-contents-> Array : Array of column name. Used to create tooltip on points when hovering them.
- *    tooltip         -> Object: instance of Tooltip. set by pane.
- *
- * example:
- *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
- *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
- */
-
-define('view/diagrams/scatter',[
-    'underscore',
-    'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, Filter, SimpleLegend){
-    function Scatter(parent, scales, df_id, _options){
-        var options = {
-            title: 'scatter',
-            x: null,
-            y: null,
-            fill_by: null,
-            shape_by: null,
-            size_by: null,
-            color:['#4682B4', '#000000'],
-            shape:['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross'],
-            size: [100, 1000],
-            stroke_color: 'black',
-            stroke_width: 1,
-            hover: true,
-            tooltip_contents:[],
-            tooltip:null,
-            legend :true
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        this.scales = scales;
-        var df = Manager.getData(df_id);
-        var model = parent.append("g");
-
-        this.legend_data = (function(thisObj){
-            var on = function(){
-                thisObj.render = true;
-                thisObj.update();
-            };
-
-            var off = function(){
-                thisObj.render = false;
-                thisObj.update();
-            };
-            return [{label: options.title, color:options.color, on:on, off:off}];
-        })(this);
-
-        this.render = true;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Scatter.prototype.update = function(){
-        var data = this.processData(this.options);
-        this.options.tooltip.reset();
-        if(this.render){
-            var shapes = this.model.selectAll("path").data(data);
-            shapes.enter().append("path");
-            this.updateModels(shapes, this.scales, this.options);
-        }else{
-            this.model.selectAll("path").remove();
-        }
-    };
-
-    // pre-process data like: [{x: 1, y: 2, fill: '#000', size: 20, shape: 'triangle-up'}, {},...,{}]
-    Scatter.prototype.processData = function(options){
-        var df = this.df;
-        var labels = ['x', 'y', 'fill', 'size', 'shape'];
-        var columns = _.map(['x', 'y'], function(label){return df.column(options[label]);});
-        var length = columns[0].length;
-
-        _.each([{column: 'fill_by', val: 'color'}, {column: 'size_by', val: 'size'}, {column: 'shape_by', val: 'shape'}], function(info){
-            if(options[info.column]){
-                var scale = df.scale(options[info.column], options[info.val]);
-                columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
-            }else{
-                columns.push(_.map(_.range(1, length+1, 1), function(d){
-                    if(_.isArray(options[info.val]))return options[info.val][0];
-                    else return options[info.val];
-                }));
-            }
-        });
-/*
-        this.optional_scales = _.reduce([{column: 'fill_by', val: 'color'}, {column: 'size_by', val: 'size'}, {column: 'shape_by', val: 'shape'}], function(memo, info){
-            if(options[info.column]){
-                var scale = df.scale(options[info.column], options[info.val]);
-                columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
-                memo[info.val] = scale;
-            }else{
-                columns.push(_.map(_.range(1, length+1, 1), function(d){
-                    if(_.isArray(options[info.val]))return options[info.val][0];
-                    else return options[info.val];
-                }));
-                memo[info.val] = d3.scale.ordinal().range(columns.last[0]);
-            }
-        }, {});*/
-
-        if(options.tooltip_contents.length > 0){
-            var tt_arr = df.getPartialDf(options.tooltip_contents);
-            labels.push('tt');
-            columns.push(tt_arr);
-        }
-
-        return _.map(_.zip.apply(null, columns), function(d){
-            return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
-        });
-    };
-
-    // update SVG dom nodes based on pre-processed data.
-    Scatter.prototype.updateModels = function(selector, scales, options){
-        var id = this.uuid;
-
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(d.fill).darker(1);});
-            options.tooltip.addToXAxis(id, this.__data__.x, 3);
-            options.tooltip.addToYAxis(id, this.__data__.y, 3);
-            if(options.tooltip_contents.length > 0){
-                options.tooltip.add(id, this.__data__.x, this.__data__.y, 'top', this.__data__.tt);
-            }
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d.fill;});
-            options.tooltip.reset();
-        };
-
-        selector
-            .attr("transform", function(d) {
-                return "translate(" + scales.get(d.x, d.y).x + "," + scales.get(d.x, d.y).y + ")"; })
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("d", d3.svg.symbol().type(function(d){return d.shape;}).size(function(d){return d.size;}));
-
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
-    };
-
-    // return legend object.
-    Scatter.prototype.getLegend = function(){
-        /*
-        var opt_data = this.optional_scales, color='';
-        var defaults = _.map([{name: 'color', default: '#fff'}, {name: 'shape', default: 'shape'}, {name: 'size', default: 30}], function(info){
-            if(opt_data[info.name].range().length == 1)return opt_data[info.name].range()[0];
-            else return info.default;
-        });
-        // color
-        switch(opt_data['color'].range().length){
-            
-        }
-        
-        // size
-        */
-
-        var legend = new SimpleLegend((this.options.legend ? this.legend_data : {}));
-        return legend;
-    };
-
-    // answer to callback coming from filter.
-    Scatter.prototype.checkSelectedData = function(ranges){
-        return;
-    };
-
-    return Scatter;
-});
-
-/*
  * Line: Line chart
  *
  * Attention: 'Line' is totally designed to be used to visualize line chart for Mathematics. So it is not useful to visualize statistical data like stock price.
@@ -2747,79 +2531,14 @@ define('view/diagrams/line',[
     'view/components/filter',
     'view/components/legend/simple_legend'
 ],function(_, Manager, Filter, SimpleLegend){
-    function Line(parent, scales, df_id, _options){
-        var options = {
-            title: 'line',
-            x: null,
-            y: null,
-            color:'steelblue',
-            fill_by : null,
-            stroke_width: 2,
-            legend: true
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        this.scales = scales;
-        var df = Manager.getData(df_id);
-        var model = parent.append("g");
-
-        this.legend_data = (function(thisObj){
-            var on = function(){
-                thisObj.render = true;
-                thisObj.update();
-            };
-
-            var off = function(){
-                thisObj.render = false;
-                thisObj.update();
-            };
-            return [{label: options.title, color:options.color, on:on, off:off}];
-        })(this);
-
-        this.render = true;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.df_id = df_id;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Line.prototype.update = function(){
-        if(this.render){
-            var data = this.processData(this.df.column(this.options.x), this.df.column(this.options.y), this.options);
-            this.model.selectAll("path").remove();
-            var path =this.model
-                    .append("path")
-                    .datum(data);
-            
-            this.updateModels(path, this.scales, this.options);
-        }else{
-            this.model.selectAll("path").remove();
-        }
-    };
-
     // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
-    Line.prototype.processData = function(x_arr, y_arr, options){
-        var df = this.df, length = x_arr.length;
-        /*
-        var color_arr = (function(column, colors){
-            if(options['fill_by']){
-                var scale = df.scale(options[column], options[colors]);
-                return _.map(df.column(options[column]), function(val){return scale(val);});
-            }else{
-                return _.map(_.range(1, length+1, 1), function(d){
-                    if(_.isArray(options[colors]))return options[colors][0];
-                    else return options[colors];
-                });
-            }
-        })('fill_by', 'color');*/
+    var processData = function(x_arr, y_arr, options){
+        var df = df, length = x_arr.length;
         return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
     };
 
     // update SVG dom nodes based on pre-processed data.
-    Line.prototype.updateModels = function(selector, scales, options){
+    var updateModels = function(selector, scales, options){
         var onMouse = function(){
             d3.select(this).transition()
                 .duration(200)
@@ -2843,747 +2562,30 @@ define('view/diagrams/line',[
             .attr("fill", "none");
     };
 
-    // return legend object.
-    Line.prototype.getLegend = function(){
-        var legend = new SimpleLegend((this.options.legend ? this.legend_data : []));
-        return legend;
-    };
-
-    // answer to callback coming from filter.
-    Line.prototype.checkSelectedData = function(ranges){
-        return;
-    };
-
-    return Line;
-});
-
-/*
- * Simplex:
- *
- * Implementation of downhill simplex method.
- * See Wikipedia: http://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method
- */
-
-
-define('utils/simplex',['underscore'], function(_){
-    var l_1 = 0.7, l_2 = 1.5;
-    var EPS = 1.0e-20;
-    var count = 0, COUNT_LIMIT=2000;
-
-    function calcCenter(vector){
-        var center = [];
-        _.each(_.zip.apply(null, vector), function(arr, i){
-            center[i] = 0;
-            _.each(arr, function(val){
-                center[i] += val;
-            });
-            center[i] = center[i]/arr.length;
-        });
-        return center;
-    }
-
-    function rec(params, func){
-        params = _.sortBy(params, function(p){return func(p);});
-        var n = params.length;
-        var val_num = params[0].length;
-        var p_h = params[n-1];
-        var p_g = params[n-2];
-        var p_l = params[0];
-        var p_c = calcCenter(params.concat().splice(0, n-1));
-        var p_r = [];
-        for(var i=0; i<val_num; i++)p_r[i]=2*p_c[i] - p_h[i];
-
-        if(func(p_r) >= func(p_h)){
-            // reduction
-            for(var i=0;i<val_num;i++)
-                params[n-1][i] = (1 - l_1)*p_h[i] + l_1 * p_r[i];
-        }else if(func(p_r) < (func(p_l)+(l_2 - 1)*func(p_h))/l_2){
-            // expand
-            var p_e = [];
-            for(var i=0;i<val_num;i++)p_e[i] = l_2*p_r[i] - (l_2 -1)*p_h[i];
-            if(func(p_e) <= func(p_r))params[n-1] = p_e;
-            else params[n-1] = p_r;
-        }else{
-            params[n-1] = p_r;
-        }
-
-        if(func(params[n-1]) >=  func(p_g)){
-            // reduction all
-            _.each(params, function(p, i){
-                for(var j=0;j<val_num;j++){
-                    params[i][j] = 0.5*(p[j] + p_l[j]);
-                }
-            });
-        }
-        var sum = 0;
-        _.each(params, function(p){sum += Math.pow(func(p) - func(p_l),2);});
-
-        if(sum < EPS)return params[n-1];
-        else{
-            count++;
-            if(count > COUNT_LIMIT)return params[n-1];
-            return rec(params, func);
-        }
-    }
-
-    function simplex(params, func){
-        var k = 1;
-        var n = params.length;
-        var p_default = [params];
-        _.each(_.range(n), function(i){
-            var p = params.concat();
-            p[i] += k;
-            p_default.push(p);
-        });
-        return rec(p_default, func);
-    }
-
-    return simplex;
-});
-
-/*
- * Venn: 3-way venn diagram
- *
- * The implementation of traditional 3-way venn diagram. This chart is designed to work with histogram and bar chart. (See example at the bottom of this comment.)
- * The overlapping areas are automatically changed according to common values in each pair of group. The calculation is excuted with downhill simplex method.
- * Attention: This is still experimental implementation and should be modernized. Feel free to re-write the code below and send pull-request.
- *
- *
- * options:
- *    category, count-> String: Column name.
- *    color          -> Array : Array of String. Colors in which circles are filled.
- *    stroke_color   -> String: stroke color.
- *    stroke_width   -> Float : stroke width.
- *    hover          -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *    area_names     -> Array : Array of String. Names for each groups.
- *    filter_control -> Bool  : Wheter to display controller for filtering. See the second example below.
- *
- * example:
- *    http://bl.ocks.org/domitry/d70dff56885218c7ad9a
- *    http://www.domitry.com/gsoc/multi_pane2.html
- */
-
-define('view/diagrams/venn',[
-    'underscore',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend',
-    'utils/simplex'
-],function(_, Manager, Filter, SimpleLegend, simplex){
-    function Venn(parent, scales, df_id, _options){
+    return function(context, scales, df_id, _options){
         var options = {
-            category: null,
-            count: null,
-            color:null,
-            stroke_color:'#000',
-            stroke_width: 1,
-            opacity: 0.7,
-            hover: false,
-            area_names:['VENN1','VENN2','VENN3'],
-            filter_control:false
+            title: 'line',
+            x: null,
+            y: null,
+            color:'steelblue',
+            fill_by : null,
+            stroke_width: 2,
+            legend: true
         };
         if(arguments.length>3)_.extend(options, _options);
 
         var df = Manager.getData(df_id);
-        var model = parent.append("g");
 
-        var column_category = df.column(options.category);
-        var categories = _.uniq(column_category);
-        var color_scale;
+        var data = processData(df.column(options.x), df.column(options.y), options);
+        context.selectAll("path").remove();
+        var path = context
+                .append("path")
+                .datum(data);
+        
+        updateModels(path, scales, options);
 
-        if(options.color == null)color_scale = d3.scale.category20().domain(options.area_names);
-        else color_scale = d3.scale.ordinal().range(options.color).domain(options.area_names);
-        this.color_scale = color_scale;
-
-        var legend_data = [];
-        var selected_category = [[categories[0]], [categories[1]], [categories[2]]];
-
-        var update = this.update, tellUpdate = this.tellUpdate;
-        var thisObj = this;
-
-        for(var i=0;i<3;i++){
-            var entry = [];
-            entry.push({label: options.area_names[i], color:color_scale(options.area_names[i])});
-            _.each(categories, function(category){
-                var venn_id = i;
-                var on = function(){
-                    selected_category[venn_id].push(category);
-                    update.call(thisObj);
-                    tellUpdate.call(thisObj);
-                };
-                var off = function(){
-                    var pos = selected_category[venn_id].indexOf(category);
-                    selected_category[venn_id].splice(pos, 1);
-                    update.call(thisObj);
-                    tellUpdate.call(thisObj);
-                };
-                var mode = (category == selected_category[i] ? 'on' : 'off');
-                entry.push({label: category, color:'black', mode:mode, on:on, off:off});
-            });
-            legend_data.push(new SimpleLegend(entry));
-        }
-
-        var filter_mode = 'all';
-        if(options.filter_control){
-            var entry = [];
-            var modes = ['all', 'overlapping', 'non-overlapping'];
-            var default_mode = filter_mode;
-
-            entry.push({label:'Filter', color:'gray'});
-            _.each(modes, function(mode){
-                var on = function(){
-                    thisObj.filter_mode = mode;
-                    update.call(thisObj);
-                    tellUpdate.call(thisObj);
-                };
-                var on_off = (mode==default_mode?'on':'off');
-                entry.push({label:mode, color:'black', on:on, off:function(){},mode:on_off});
-            });
-            legend_data.push(new SimpleLegend(entry, {mode:'radio'}));
-        }
-
-        this.selected_category = selected_category;
-        this.filter_mode = filter_mode;
-        this.legend_data = legend_data;
-        this.options = options;
-        this.scales = scales;
-        this.model = model;
-        this.df_id = df_id;
-        this.df = df;
-        this.uuid = options.uuid;
-
-        this.tellUpdate();
-
-        return this;
-    }
-
-    // X->x, Y->y scales given by pane is useless when creating venn diagram, so create new scale consists of x, y, and r.
-    Venn.prototype.getScales = function(data, scales){
-        var r_w = _.max(scales.range().x) - _.min(scales.range().x);
-        var r_h = _.max(scales.range().y) - _.min(scales.range().y);
-        var d_x = {
-            min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
-            max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
-        };
-        var d_y = {
-            min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r;}); return min_d.y - min_d.r;})(),
-            max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r;}); return max_d.y + max_d.r;})()
-        };
-        var d_w = d_x.max-d_x.min;
-        var d_h = d_y.max-d_y.min;
-
-        var scale = 0;
-        if(r_w/r_h > d_w/d_h){
-            scale = d_h/r_h;
-            var new_d_w = scale*r_w;
-            d_x.min -= (new_d_w - d_w)/2;
-            d_x.max += (new_d_w - d_w)/2;
-        }
-        else{
-            scale = d_w/r_w;
-            var new_d_h = scale*r_h;
-            d_h.min -= (new_d_h - d_h)/2;
-            d_h.max += (new_d_h - d_h)/2;
-        }
-        var new_scales = {};
-        new_scales.x = d3.scale.linear().range(scales.range().x).domain([d_x.min, d_x.max]);
-        new_scales.y = d3.scale.linear().range(scales.range().y).domain([d_y.min, d_y.max]);
-        new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
-        return new_scales;
+        return path;
     };
-
-    // fetch data and update dom objects.
-    Venn.prototype.update = function(){
-        var column_count = this.df.columnWithFilters(this.uuid, this.options.count);
-        var column_category = this.df.columnWithFilters(this.uuid, this.options.category);
-
-        var data = this.processData(column_category, column_count, this.selected_category);
-        var scales = this.getScales(data, this.scales);
-        var circles = this.model.selectAll("circle").data(data.pos);
-        var texts = this.model.selectAll("text").data(data.labels);
-
-        if(circles[0][0]==undefined)circles = circles.enter().append("circle");
-        if(texts[0][0]==undefined)texts = texts.enter().append("text");
-
-        this.counted_items = data.counted_items;
-        this.updateModels(circles, scales, this.options);
-        this.updateLabels(texts, scales, this.options);
-    };
-
-    // Calculate overlapping areas at first, and then decide center point of each circle with simplex module.
-    Venn.prototype.processData = function(category_column, count_column, selected_category){
-        // decide overlapping areas
-        var items = (function(){
-            var table = [];
-            var counted_items = (function(){
-                var hash={};
-                _.each(_.zip(category_column, count_column), function(arr){
-                    if(hash[arr[1]]==undefined)hash[arr[1]]={};
-                    _.each(selected_category, function(category, i){
-                        if(category.indexOf(arr[0])!=-1)hash[arr[1]][i] = true;
-                    });
-                });
-                return hash;
-            })();
-
-            var count_common = function(items){
-                var cnt=0;
-                _.each(_.values(counted_items), function(values, key){
-                    if(!_.some(items, function(item){return !(item in values);}))cnt++;
-                });
-                return cnt;
-            };
-            
-            for(var i = 0; i<3; i++){
-                table[i] = [];
-                table[i][i] = count_common([i]);
-                for(var j=i+1; j<3; j++){
-                    var num = count_common([i, j]);
-                    table[i][j] = num;
-                }
-            }
-            return {table:table,counted_items:counted_items};
-        })();
-        var table=items.table;
-        var counted_items=items.counted_items;
-
-        // decide radius of each circle
-        var r = _.map(table, function(row, i){
-            return Math.sqrt(table[i][i]/(2*Math.PI));
-        });
-
-        // function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
-        var evaluation = function(values){
-            var loss = 0;
-            for(var i=0;i<values.length;i+=2){
-                for(var j=i+2;j<values.length;j+=2){
-                    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
-                    var r1=r[i/2], r2=r[j/2];
-                    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
-                    var S = 0;
-                    if(d > r1+r2)S = 0;
-                    else{
-                        _.each([[r1, r2],[r2, r1]], function(r_arr){
-                            var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
-                            var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
-                            S += s;
-                        });
-                    }
-                    loss += Math.pow(table[i/2][j/2]-S,2);
-                }
-            }
-            return loss;
-        };
-
-        // decide initial paramaters
-        var init_params = (function(){
-            var params = [];
-            var set_num = table[0].length;
-            var max_area = _.max(table, function(arr, i){
-                // calc the sum of overlapping area
-                var result=0;
-                for(var j=0;j<i;j++)result+=table[j][i];
-                for(var j=i+1;j<arr.length;j++)result+=table[i][j];
-                return result;
-            });
-            var center_i = set_num - max_area.length;
-            params[center_i*2] = 0; // x
-            params[center_i*2+1] = 0; // y
-            var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
-            for(var i=0;i<set_num;i++){
-                if(i!=center_i){
-                    var d = r[center_i] + r[i]/2;
-                    params[i*2] = d*Math.sin(rad);
-                    params[i*2+1] = d*Math.cos(rad);
-                    rad += rad_interval;
-                }
-            }
-            return params;
-        })();
-
-        // decide coordinates using Simplex method
-        var params = simplex(init_params, evaluation);
-        var pos=[], labels=[];
-        for(var i=0;i<params.length;i+=2)
-            pos.push({x:params[i] ,y:params[i+1], r:r[i/2], id:i});
-
-        for(var i=0;i<3;i++){
-            labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
-            for(var j=i+1;j<3;j++){
-                var x = (params[i*2] + params[j*2])/2;
-                var y = (params[i*2+1] + params[j*2+1])/2;
-                labels.push({x: x, y: y, val: table[i][j]});
-            }
-        }
-
-        return {pos:pos, labels:labels, counted_items:counted_items};
-    };
-
-    // update dom objects according to pre-processed data.
-    Venn.prototype.updateModels = function(selector, scales, options){
-        var color_scale = this.color_scale;
-        var area_names = this.options.area_names;
-
-        selector
-            .attr("cx", function(d){return scales.x(d.x);})
-            .attr("cy", function(d){return scales.y(d.y);})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("fill", function(d){return color_scale(area_names[d.id]);})
-            .attr("fill-opacity", options.opacity)
-            .transition()
-            .duration(500)
-            .attr("r", function(d){return scales.r(d.r);});
-
-        if(options.hover){
-            var onMouse = function(){
-                d3.select(this).transition()
-                    .duration(200)
-                    .attr("fill", function(d){return d3.rgb(color_scale(area_names[d.id])).darker(1);});
-            };
-
-            var outMouse = function(){
-                d3.select(this).transition()
-                    .duration(200)
-                    .attr("fill", function(d){return color_scale(area_names[d.id]);});
-            };
-            
-            selector
-                .on("mouseover", onMouse)
-                .on("mouseout", outMouse);
-        }
-    };
-
-    // update labels placed the center point between each pair of circle.
-    Venn.prototype.updateLabels = function(selector, scales, options){
-        selector
-            .attr("x", function(d){return scales.x(d.x);})
-            .attr("y", function(d){return scales.y(d.y);})
-            .attr("text-anchor", "middle")
-            .text(function(d){return String(d.val);});
-    };
-
-    // return legend object.
-    Venn.prototype.getLegend = function(){
-        return this.legend_data;
-    };
-
-    // tell update to Manager when venn recieved change from filter controller.
-    Venn.prototype.tellUpdate = function(){
-        var rows=[], selected_category = this.selected_category;
-        var counted_items = this.counted_items;
-        var filter_mode = this.filter_mode;
-        var category_num = this.options.category;
-        var count_num = this.options.count;
-        var filter = {
-            'all':function(row){
-                // check if this row in in any area (VENN1, VENN2, VENN3,...)
-                return _.some(selected_category, function(categories){
-                    if(categories.indexOf(row[category_num])!=-1)return true;
-                    else return false;
-                });
-            },
-            'overlapping':function(row){
-                if(!_.some(selected_category, function(categories){
-                    if(categories.indexOf(row[category_num])!=-1)return true;
-                    else return false;
-                }))return false;
-
-                for(var i=0;i<3;i++){
-                    for(var j=i+1;j<3;j++){
-                        if( 
-                            counted_items[row[count_num]][i]
-                                && counted_items[row[count_num]][j]
-                        )return true;
-                    }
-                }
-                return false;
-            },
-            'non-overlapping':function(row){
-                if(!_.some(selected_category, function(categories){
-                    if(categories.indexOf(row[category_num])!=-1)return true;
-                    else return false;
-                }))return false;
-
-                for(var i=0;i<3;i++){
-                    for(var j=i+1;j<3;j++){
-                        if(counted_items[row[count_num]][i]
-                           && counted_items[row[count_num]][j]
-                          )return false;
-                    }
-                }
-                return true;
-            }
-        }[filter_mode];
-        this.df.addFilter(this.uuid, filter, ['self']);
-        Manager.update();
-    };
-
-    return Venn;
-});
-
-/*
- * Venn: Venn diagram consisted in 3> circles
- *
- * Attention -- this chart is not supported yet. Please send pull-req if you are interested in re-implementing this chart.
- *    See src/view/diagrams/venn.js to learn more.
- */
-
-define('view/diagrams/multiple_venn',[
-    'underscore',
-    'core/manager',
-    'view/components/filter',
-    'utils/simplex'
-],function(_, Manager, Filter, simplex){
-    function Venn(parent, scales, df_id, _options){
-        var options = {
-            category: null,
-            count: null,
-            color:null,
-            stroke_color:'#000',
-            stroke_width: 1,
-            opacity: 0.7,
-            hover: false
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        this.getScales = function(data, scales){
-            var r_w = _.max(scales.x.range()) - _.min(scales.x.range());
-            var r_h = _.max(scales.y.range()) - _.min(scales.y.range());
-            var d_x = {
-                min: (function(){var min_d = _.min(data.pos, function(d){return d.x - d.r;}); return min_d.x - min_d.r;})(),
-                max: (function(){var max_d = _.max(data.pos, function(d){return d.x + d.r;}); return max_d.x + max_d.r;})()
-            };
-            var d_y = {
-                min: (function(){var min_d = _.min(data.pos, function(d){return d.y - d.r;}); return min_d.y - min_d.r;})(),
-                max: (function(){var max_d = _.max(data.pos, function(d){return d.y + d.r;}); return max_d.y + max_d.r;})()
-            };
-            var d_w = d_x.max-d_x.min;
-            var d_h = d_y.max-d_y.min;
-
-            var scale = 0;
-            if(r_w/r_h > d_w/d_h){
-                scale = d_h/r_h;
-                var new_d_w = scale*r_w;
-                d_x.min -= (new_d_w - d_w)/2;
-                d_x.max += (new_d_w - d_w)/2;
-            }
-            else{
-                scale = d_w/r_w;
-                var new_d_h = scale*r_h;
-                d_h.min -= (new_d_h - d_h)/2;
-                d_h.max += (new_d_h - d_h)/2;
-            }
-            var new_scales = {};
-            new_scales.x = d3.scale.linear().range(scales.x.range()).domain([d_x.min, d_x.max]);
-            new_scales.y = d3.scale.linear().range(scales.y.range()).domain([d_y.min, d_y.max]);
-            new_scales.r = d3.scale.linear().range([0,100]).domain([0,100*scale]);
-            return new_scales;
-        };
-
-        var df = Manager.getData(df_id);
-        var data = this.processData(df.column(options.category), df.column(options.count));
-        var new_scales = this.getScales(data, scales);
-
-        var model = parent.append("g");
-
-        var circles = model
-                .selectAll("circle")
-                .data(data.pos)
-                .enter()
-                .append("circle");
-
-        var texts = model
-                .selectAll("text")
-                .data(data.labels)
-                .enter()
-                .append("text");
-
-        if(options.color == null)this.color_scale = d3.scale.category20();
-        else this.color_scale = d3.scale.ordinal().range(options.color);
-        var color_scale = this.color_scale;
-
-        this.updateModels(circles, new_scales, options);
-        this.updateLabels(texts, new_scales, options);
-
-        var legends = [];
-        _.each(data.pos, function(d){
-            legends.push({label: d.name, color:color_scale(d.name)});
-        });
-
-        this.legends = legends;
-        this.scales = scales;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.df_id = df_id;
-
-        return this;
-    }
-
-    Venn.prototype.processData = function(category_column, count_column){
-        var categories = _.uniq(category_column);
-
-        // decide overlapping areas
-        var table = (function(){
-            var table = [];
-            var counted_items = (function(){
-                var hash={};
-                _.each(_.zip(category_column, count_column), function(arr){
-                    if(hash[arr[1]]==undefined)hash[arr[1]]={};
-                    hash[arr[1]][arr[0]] = true;
-                });
-                return _.values(hash);
-            })();
-
-            var count_common = function(items){
-                var cnt=0;
-                _.each(counted_items, function(values, key){
-                    if(!_.some(items, function(item){return !(item in values);}))cnt++;
-                });
-                return cnt;
-            };
-            
-            for(var i = 0; i<categories.length; i++){
-                table[i] = [];
-                table[i][i] = count_common([categories[i]]);
-                for(var j=i+1; j<categories.length; j++){
-                    var num = count_common([categories[i], categories[j]]);
-                    table[i][j] = num;
-                }
-            }
-            return table;
-        })();
-
-        // decide radius of each circle
-        var r = _.map(table, function(row, i){
-            return Math.sqrt(table[i][i]/(2*Math.PI));
-        });
-
-        // function for minimizing loss of overlapping (values: x1,y1,x1,y1...)
-        var evaluation = function(values){
-            var loss = 0;
-            for(var i=0;i<values.length;i+=2){
-                for(var j=i+2;j<values.length;j+=2){
-                    var x1=values[i], y1=values[i+1], x2=values[j], y2=values[j+1];
-                    var r1=r[i/2], r2=r[j/2];
-                    var d = Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
-                    var S = 0;
-                    if(d > r1+r2)S = 0;
-                    else{
-                        _.each([[r1, r2],[r2, r1]], function(r_arr){
-                            var theta = Math.acos((r_arr[1]*r_arr[1] - r_arr[0]*r_arr[0] + d*d)/(2*r_arr[1]*d));
-                            var s = r_arr[i]*r_arr[i]*theta - (1/2)*r_arr[1]*r_arr[1]*Math.sin(theta*2);
-                            S += s;
-                        });
-                    }
-                    loss += Math.pow(table[i/2][j/2]-S,2);
-                }
-            }
-            return loss;
-        };
-
-        // decide initial paramaters
-        var init_params = (function(){
-            var params = [];
-            var set_num = table[0].length;
-            var max_area = _.max(table, function(arr, i){
-                // calc the sum of overlapping area
-                var result=0;
-                for(var j=0;j<i;j++)result+=table[j][i];
-                for(var j=i+1;j<arr.length;j++)result+=table[i][j];
-                return result;
-            });
-            var center_i = set_num - max_area.length;
-            params[center_i*2] = 0; // x
-            params[center_i*2+1] = 0; // y
-            var rad=0, rad_interval=Math.PI/(1.5*(set_num-1));
-            for(var i=0;i<set_num;i++){
-                if(i!=center_i){
-                    var d = r[center_i] + r[i]/2;
-                    params[i*2] = d*Math.sin(rad);
-                    params[i*2+1] = d*Math.cos(rad);
-                    rad += rad_interval;
-                }
-            }
-            return params;
-        })();
-
-        // decide coordinates using Simplex method
-        var params = simplex(init_params, evaluation);
-        var pos=[], labels=[];
-        for(var i=0;i<params.length;i+=2)
-            pos.push({x:params[i] ,y:params[i+1], r:r[i/2], name:categories[i/2]});
-
-        for(var i=0;i<categories.length;i++){
-            labels.push({x: params[i*2], y: params[i*2+1], val: table[i][i]});
-            for(var j=i+1;j<categories.length;j++){
-                var x = (params[i*2] + params[j*2])/2;
-                var y = (params[i*2+1] + params[j*2+1])/2;
-                labels.push({x: x, y: y, val: table[i][j]});
-            }
-        }
-
-        return {pos:pos, labels:labels};
-    };
-
-    Venn.prototype.updateModels = function(selector, scales, options){
-        var color_scale = this.color_scale;
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.name)).darker(1);});
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return color_scale(d.name);});
-        };
-
-        selector
-            .attr("cx", function(d){return scales.x(d.x);})
-            .attr("cy", function(d){return scales.y(d.y);})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("fill", function(d){return color_scale(d.name);})
-            .attr("fill-opacity", options.opacity)
-            .transition()
-            .duration(500)
-            .attr("r", function(d){return scales.r(d.r);});
-
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
-    };
-
-    Venn.prototype.updateLabels = function(selector, scales, options){
-        selector
-            .attr("x", function(d){return scales.x(d.x);})
-            .attr("y", function(d){return scales.y(d.y);})
-            .attr("text-anchor", "middle")
-            .text(function(d){return String(d.val);});
-    };
-
-    Venn.prototype.selected = function(data, row_nums){
-        var selected_count = this.df.pickUpCells(this.options.count, row_nums);
-        var selected_category = this.df.pickUpCells(this.options.category, row_nums);
-        var data = this.processData(selected_category, selected_count, this.options);
-        var scales = this.getScales(data, this.scales);
-
-        var circles = this.model.selectAll("circle").data(data.pos);
-        var texts = this.model.selectAll("text").data(data.labels);
-        this.updateModels(circles, scales, this.options);
-        this.updateLabels(texts, scales, this.options);
-    };
-
-    Venn.prototype.update = function(){
-    };
-
-    Venn.prototype.checkSelectedData = function(ranges){
-    };
-
-    return Venn;
 });
 
 /*
@@ -3610,64 +2612,10 @@ define('view/diagrams/multiple_venn',[
 define('view/diagrams/box.js',[
     'underscore',
     'node-uuid',
-    'core/manager',
-    'view/components/filter',
-    'view/components/legend/simple_legend'
-],function(_, uuid, Manager, SimpleLegend){
-    function Box(parent, scales, df_id, _options){
-        var options = {
-            title: '',
-            value: [],
-            width: 0.9,
-            color:null,
-            stroke_color: 'black',
-            stroke_width: 1,
-            outlier_r: 3,
-            tooltip_contents:[],
-            tooltip:null
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        var model = parent.append("g");
-        var df = Manager.getData(df_id);
-
-        var color_scale;
-        if(options.color == null){
-            color_scale = d3.scale.category20b();
-        }else{
-            color_scale = d3.scale.ordinal().range(options.color);
-        }
-
-        this.model = model;
-        this.scales = scales;
-        this.options = options;
-        this.df = df;
-        this.color_scale = color_scale;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Box.prototype.update = function(){
-        var uuid = this.uuid;
-        var processData = this.processData;
-        var df = this.df;
-        var data = [];
-        _.each(this.options.value, function(column_name){
-            var column = df.columnWithFilters(uuid, column_name);
-            data.push(_.extend(processData(column), {x: column_name}));
-        });
-
-        var boxes = this.model.selectAll("g").data(data);
-        boxes.enter()
-            .append("g");
-
-        this.updateModels(boxes, this.scales, this.options);
-    };
-
+    'core/manager'
+],function(_, uuid, Manager){
     // convert raw data into style information for box
-    Box.prototype.processData = function(column){
+    var processData = function(column){
         var getMed = function(arr){
             var n = arr.length;
             return (n%2==1 ? arr[Math.floor(n/2)] : (arr[n/2]+arr[n/2+1])/2);
@@ -3693,32 +2641,9 @@ define('view/diagrams/box.js',[
     };
 
     // update SVG dom nodes based on data
-    Box.prototype.updateModels = function(selector, scales, options){
+    var updateModels = function(selector, scales, options, color_scale){
         var width = scales.raw.x.rangeBand()*options.width;
         var padding = scales.raw.x.rangeBand()*((1-options.width)/2);
-        var color_scale = this.color_scale;
-
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.x)).darker(1);});
-            var id = d3.select(this).attr("id");
-
-            options.tooltip.addToYAxis(id, this.__data__.min, 3);
-            options.tooltip.addToYAxis(id, this.__data__.q1, 3);
-            options.tooltip.addToYAxis(id, this.__data__.med, 3);
-            options.tooltip.addToYAxis(id, this.__data__.q3, 3);
-            options.tooltip.addToYAxis(id, this.__data__.max, 3);
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(color_scale(d.x));});
-            var id = d3.select(this).attr("id");
-            options.tooltip.reset();
-        };
 
         selector
             .append("line")
@@ -3735,10 +2660,7 @@ define('view/diagrams/box.js',[
             .attr("height", function(d){return scales.get(d.x, d.q1).y - scales.get(d.x, d.q3).y;})
             .attr("width", width)
             .attr("fill", function(d){return color_scale(d.x);})
-            .attr("stroke", options.stroke_color)
-            .attr("id", uuid.v4())
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
+            .attr("stroke", options.stroke_color);
 
         // median line
         selector
@@ -3763,117 +2685,43 @@ define('view/diagrams/box.js',[
             });
     };
 
-    // return legend object based on data prepared by initializer
-    Box.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
-    };
-
-    // answer to callback coming from filter. not implemented yet.
-    Box.prototype.checkSelectedData = function(ranges){
-        return;
-    };
-
-    return Box;
-});
-
-/*
- * ColorBar: 
- *
- * ColorBar provides colorbar filled with gradient for continuous data.
- * Each diagram create an instance of Colorset and Pane append it to itself.
- *
- * options:
- *    width -> Float: width of the whole area for colorset (not noly for bar)
- *    height-> Float: height of the area for colorset
- *
- * example:
- *    http://bl.ocks.org/domitry/11322618
- */
-
-define('view/components/legend/color_bar',[
-    'underscore'
-], function(_){
-    function ColorBar(color_scale, _options){
+    return function(context, scales, df_id, _options){
         var options = {
-            width: 150,
-            height: 200
+            title: '',
+            value: [],
+            width: 0.9,
+            color:null,
+            stroke_color: 'black',
+            stroke_width: 1,
+            outlier_r: 3,
+            tooltip_contents:[],
+            tooltip:null
         };
-        if(arguments.length>1)_.extend(options, _options);
-        
-        this.options = options;
-        this.model = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
-        this.color_scale = color_scale;
-    }
+        if(arguments.length>3)_.extend(options, _options);
 
-    ColorBar.prototype.width = function(){
-        return this.options.width;
+        var df = Manager.getData(df_id);
+
+        var color_scale;
+        if(options.color == null){
+            color_scale = d3.scale.category20b();
+        }else{
+            color_scale = d3.scale.ordinal().range(options.color);
+        }
+
+        var data = [];
+        _.each(options.value, function(column_name){
+            var column = df.columnWithFilters(uuid, column_name);
+            data.push(_.extend(processData(column), {x: column_name}));
+        });
+
+        var boxes = context.selectAll("g").data(data);
+        boxes.enter()
+            .append("g");
+
+        updateModels(boxes, scales, options, color_scale);
+
+        return boxes;
     };
-
-    ColorBar.prototype.height = function(){
-        return this.options.height;
-    };
-
-    // Create dom object independent form pane or context and return it. called by each diagram.o
-    ColorBar.prototype.getDomObject = function(){
-        var model = this.model;
-	    var color_scale = this.color_scale;
-        var colors = color_scale.range();
-        var values = color_scale.domain();
-
-        var height_scale = d3.scale.linear()
-                .domain(d3.extent(values))
-                .range([this.options.height,0]);
-
-	    var gradient = model.append("svg:defs")
-	            .append("svg:linearGradient")
-	            .attr("id", "gradient")
-	            .attr("x1", "0%")
-	            .attr("x2", "0%")
-	            .attr("y1", "100%")
-	            .attr("y2", "0%");
-
-	    for(var i=0; i<colors.length; i++){
-	        gradient.append("svg:stop")
-		        .attr("offset", (100/(colors.length-1))*i + "%")
-		        .attr("stop-color", colors[i]);
-	    }
-
-	    var group = model.append("g");
-
-	    group.append("svg:rect")
-	        .attr("y",10)
-	        .attr("width", "25")
-	        .attr("height", this.options.height)
-	        .style("fill", "url(#gradient)");
-
-	    model.append("g")
-	        .attr("width", "100")
-	        .attr("height", this.options.height)
-	        .attr("class", "axis")
-	        .attr("transform", "translate(25,10)")
-	        .call(d3.svg.axis()
-		          .scale(height_scale)
-		          .orient("right")
-		          .ticks(5));
-
-	    model.selectAll(".axis").selectAll("path")
-	        .style("fill", "none")
-	        .style("stroke", "black")
-	        .style("shape-rendering", "crispEdges");
-
-	    model.selectAll(".axis").selectAll("line")
-	        .style("fill", "none")
-	        .style("stroke", "black")
-	        .style("shape-rendering", "crispEdges");
-
-	    model.selectAll(".axis").selectAll("text")
-	        .style("font-family", "san-serif")
-	        .style("font-size", "11px");
-
-	    return model;
-    };
-
-    return ColorBar;
 });
 
 define('colorbrewer',[],function(){
@@ -3965,10 +2813,37 @@ define('view/diagrams/heatmap.js',[
     'node-uuid',
     'core/manager',
     'view/components/filter',
-    'view/components/legend/color_bar',
     'utils/color'
-],function(_, uuid, Manager, Filter, ColorBar, colorset){
-    function HeatMap(parent, scales, df_id, _options){
+],function(_, uuid, Manager, Filter, colorset){
+    // pre-process data. convert data coorinates to dom coordinates with Scale.
+    var processData = function(df, scales, color_scale, options){
+        var column_x = df.columnWithFilters(uuid, options.x);
+        var column_y = df.columnWithFilters(uuid, options.y);
+        var column_fill = df.columnWithFilters(uuid, options.fill);
+
+        return _.map(_.zip(column_x, column_y, column_fill), function(row){
+            var x, y, width, height;
+            width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
+            height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
+            x = scales.get(row[0], 0).x - width/2;
+            y = scales.get(0, row[1]).y - height/2;
+            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
+        });
+    };
+
+    // update SVG dom nodes based on pre-processed data.
+    var updateModels = function(selector, options){
+        selector
+            .attr("x", function(d){return d.x;})
+            .attr("width", function(d){return d.width;})
+            .attr("y", function(d){return d.y;})
+            .attr("height", function(d){return d.height;})
+            .attr("fill", function(d){return d.fill;})
+            .attr("stroke", options.stroke_color)
+            .attr("stroke-width", options.stroke_width);
+    };
+
+    return function(context, scales, df_id, _options){
         var options = {
             title: 'heatmap',
             x: null,
@@ -3985,9 +2860,8 @@ define('view/diagrams/heatmap.js',[
         if(arguments.length>3)_.extend(options, _options);
 
         var df = Manager.getData(df_id);
-        var model = parent.append("g");
 
-        this.color_scale = (function(){
+        var color_scale = (function(){
             var column_fill = df.columnWithFilters(options.uuid, options.fill);
             var min_max = d3.extent(column_fill);
             var domain = d3.range(min_max[0], min_max[1], (min_max[1]-min_max[0])/(options.color.length));
@@ -3996,90 +2870,18 @@ define('view/diagrams/heatmap.js',[
                 .domain(domain);
         })();
 
-        this.scales = scales;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-        return this;
-    };
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    HeatMap.prototype.update = function(){
-        var data = this.processData();
-        var models = this.model.selectAll("rect").data(data);
+        var data = processData(df, scales, color_scale, options);
+        var models = context.selectAll("rect").data(data);
         models.each(function(){
             var event = document.createEvent("MouseEvents");
             event.initEvent("mouseout", false, true);
             this.dispatchEvent(event);
         });
         models.enter().append("rect");
-        this.updateModels(models, this.options);
+        updateModels(models, options);
+
+        return models;
     };
-
-    // pre-process data. convert data coorinates to dom coordinates with Scale.
-    HeatMap.prototype.processData = function(){
-        var column_x = this.df.columnWithFilters(this.uuid, this.options.x);
-        var column_y = this.df.columnWithFilters(this.uuid, this.options.y);
-        var column_fill = this.df.columnWithFilters(this.uuid, this.options.fill);
-        var scales = this.scales;
-        var options = this.options;
-        var color_scale = this.color_scale;
-
-        return _.map(_.zip(column_x, column_y, column_fill), function(row){
-            var x, y, width, height;
-            width = Math.abs(scales.get(options.width, 0).x - scales.get(0, 0).x);
-            height = Math.abs(scales.get(0, options.height).y - scales.get(0, 0).y);
-            x = scales.get(row[0], 0).x - width/2;
-            y = scales.get(0, row[1]).y - height/2;
-            return {x: x, y:y, width:width, height:height, fill:color_scale(row[2]), x_raw: row[0], y_raw: row[1]};
-        });
-    };
-
-    // update SVG dom nodes based on pre-processed data.
-    HeatMap.prototype.updateModels = function(selector, options){
-        var id = this.uuid;
-        var onMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d3.rgb(d.fill).darker(1);});
-            options.tooltip.addToXAxis(id, this.__data__.x_raw, 3);
-            options.tooltip.addToYAxis(id, this.__data__.y_raw, 3);
-            options.tooltip.update();
-        };
-
-        var outMouse = function(){
-            d3.select(this).transition()
-                .duration(200)
-                .attr("fill", function(d){return d.fill;});
-            options.tooltip.reset();
-        };
-
-        selector
-            .attr("x", function(d){return d.x;})
-            .attr("width", function(d){return d.width;})
-            .attr("y", function(d){return d.y;})
-            .attr("height", function(d){return d.height;})
-            .attr("fill", function(d){return d.fill;})
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width);
-
-        if(options.hover)selector
-            .on("mouseover", onMouse)
-            .on("mouseout", outMouse);
-    };
-
-    // return legend object.
-    HeatMap.prototype.getLegend = function(){
-        return new ColorBar(this.color_scale);
-    };    
-
-    // answer to callback coming from filter. not implemented yet.
-    HeatMap.prototype.checkSelectedData = function(ranges){
-        return;
-    };
-
-    return HeatMap;
 });
 
 /*
@@ -4109,64 +2911,8 @@ define('view/diagrams/vectors.js',[
     'view/components/filter',
     'view/components/legend/simple_legend'
 ],function(_, uuid, Manager, Filter, SimpleLegend){
-    function Vectors(parent, scales, df_id, _options){
-        var options = {
-            title: 'vectors',
-            x: null,
-            y: null,
-            dx: null,
-            dy: null,
-            fill_by: null,
-            color:['steelblue', '#000000'],
-            stroke_color: '#000',
-            stroke_width: 2,
-            hover: true,
-            tooltip:null
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        this.scales = scales;
-        var df = Manager.getData(df_id);
-        var model = parent.append("g");
-
-        this.legend_data = (function(thisObj){
-            var on = function(){
-                thisObj.render = true;
-                thisObj.update();
-            };
-
-            var off = function(){
-                thisObj.render = false;
-                thisObj.update();
-            };
-            return [{label: options.title, color:options.color, on:on, off:off}];
-        })(this);
-
-        this.render = true;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Vectors.prototype.update = function(){
-        var data = this.processData(this.options);
-        this.options.tooltip.reset();
-        if(this.render){
-            var shapes = this.model.selectAll("line").data(data);
-            shapes.enter().append("line");
-            this.updateModels(shapes, this.scales, this.options);
-        }else{
-            this.model.selectAll("line").remove();
-        }
-    };
-
     // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
-    Vectors.prototype.processData = function(options){
-        var df = this.df;
+    var processData = function(df, options){
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
         var columns = _.map(['x', 'y', 'dx', 'dy'], function(label){return df.column(options[label]);});
         var length = columns[0].length;
@@ -4189,7 +2935,7 @@ define('view/diagrams/vectors.js',[
     };
 
     // update SVG dom nodes based on pre-processed data.
-    Vectors.prototype.updateModels = function(selector, scales, options){
+    var updateModels = function(selector, scales, options){
         selector
             .attr({
                 'x1':function(d){return scales.get(d.x, d.y).x;},
@@ -4201,17 +2947,32 @@ define('view/diagrams/vectors.js',[
             });
     };
 
-    // return legend object.
-    Vectors.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
-    };
+    return function(context, scales, df_id, _options){
+        var options = {
+            title: 'vectors',
+            x: null,
+            y: null,
+            dx: null,
+            dy: null,
+            fill_by: null,
+            color:['steelblue', '#000000'],
+            stroke_color: '#000',
+            stroke_width: 2,
+            hover: true,
+            tooltip:null
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-    // answer to callback coming from filter.
-    Vectors.prototype.checkSelectedData = function(ranges){
-        return;
-    };
+        var df = Manager.getData(df_id);
 
-    return Vectors;
+        var data = processData(df, options);
+
+        var shapes = context.selectAll("line").data(data);
+        shapes.enter().append("line");
+        updateModels(shapes, scales, options);
+
+        return shapes;
+    };
 });
 
 /*
@@ -4221,15 +2982,13 @@ define('view/diagrams/vectors.js',[
  *
  */
 
-define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar','view/diagrams/histogram','view/diagrams/scatter','view/diagrams/line','view/diagrams/venn','view/diagrams/multiple_venn','view/diagrams/box.js','view/diagrams/heatmap.js','view/diagrams/vectors.js'],function(require, exports, module){
+define('view/diagrams/diagrams',['require','exports','module','view/diagrams/bar','view/diagrams/histogram','view/diagrams/scatter','view/diagrams/line','view/diagrams/box.js','view/diagrams/heatmap.js','view/diagrams/vectors.js'],function(require, exports, module){
     var diagrams = {};
 
     diagrams.bar = require('view/diagrams/bar');
     diagrams.histogram = require('view/diagrams/histogram');
     diagrams.scatter = require('view/diagrams/scatter');
     diagrams.line = require('view/diagrams/line');
-    diagrams.venn = require('view/diagrams/venn');
-    diagrams.multiple_venn = require('view/diagrams/multiple_venn');
     diagrams.box = require('view/diagrams/box.js');
     diagrams.heatmap = require('view/diagrams/heatmap.js');
     diagrams.vectors = require('view/diagrams/vectors.js');
@@ -4765,7 +3524,6 @@ define('view/pane',[
         this.model = model;
         this.scales = scales;
         this.options = options;
-        this.filter = null;
         return this;
     }
 
@@ -4776,29 +3534,8 @@ define('view/pane',[
             tooltip: this.tooltip
         });
 
-        var diagram = new diagrams[type](this.context, this.scales, data, options);
-
-        if(this.options.legend){
-            var legend_area = this.legend_area;
-            var legend = diagram.getLegend();
-            if(_.isArray(legend))_.each(legend, function(l){
-                legend_area.add(l);
-            });
-            else this.legend_area.add(legend);
-	    }
-
+        var diagram = diagrams[type](this.context.append("g"), this.scales, data, options);
 	    this.diagrams.push(diagram);
-    };
-
-    // Add filter to pane (usually a gray box on the pane)
-    Pane.prototype.addFilter = function(target, options){
-	    var diagrams = this.diagrams;
-	    var callback = function(ranges){
-	        _.each(diagrams, function(diagram){
-		        diagram.checkSelectedData(ranges);
-	        });
-	    };
-	    this.filter = new Filter(this.context, this.scales, callback, options);
     };
 
     // Update all diagrams belong to the pane

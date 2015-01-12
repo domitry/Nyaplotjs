@@ -25,64 +25,8 @@ define([
     'view/components/filter',
     'view/components/legend/simple_legend'
 ],function(_, uuid, Manager, Filter, SimpleLegend){
-    function Vectors(parent, scales, df_id, _options){
-        var options = {
-            title: 'vectors',
-            x: null,
-            y: null,
-            dx: null,
-            dy: null,
-            fill_by: null,
-            color:['steelblue', '#000000'],
-            stroke_color: '#000',
-            stroke_width: 2,
-            hover: true,
-            tooltip:null
-        };
-        if(arguments.length>3)_.extend(options, _options);
-
-        this.scales = scales;
-        var df = Manager.getData(df_id);
-        var model = parent.append("g");
-
-        this.legend_data = (function(thisObj){
-            var on = function(){
-                thisObj.render = true;
-                thisObj.update();
-            };
-
-            var off = function(){
-                thisObj.render = false;
-                thisObj.update();
-            };
-            return [{label: options.title, color:options.color, on:on, off:off}];
-        })(this);
-
-        this.render = true;
-        this.options = options;
-        this.model = model;
-        this.df = df;
-        this.uuid = options.uuid;
-
-        return this;
-    }
-
-    // fetch data and update dom object. called by pane which this chart belongs to.
-    Vectors.prototype.update = function(){
-        var data = this.processData(this.options);
-        this.options.tooltip.reset();
-        if(this.render){
-            var shapes = this.model.selectAll("line").data(data);
-            shapes.enter().append("line");
-            this.updateModels(shapes, this.scales, this.options);
-        }else{
-            this.model.selectAll("line").remove();
-        }
-    };
-
     // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
-    Vectors.prototype.processData = function(options){
-        var df = this.df;
+    var processData = function(df, options){
         var labels = ['x', 'y', 'dx', 'dy', 'fill'];
         var columns = _.map(['x', 'y', 'dx', 'dy'], function(label){return df.column(options[label]);});
         var length = columns[0].length;
@@ -105,7 +49,7 @@ define([
     };
 
     // update SVG dom nodes based on pre-processed data.
-    Vectors.prototype.updateModels = function(selector, scales, options){
+    var updateModels = function(selector, scales, options){
         selector
             .attr({
                 'x1':function(d){return scales.get(d.x, d.y).x;},
@@ -117,15 +61,30 @@ define([
             });
     };
 
-    // return legend object.
-    Vectors.prototype.getLegend = function(){
-        return new SimpleLegend(this.legend_data);
-    };
+    return function(context, scales, df_id, _options){
+        var options = {
+            title: 'vectors',
+            x: null,
+            y: null,
+            dx: null,
+            dy: null,
+            fill_by: null,
+            color:['steelblue', '#000000'],
+            stroke_color: '#000',
+            stroke_width: 2,
+            hover: true,
+            tooltip:null
+        };
+        if(arguments.length>3)_.extend(options, _options);
 
-    // answer to callback coming from filter.
-    Vectors.prototype.checkSelectedData = function(ranges){
-        return;
-    };
+        var df = Manager.getData(df_id);
 
-    return Vectors;
+        var data = processData(df, options);
+
+        var shapes = context.selectAll("line").data(data);
+        shapes.enter().append("line");
+        updateModels(shapes, scales, options);
+
+        return shapes;
+    };
 });

@@ -197,7 +197,6 @@ define([
         this.model = model;
         this.scales = scales;
         this.options = options;
-        this.filter = null;
         return this;
     }
 
@@ -208,29 +207,8 @@ define([
             tooltip: this.tooltip
         });
 
-        var diagram = new diagrams[type](this.context, this.scales, data, options);
-
-        if(this.options.legend){
-            var legend_area = this.legend_area;
-            var legend = diagram.getLegend();
-            if(_.isArray(legend))_.each(legend, function(l){
-                legend_area.add(l);
-            });
-            else this.legend_area.add(legend);
-	    }
-
+        var diagram = diagrams[type](this.context.append("g"), this.scales, data, options);
 	    this.diagrams.push(diagram);
-    };
-
-    // Add filter to pane (usually a gray box on the pane)
-    Pane.prototype.addFilter = function(target, options){
-	    var diagrams = this.diagrams;
-	    var callback = function(ranges){
-	        _.each(diagrams, function(diagram){
-		        diagram.checkSelectedData(ranges);
-	        });
-	    };
-	    this.filter = new Filter(this.context, this.scales, callback, options);
     };
 
     // Update all diagrams belong to the pane
