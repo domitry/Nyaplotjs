@@ -1,14 +1,14 @@
 define([
     "underscore",
-    "core/parser_manager"
-], function(_, parser_manager){
+    "core"
+], function(_, core){
     /*
      Thin layer between parser_manager and glyph.
      */
-    function register_glyph(name, func, required_args, optional_args){
+    function register_glyph(name, required_args, optional_args, func){
         required_args.shift();
 
-        parser_manager.register_parser(
+        core.register_parser(
             name,
             required_args,
             optional_args,
@@ -18,9 +18,9 @@ define([
 
                 // resolve dependency
                 var func = function(arg){
-                    if(_.isObject(arg) && _.has("async")){
-                        var uuid = arg.async;
-                        return parser_manager.get(uuid);
+                    if(_.isObject(arg) && _.has("sync")){
+                        var uuid = arg.sync;
+                        return core.get(uuid);
                     }
                     return arg;
                 };
@@ -30,8 +30,7 @@ define([
 
                 required_args.push(optional_args);
                 required_args.unshift(d3.select(g));
-                var ret = func.apply(null, required_args);
-                return {parent: g, children: ret};
+                return func.apply(null, required_args);
             }
         );
     };

@@ -10,11 +10,11 @@
 var data1 = [], MAX=50, MIN=0;
 for(var i=0;i<50;i++)data1.push({x: Math.random()*MAX, y: Math.random()*MAX})
 models = [
-  {type: "DataFrame", uuid: "data1", args: {
+  {type: "data", uuid: "data1", args: {
     data: data1
   }},
   {type: "df_scale", uuid: "scalex", args: {
-    df_id: "data1",
+    data_id: "data1",
     column_name: "x"
     ranges: ["0%", "100%"]
   }},
@@ -24,29 +24,30 @@ models = [
     ranges: [0, 500]
   }},
   {type: "scatter", uuid: "scatter1", args: {
-    x: {async: "scalex"},
-    y: {async: "scaley"},
+    x: {sync: "scalex"},
+    y: {sync: "scaley"},
   }},
-  {type: "axis2d", uuid: "scatter1", args: {
-    scalex: {async: "scalex"},
-    scaley: {async: "scaley"},
+  {type: "axis2d", uuid: "axis", args: {
+    scalex: {sync: "scalex"},
+    scaley: {sync: "scaley"},
   }},
-  {type: "background", uuid: "scatter1", args: {
+  {type: "background2d", uuid: "background", args: {
     width: 500,
     height: 500
   }},
-  {type: "Stage2D", uuid: "stage1", args: {
-    layer0: ["", "", ""],
+  {type: "stage2d", uuid: "stage", args: {
+    layer0: ["background", "axis"],
     layer1: ["scatter"],
     width: 500,
     height: 500,
     zoom:true
   }},
-  {type: "Pane", uuid: "pane", args: {
-    rows: ["stage1"],
+  {type: "pane", uuid: "pane", args: {
+    "parent_id":"vis",
+    "layout" {type: "rows", contents: [{"sync": "stage1"}]}:
   }}
 ];
-window.onload = function(){Nyaplot.core.parse(models, '#vis');};
+window.onload = function(){Nyaplot.core.parse(models);};
 </script>
 </body>
 </html>

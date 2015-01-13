@@ -13,7 +13,9 @@ define([
     var history = {};
 
     /*
-     model is given as "stacked task" style:
+     Nyaplot.core.parse
+
+     "model" is given as "stacked task" style:
      e.g.
 
       [
@@ -31,9 +33,7 @@ define([
 
      Each task is an Object whose properties are "type", "uuid", and "args".
      */
-    function parse(model, dom_name){
-        var element = d3.select(dom_name);
-
+    function parse(model){
         // el: {uuid: "", type: "", args: {}}
         _.extend(history, _.reduce(model, function(memo, task){
             var parser = parsers_list[task.type].callback;
@@ -66,5 +66,9 @@ define([
         return history[uuid];
     }
 
-    return parse;
+    return {
+        register_parser: register_parser,
+        parse: parse,
+        get: get
+    };
 });
