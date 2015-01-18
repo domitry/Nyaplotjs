@@ -3,9 +3,19 @@
  */
 
 define([
-], function(){
-    return {
-        func: function(context, options){
+    'parser/sheet'
+], function(sheet){
+    sheet.register_sheet(
+        "background2d",
+        ["context"],
+        {
+            width: 500,
+            height: 500,
+            bg_color: "#eee",
+            stroke_width: 1,
+            stroke: "#666"
+        },
+        function(context, options){
             var g = context
                     .append("g")
                     .attr("class", "background");
@@ -23,14 +33,5 @@ define([
                 });
 
             return g;
-        },
-        required_args: ["context"],
-        optional_args: {
-            width: 500,
-            height: 500,
-            bg_color: "#eee",
-            stroke_width: 1,
-            stroke: "#666"
-        }
-    };
+        });
 });

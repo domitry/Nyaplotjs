@@ -14,11 +14,12 @@
 
 define([
     'underscore',
-    'core/manager'
-],function(_, Manager){
-    return {
-        required_args: ["context", "xscale", "yscale"],
-        optional_args: {
+    'parser/sheet'
+],function(_, sheet){
+    sheet.register_sheet(
+        "axis2d",
+        ["context", "xscale", "yscale"],
+        {
             width:0,
             height:0,
             margin: {top:0,bottom:0,left:0,right:0},
@@ -32,7 +33,7 @@ define([
             rotate_x_label:0,
             rotate_y_label:0
         },
-        func: function(context, xscale, yscale, options){
+        function(context, xscale, yscale, options){
             var xAxis = d3.svg.axis()
                     .scale(xscale)
                     .orient("bottom");
@@ -90,6 +91,5 @@ define([
             }
 
             return g;
-        }
-    };
+        });
 });

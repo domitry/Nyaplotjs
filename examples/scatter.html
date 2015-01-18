@@ -35,9 +35,11 @@ models = [
     width: 500,
     height: 500
   }},
+  {type: "context2d", uuid: "context", args: {
+    glyph: ["scatter"]
+  }},
   {type: "stage2d", uuid: "stage", args: {
-    layer0: ["background", "axis"],
-    layer1: ["scatter"],
+    sheets: ["background", "axis", "context"],
     width: 500,
     height: 500,
     zoom:true
