@@ -1,4 +1,4 @@
-require([
+define([
     "underscore",
     "core",
     "utils/dataframe"

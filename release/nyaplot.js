@@ -1807,20 +1807,20 @@ define('core',[
      */
     function parse(model){
         // el: {uuid: "", type: "", args: {}}
-        _.extend(history, _.reduce(model, function(memo, task){
-            var parser = parsers_list[task.type].callback;
-            var func = parser.func;
+        _.each(model, function(task){
+            var parser = parsers_list[task.type];
+            var func = parser.callback;
 
             var args = _.map(parser.required_args, function(name){
                 return task.args[name];
             });
 
-            var optional_args = _.extend(parser.optional_args, task);
-            args.push(optional_args);
-            var ret = func.apply(null, args);
+            var optional_args = _.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args)));
 
-            memo[task.uuid] = ret;
-        }, {}));
+            args.push(optional_args);
+            history[task.uuid] = func.apply(null, args);;
+        });
+        console.log("hogehoge");
     }
 
     function register_parser(type_name, required_args, optional_args, callback){
@@ -1845,88 +1845,382 @@ define('core',[
     };
 });
 
-define('parser/glyph',[
-    "underscore",
-    "core"
-], function(_, core){
-    /*
-     Thin layer between parser_manager and glyph.
-     */
-    function register_glyph(name, required_args, optional_args, func){
-        required_args.shift();
+/*
+ * Pane: 
+ */
 
-        core.register_parser(
-            name,
-            required_args,
-            optional_args,
-            function(){
-                var args = [].slice.call(arguments, 0);
-                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+require([
+    'underscore',
+    'core'
+],function(_, core){
+    core.register_parser(
+        "pane",
+        ["parent_id", "layout"],
+        {
+        },
+        /*
+         layout: 
+         e.g.
+             layout: {type: "rows", contents: [{sync: "uuid-of-stage"}]}
+             or
+             layout:{type: "columns", contents: [{type: "rows", contents: []}, {}]}
+         */
+        function(parent_id, layout, options){
+            var parent = d3.select("#" + parent_id);
 
-                // resolve dependency
-                var func = function(arg){
-                    if(_.isObject(arg) && _.has("sync")){
-                        var uuid = arg.sync;
-                        return core.get(uuid);
+            var parse_layout = function(parent, model){
+                if(!_.has(model, "type")){
+                    // svg should be d3.selection
+                    var svg = core.get(model.sync);
+                    parent.node().appendChild(svg.node());
+                    return;
+                }else{
+                    switch(model.type){
+                    case "columns":
+                        var columns_root = parent
+                            .append("div")
+                            .style({
+                                "display" : "table"
+                            });
+
+                        _.each(model.contents, function(next_model){
+                            var child = columns_root.append("div")
+                                    .style("display", "table-cell");
+                            parse_layout(child, next_model);
+                        });
+                        break;
+                    case "rows":
+                        var rows_root = parent.append("div");
+
+                        _.each(model.contents, function(next_model){
+                            var child = rows_root.append("div");
+                            parse_layout(child, next_model);
+                        });
+                        break;
+                    default:
+                        return;
                     }
-                    return arg;
-                };
+                }
+                return;
+            };
 
-                var optional_args = _.map(args.pop(), func);
-                var required_args = _.map(args, func);
-
-                required_args.push(optional_args);
-                required_args.unshift(d3.select(g));
-                return func.apply(null, required_args);
-            }
-        );
-    };
-
-    return {
-        register_glyph: register_glyph
-    };
+            parse_layout(parent, layout);
+        }
+    );
 });
 
-define('parser/sheet',[
+define("pane", function(){});
+
+//     uuid.js
+//
+//     Copyright (c) 2010-2012 Robert Kieffer
+//     MIT License - http://opensource.org/licenses/mit-license.php
+
+(function() {
+  var _global = this;
+
+  // Unique ID creation requires a high quality random # generator.  We feature
+  // detect to determine the best RNG source, normalizing to a function that
+  // returns 128-bits of randomness, since that's what's usually required
+  var _rng;
+
+  // Node.js crypto-based RNG - http://nodejs.org/docs/v0.6.2/api/crypto.html
+  //
+  // Moderately fast, high quality
+  if (typeof(require) == 'function') {
+    try {
+      var _rb = require('crypto').randomBytes;
+      _rng = _rb && function() {return _rb(16);};
+    } catch(e) {}
+  }
+
+  if (!_rng && _global.crypto && crypto.getRandomValues) {
+    // WHATWG crypto-based RNG - http://wiki.whatwg.org/wiki/Crypto
+    //
+    // Moderately fast, high quality
+    var _rnds8 = new Uint8Array(16);
+    _rng = function whatwgRNG() {
+      crypto.getRandomValues(_rnds8);
+      return _rnds8;
+    };
+  }
+
+  if (!_rng) {
+    // Math.random()-based (RNG)
+    //
+    // If all else fails, use Math.random().  It's fast, but is of unspecified
+    // quality.
+    var  _rnds = new Array(16);
+    _rng = function() {
+      for (var i = 0, r; i < 16; i++) {
+        if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+        _rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+      }
+
+      return _rnds;
+    };
+  }
+
+  // Buffer class to use
+  var BufferClass = typeof(Buffer) == 'function' ? Buffer : Array;
+
+  // Maps for number <-> hex string conversion
+  var _byteToHex = [];
+  var _hexToByte = {};
+  for (var i = 0; i < 256; i++) {
+    _byteToHex[i] = (i + 0x100).toString(16).substr(1);
+    _hexToByte[_byteToHex[i]] = i;
+  }
+
+  // **`parse()` - Parse a UUID into it's component bytes**
+  function parse(s, buf, offset) {
+    var i = (buf && offset) || 0, ii = 0;
+
+    buf = buf || [];
+    s.toLowerCase().replace(/[0-9a-f]{2}/g, function(oct) {
+      if (ii < 16) { // Don't overflow!
+        buf[i + ii++] = _hexToByte[oct];
+      }
+    });
+
+    // Zero out remaining bytes if string was short
+    while (ii < 16) {
+      buf[i + ii++] = 0;
+    }
+
+    return buf;
+  }
+
+  // **`unparse()` - Convert UUID byte array (ala parse()) into a string**
+  function unparse(buf, offset) {
+    var i = offset || 0, bth = _byteToHex;
+    return  bth[buf[i++]] + bth[buf[i++]] +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] + '-' +
+            bth[buf[i++]] + bth[buf[i++]] +
+            bth[buf[i++]] + bth[buf[i++]] +
+            bth[buf[i++]] + bth[buf[i++]];
+  }
+
+  // **`v1()` - Generate time-based UUID**
+  //
+  // Inspired by https://github.com/LiosK/UUID.js
+  // and http://docs.python.org/library/uuid.html
+
+  // random #'s we need to init node and clockseq
+  var _seedBytes = _rng();
+
+  // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+  var _nodeId = [
+    _seedBytes[0] | 0x01,
+    _seedBytes[1], _seedBytes[2], _seedBytes[3], _seedBytes[4], _seedBytes[5]
+  ];
+
+  // Per 4.2.2, randomize (14 bit) clockseq
+  var _clockseq = (_seedBytes[6] << 8 | _seedBytes[7]) & 0x3fff;
+
+  // Previous uuid creation time
+  var _lastMSecs = 0, _lastNSecs = 0;
+
+  // See https://github.com/broofa/node-uuid for API details
+  function v1(options, buf, offset) {
+    var i = buf && offset || 0;
+    var b = buf || [];
+
+    options = options || {};
+
+    var clockseq = options.clockseq != null ? options.clockseq : _clockseq;
+
+    // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+    // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+    // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+    // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+    var msecs = options.msecs != null ? options.msecs : new Date().getTime();
+
+    // Per 4.2.1.2, use count of uuid's generated during the current clock
+    // cycle to simulate higher resolution clock
+    var nsecs = options.nsecs != null ? options.nsecs : _lastNSecs + 1;
+
+    // Time since last uuid creation (in msecs)
+    var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+    // Per 4.2.1.2, Bump clockseq on clock regression
+    if (dt < 0 && options.clockseq == null) {
+      clockseq = clockseq + 1 & 0x3fff;
+    }
+
+    // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+    // time interval
+    if ((dt < 0 || msecs > _lastMSecs) && options.nsecs == null) {
+      nsecs = 0;
+    }
+
+    // Per 4.2.1.2 Throw error if too many uuids are requested
+    if (nsecs >= 10000) {
+      throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+    }
+
+    _lastMSecs = msecs;
+    _lastNSecs = nsecs;
+    _clockseq = clockseq;
+
+    // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+    msecs += 12219292800000;
+
+    // `time_low`
+    var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+    b[i++] = tl >>> 24 & 0xff;
+    b[i++] = tl >>> 16 & 0xff;
+    b[i++] = tl >>> 8 & 0xff;
+    b[i++] = tl & 0xff;
+
+    // `time_mid`
+    var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+    b[i++] = tmh >>> 8 & 0xff;
+    b[i++] = tmh & 0xff;
+
+    // `time_high_and_version`
+    b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+    b[i++] = tmh >>> 16 & 0xff;
+
+    // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+    b[i++] = clockseq >>> 8 | 0x80;
+
+    // `clock_seq_low`
+    b[i++] = clockseq & 0xff;
+
+    // `node`
+    var node = options.node || _nodeId;
+    for (var n = 0; n < 6; n++) {
+      b[i + n] = node[n];
+    }
+
+    return buf ? buf : unparse(b);
+  }
+
+  // **`v4()` - Generate random UUID**
+
+  // See https://github.com/broofa/node-uuid for API details
+  function v4(options, buf, offset) {
+    // Deprecated - 'format' argument, as supported in v1.2
+    var i = buf && offset || 0;
+
+    if (typeof(options) == 'string') {
+      buf = options == 'binary' ? new BufferClass(16) : null;
+      options = null;
+    }
+    options = options || {};
+
+    var rnds = options.random || (options.rng || _rng)();
+
+    // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+    rnds[6] = (rnds[6] & 0x0f) | 0x40;
+    rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+    // Copy bytes to buffer, if provided
+    if (buf) {
+      for (var ii = 0; ii < 16; ii++) {
+        buf[i + ii] = rnds[ii];
+      }
+    }
+
+    return buf || unparse(rnds);
+  }
+
+  // Export public API
+  var uuid = v4;
+  uuid.v1 = v1;
+  uuid.v4 = v4;
+  uuid.parse = parse;
+  uuid.unparse = unparse;
+  uuid.BufferClass = BufferClass;
+
+  if (typeof define === 'function' && define.amd) {
+    // Publish as AMD module
+    define('node-uuid',[],function() {return uuid;});
+  } else if (typeof(module) != 'undefined' && module.exports) {
+    // Publish as node.js module
+    module.exports = uuid;
+  } else {
+    // Publish as global (in browsers)
+    var _previousRoot = _global.uuid;
+
+    // **`noConflict()` - (browser only) to reset global 'uuid' var**
+    uuid.noConflict = function() {
+      _global.uuid = _previousRoot;
+      return uuid;
+    };
+
+    _global.uuid = uuid;
+  }
+}).call(this);
+
+require([
+    "underscore",
+    "node-uuid",
+    "core"
+], function(_, node_uuid, core){
+    core.register_parser(
+        "stage2d",
+        ["sheets"],
+        {
+            margin_x: 10,
+            margin_y: 10,
+            width: 500,
+            height: 500
+        },
+        /*
+         * Construct DOM tree as follows:
+         *
+         * svg--g (root_g)
+         *      |
+         *      +-- g0 (root_layer0)
+         *      |
+         *      +-- g1
+         *           +--clipPath--rect
+         *           |
+         *           +--root_layer0
+         *
+         * Glyphs (e.g. scatter, rect, box...) are appended to root_layer1.
+         * Other components (e.g. axis, background...) are appended to root_layer0.
+         */
+        function(sheets, options){
+            var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+
+            var root = svg.append("g")
+                    .attr("transform", "translate(" + options.margin_x  + "," + options.margin_y + ")")
+                    .attr("class", "root");
+
+            var sheets_root = root.append("g").attr("class", "sheets_root");
+            
+            // component: selection of "g" element.
+            _.each(sheets, function(uuid){
+                var component = core.get(uuid);
+                var raw_g = component.node();
+                sheets_root.node().appendChild(raw_g);
+            });
+
+            return svg;
+        }
+    );
+});
+
+define("stage2d", function(){});
+
+define( 'parser/data',[
     "underscore",
     "core"
 ], function(_, core){
-    /*
-     Thin layer between parser_manager and sheet.
-     */
-    function register_sheet(name, required_args, optional_args, func){
-        required_args.shift();
-
-        core.register_parser(
-            name,
-            required_args,
-            optional_args,
-            function(){
-                var args = [].slice.call(arguments, 0);
-                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-                // resolve dependency
-                var func = function(arg){
-                    if(_.isObject(arg) && _.has("sync")){
-                        var uuid = arg.sync;
-                        return core.get(uuid);
-                    }
-                    return arg;
-                };
-
-                var optional_args = _.map(args.pop(), func);
-                var required_args = _.map(args, func);
-
-                required_args.push(optional_args);
-                required_args.unshift(d3.select(g));
-                return func.apply(null, required_args);
-            }
-        );
-    };
-
-    return {
-        register_sheet: register_sheet
-    };
+    core.register_parser(
+        "data",
+        ["data"],
+        {},
+        function(data){
+            return data;
+        }
+    );
 });
 
 /*
@@ -1939,7 +2233,7 @@ define('parser/sheet',[
 define('utils/dataframe',[
     'underscore'  // module
 ],function(_){
-    function Dataframe(name, data){
+    function Dataframe(data){
         this.raw = data;
 
         // detect the nested column (that should be only one)
@@ -2040,7 +2334,648 @@ define('utils/dataframe',[
     return Dataframe;
 });
 
-define('main',['require','exports','module','core','parser/glyph','parser/sheet','utils/dataframe'],function(require, exports, module){
+define('parser/scale',[
+    "underscore",
+    "core",
+    "utils/dataframe"
+], function(_, core, Df){
+    core.register_parser(
+        "df_scale",
+        /* args: {data_id: "uuid", column: "hoge", range: []} */
+        ["data_id", "column", "range"],
+        {},
+        function(data_id, column_name, range){
+            var data = core.get(data_id);
+            var df = new Df(data);
+            return df.scale(column_name, range);
+        }
+    );
+});
+
+define('parser/glyph',[
+    "underscore",
+    "core"
+], function(_, core){
+    /*
+     Thin layer between parser_manager and glyph.
+     */
+    function register_glyph(name, required_args, optional_args, func){
+        required_args.shift();
+
+        core.register_parser(
+            name,
+            required_args,
+            optional_args,
+            function(){
+                var args = [].slice.call(arguments, 0);
+                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+                // resolve dependency
+                var func = function(arg){
+                    if(_.isObject(arg) && _.has("sync")){
+                        var uuid = arg.sync;
+                        return core.get(uuid);
+                    }
+                    return arg;
+                };
+
+                var optional_args = _.map(args.pop(), func);
+                var required_args = _.map(args, func);
+
+                required_args.push(optional_args);
+                required_args.unshift(d3.select(g));
+                return func.apply(null, required_args);
+            }
+        );
+    };
+
+    return {
+        register_glyph: register_glyph
+    };
+});
+
+/*
+ * Scatter: Scatter and Bubble chart
+ *
+ * Scatter chart. This can create bubble chart when specified 'size_by' option.
+ * Tooltip, fill_by, size_by options should be implemented to other charts refering to this chart.
+ *
+ *
+ * options:
+ *    x,y             -> String: column name. both of continuous and descrete data are allowed.
+ *    fill_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    shape_by        -> String: column name. Fill vectors according to this column. (d is allowd.)
+ *    size_by         -> String: column name. Fill vectors according to this column. (c/d are allowd.)
+ *    color           -> Array : Array of String.
+ *    shape           -> Array : Array of String.
+ *                       ['circle','triangle-up', 'diamond', 'square', 'triangle-down', 'cross']
+ *    size            -> Array : Array of Float. specified when creating bubble chart.
+ *    stroke_color    -> String: stroke color.
+ *    stroke_width    -> Float : stroke width.
+ *    hover           -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip-contents-> Array : Array of column name. Used to create tooltip on points when hovering them.
+ *    tooltip         -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
+ *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
+ */
+
+require([
+    'underscore',
+    'parser/glyph'
+],function(_, glyph){
+    glyph.register_glyph(
+        "scatter",
+        ["context", "data", "position"],
+        {
+            color: "steelblue",
+            shape: "circle",
+            size: 100,
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: true
+        },
+        function(context, data, position, options){
+            var shapes = context.selectAll("path").data(data);
+
+            shapes
+                .enter()
+                .append("path")
+                .attr("transform", function(row) {
+                    var d = position(row);
+                    return "translate(" + d.x + "," + d.y + ")"; })
+                .attr("fill", options.color)
+                .attr("stroke", options.stroke_color)
+                .attr("stroke-width", options.stroke_width)
+                .transition().duration(200)
+                .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
+
+            return shapes;
+        }
+    );
+});
+
+define("glyph/scatter", function(){});
+
+define('parser/sheet',[
+    "underscore",
+    "core"
+], function(_, core){
+    /*
+     Thin layer between parser_manager and sheet.
+     */
+    function register_sheet(name, required_args, optional_args, func){
+        required_args.shift();
+
+        core.register_parser(
+            name,
+            required_args,
+            optional_args,
+            function(){
+                var args = [].slice.call(arguments, 0);
+                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+                // resolve dependency
+                var func = function(arg){
+                    if(_.isObject(arg) && _.has("sync")){
+                        var uuid = arg.sync;
+                        return core.get(uuid);
+                    }
+                    return arg;
+                };
+
+                var optional_args = _.map(args.pop(), func);
+                var required_args = _.map(args, func);
+
+                required_args.push(optional_args);
+                required_args.unshift(d3.select(g));
+                return func.apply(null, required_args);
+            }
+        );
+    };
+
+    return {
+        register_sheet: register_sheet
+    };
+});
+
+/*
+ * Axis:
+ *
+ * Axis generates x and y axies for plot. It also controlls grids.
+ * Have a look at documents on d3.svg.axis and d3.behavior.zoom to learn more.
+ *
+ * options (summary) :
+ *    width     -> (Float) : Width of *context area*.
+ *    height    -> (Float) : Height of *context area*.
+ *    margin    -> (Object): Margin outside of context area. used when adding axis labels.
+ *    pane_uuid -> (Float) : Given by pane itself. used to tell update information to Manager.
+ *    z_index   -> (Float) : Given by pane. Usually axis are placed below context and over backgroupd.
+ */
+
+define('sheet/axis',[
+    'underscore',
+    'parser/sheet'
+],function(_, sheet){
+    sheet.register_sheet(
+        "axis2d",
+        ["context", "xscale", "yscale"],
+        {
+            width:0,
+            height:0,
+            margin: {top:0,bottom:0,left:0,right:0},
+            stroke_color:"#fff",
+            stroke_width: 1.0,
+            x_label:'X',
+            y_label:'Y',
+            grid:true,
+            zoom:false,
+            zoom_range:[0.5, 5],
+            rotate_x_label:0,
+            rotate_y_label:0
+        },
+        function(context, xscale, yscale, options){
+            var xAxis = d3.svg.axis()
+                    .scale(xscale)
+                    .orient("bottom");
+
+            var yAxis = d3.svg.axis()
+                    .scale(yscale)
+                    .orient("left");
+
+            var g = context.append("g");
+
+            g.append("g").attr("class", "x_axis");
+            g.append("g").attr("class", "y_axis");
+
+            g.select(".x_axis").call(xAxis);
+            g.select(".y_axis").call(yAxis);
+
+            g.selectAll(".x_axis, .y_axis")
+                .selectAll("path, line")
+                .style("z-index", options.z_index)
+                .style("fill","none")
+                .style("stroke",options.stroke_color)
+                .style("stroke-width",options.stroke_width);
+
+            g.selectAll(".x_axis, .y_axis")
+                .selectAll("text")
+                .attr("fill", "rgb(50,50,50)");
+
+            g.selectAll(".x_axis")
+                .attr("transform", "translate(0," + (options.height + 4) + ")");
+
+            g.selectAll(".y_axis")
+                .attr("transform", "translate(-4,0)");
+            
+            if(options.rotate_y_label != 0){
+                g.selectAll(".y_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_y_label + ")";
+                    });
+            }
+
+            if(options.rotate_x_label != 0){
+                g.selectAll(".x_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_x_label + ")";
+                    });
+            }
+
+            if(options.grid){
+                xAxis.tickSize((-1)*options.height);
+                yAxis.tickSize((-1)*options.width);
+            }
+
+            return g;
+        });
+});
+
+/*
+ * Background
+ */
+
+define('sheet/background',[
+    'parser/sheet'
+], function(sheet){
+    sheet.register_sheet(
+        "background2d",
+        ["context"],
+        {
+            width: 500,
+            height: 500,
+            bg_color: "#eee",
+            stroke_width: 1,
+            stroke: "#666"
+        },
+        function(context, options){
+            var g = context
+                    .append("g")
+                    .attr("class", "background");
+
+            g
+                .append("rect")
+                .attr({
+                    "x" : 0,
+                    "y" : 0,
+                    "width" : options.width,
+                    "height" : options.height,
+                    "fill" : options.bg_color,
+                    "stroke": options.stroke,
+                    "stroke-width": options.stroke_width
+                });
+
+            return g;
+        });
+});
+
+define('sheet/label',[], function(){
+    return {
+        required_args: ["context"],
+        optional_args: {},
+        func: function(context, options){
+            var g = context.append("g");
+
+            g.append("text")
+                .attr("x", options.width/2)
+                .attr("y", options.height + options.margin.bottom/1.5)
+                .attr("text-anchor", "middle")
+                .attr("fill", "rgb(50,50,50)")
+                .attr("font-size", 22)
+                .text(options.x_label);
+
+
+
+            return g;
+        }
+    };
+});
+
+/* 
+ * Return UA information
+ */
+
+define('utils/ua_info',['underscore'], function(_){
+    return (function(){
+        var userAgent = window.navigator.userAgent.toLowerCase();
+        if(userAgent.indexOf('chrome')!=-1)return 'chrome';
+        if(userAgent.indexOf('firefox')!=-1)return 'firefox';
+        else return 'unknown';
+    });
+});
+
+/*
+ * Tooltip:
+ *
+ * Tooltip is an module to generate small tool-tips and rendering them.
+ * Pane generate its instance and keep it. Then each diagrams send requests to it.
+ *
+ * options (summary):
+ *    arrow_width   -> Float : Width of arrow. See diagram below.
+ *    arrow_height  -> Float : Height of arrow.
+ *    tooltip_margin-> Object: Margin inside of tool-tip box.
+ *
+ *    ------
+ *    |_  _ |
+ *      \/     <=== arrow
+ *
+ * example: 
+ *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
+ */
+
+define('sheet/tooltip',[
+    'underscore',
+    'utils/ua_info'
+],function(_, ua){
+    function Tooltip(parent, scales, _options){
+        var options = {
+            bg_color:"#333",
+            stroke_color:"#000",
+            stroke_width:1,
+            text_color:"#fff",
+            context_width:0,
+            context_height:0,
+            context_margin:{top:0,left:0,bottom:0,right:0},
+            arrow_width:10,
+            arrow_height:10,
+            tooltip_margin:{top:2,left:5,bottom:2,right:5},
+            font: "Helvetica, Arial, sans-serif",
+            font_size: "1em"
+        };
+        if(arguments.length>1)_.extend(options, _options);
+        
+        var model=parent.append("g");
+
+        this.scales = scales;
+        this.options = options;
+        this.lists = [];
+        this.model = model;
+
+        return this;
+    }
+
+    // add small tool-tip to context area
+    Tooltip.prototype.add = function(id, x, y, pos, contents){
+        var str = _.map(contents, function(v, k){
+            return String(k) + ":" + String(v);
+        });
+        this.lists.push({id:id, x:x, y:y, pos:pos, contents:str});
+    };
+
+    // add small tool-tip to x-axis
+    Tooltip.prototype.addToXAxis = function(id, x, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            x = Math.round(x*pow10)/pow10;
+        }
+        this.lists.push({id:id, x:x, y:"bottom", pos:'bottom', contents:String(x)});
+    };
+
+    // add small tool-tip to y-axis
+    Tooltip.prototype.addToYAxis = function(id, y, round){
+        if(arguments.length > 2){
+            var pow10 = Math.pow(10, round);
+            y = Math.round(y*pow10)/pow10;
+        }
+        this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
+    };
+
+    // remove all exsistng tool-tips
+    Tooltip.prototype.reset = function(){
+        this.lists = [];
+        this.update();
+    };
+
+    // calcurate position, height and width of tool-tip, then update dom objects
+    Tooltip.prototype.update = function(){
+        var style = this.processData(this.lists);
+        var model = this.model.selectAll("g").data(style);
+        this.updateModels(model);
+    };
+
+    // generate dom objects for new tool-tips, and delete old ones
+    Tooltip.prototype.updateModels = function(model){
+        model.exit().remove();
+        var options = this.options;
+
+        (function(enters, options){
+            var lineFunc = d3.svg.line()
+                    .x(function(d){return d.x;})
+                    .y(function(d){return d.y;})
+                    .interpolate("linear");
+
+            enters.append("path")
+                .attr("d", function(d){return lineFunc(d.shape);})
+                .attr("stroke", options.stroke_color)
+                .attr("fill", options.bg_color);
+            //.atrr("stroke-width", options.stroke_width)
+
+            enters.each(function(){
+                var dom;
+                if(_.isArray(this.__data__.text)){
+                    var texts = this.__data__.text;
+                    var x = this.__data__.text_x;
+                    var y = this.__data__.text_y;
+                    var data = _.map(_.zip(texts, y), function(row){return {text: row[0], y: row[1]};});
+                    dom = d3.select(this)
+                        .append("g")
+                        .selectAll("text")
+                        .data(data)
+                        .enter()
+                        .append("text")
+                        .text(function(d){return d.text;})
+                        .attr("x", function(d){return x;})
+                        .attr("y", function(d){return d.y;});
+                }else{
+                    dom = d3.select(this).append("text")
+                        .text(function(d){return d.text;})
+                        .attr("x", function(d){return d.text_x;})
+                        .attr("y", function(d){return d.text_y;});
+                }
+                dom.attr("text-anchor", "middle")
+                    .attr("fill", "#ffffff")
+                    .attr("font-size",options.font_size)
+                    .style("font-family", options.font);
+
+                // Fix for chrome's Issue 143990
+                // https://code.google.com/p/chromium/issues/detail?colspec=ID20Pri20Feature20Status20Modified20Mstone%20OS&sort=-modified&id=143990
+                switch(ua()){
+                    case 'chrome':
+                    dom.attr("dominant-baseline","middle").attr("baseline-shift","50%");break;
+                    default:
+                    dom.attr("dominant-baseline","text-after-edge");break;
+                }
+            });
+
+            enters.attr("transform",function(d){
+                return "translate(" + d.tip_x + "," + d.tip_y + ")";
+            });
+
+        })(model.enter().append("g"), this.options);
+    };
+
+    // calcurate height and width that are necessary for rendering the tool-tip
+    Tooltip.prototype.processData = function(lists){
+        var options = this.options;
+
+        // calcurate shape and center point of tool-tip
+        var calcPoints = function(pos, width, height){
+            var arr_w = options.arrow_width;
+            var arr_h = options.arrow_height;
+            var tt_w = width;
+            var tt_h = height;
+            var points = {
+                'top':[
+                    {x:0, y:0},{x:arr_w/2, y:-arr_h},
+                    {x:tt_w/2, y:-arr_h},{x:tt_w/2, y:-arr_h-tt_h},
+                    {x:-tt_w/2, y:-arr_h-tt_h},{x:-tt_w/2, y:-arr_h},
+                    {x:-arr_w/2, y:-arr_h},{x:0, y:0}
+                ],
+                'right':[
+                    {x:0, y:0},{x:-arr_w, y:-arr_h/2},
+                    {x:-arr_w, y:-tt_h/2},{x:-arr_w-tt_w, y:-tt_h/2},
+                    {x:-arr_w-tt_w, y:tt_h/2},{x:-arr_w, y:tt_h/2},
+                    {x:-arr_w, y:arr_h/2},{x:0, y:0}
+                ]
+            };
+            points['bottom'] = _.map(points['top'], function(p){return {x:p.x, y:-p.y};});
+            points['left'] = _.map(points['right'], function(p){return {x:-p.x, y:p.y};});
+
+            var center = (function(p){
+                var result={};
+                switch(pos){
+                case 'top': case 'bottom':
+                    result = {x:0, y:(p[2].y+p[3].y)/2};
+                    break;
+                case 'right': case 'left':
+                    result = {x:(p[2].x+p[3].x)/2, y:0};
+                    break;
+                }
+                return result;
+            })(points[pos]);
+
+            return {shape:points[pos], text: center};
+        };
+
+        var margin = this.options.tooltip_margin;
+        var context_height = this.options.context_height;
+        var scales = this.scales;
+        var model = this.model;
+
+        var calcText = function(text, size){
+            var dom = model.append("text").text(text).attr("font-size", size).style("font-family", options.font);
+            var text_width = dom[0][0].getBBox().width;
+            var text_height = dom[0][0].getBBox().height;
+            dom.remove();
+            return {w: text_width, h:text_height};
+        };
+
+        return _.map(lists, function(list){
+            var text_num = (_.isArray(list.contents) ? list.contents.length : 1);
+            var str = (_.isArray(list.contents) ? _.max(list.contents, function(d){return d.length;}) : list.contents);
+
+            var text_size = calcText(str, options.font_size);
+            var tip_width = text_size.w + margin.left + margin.right;
+            var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
+
+            var point = scales.get(list.x, list.y);
+            var tip_x = (list.x == "left" ? 0 : point.x);
+            var tip_y = (list.y == "bottom" ? context_height : point.y);
+
+            var points = calcPoints(list.pos, tip_width, tip_height);
+
+            var text_y;
+            if(_.isArray(list.contents)){
+                var len = list.contents.length;
+                text_y = _.map(list.contents, function(str, i){
+                    return (points.text.y - text_size.h/2*(len-2)) + text_size.h*i;
+                });
+            }else{
+                text_y = points.text.y + text_size.h/2;
+            }
+
+            return {
+                shape: points.shape,
+                tip_x: tip_x,
+                tip_y: tip_y,
+                text_x: points.text.x,
+                text_y: text_y,
+                text: list.contents
+            };
+        });
+    };
+
+    return Tooltip;
+});
+
+require([
+    "underscore",
+    "node-uuid",
+    "core",
+    "parser/sheet"
+], function(_, node_uuid, core, sheet){
+    /*
+     *  parent
+     *       +--clipPath--rect
+     *       |
+     *       +--root
+     *             +--glyph0
+     *             +--glyph1
+     */
+    sheet.register_sheet(
+        "context2d",
+        ["parent", "glyphs"],
+        {
+            width: 500,
+            height: 500
+        },
+        function(parent, glyphs, options){
+            var unique_id = node_uuid.v4() + "clip_context";
+            var g = parent.append("g").attr("class", "context");
+
+            g
+                .attr("clip-path","url(#" + unique_id + ")")
+                .append("clipPath")
+                .attr("id", unique_id)
+                .append("rect")
+                .attr({
+                    "x" : 0,
+                    "y" : 0,
+                    "width" : options.width,
+                    "height" : options.height
+                });
+
+            var root = g.append("g");
+
+            _.each(glyphs, function(uuid){
+                var glyph = core.get(uuid);
+                var raw_g = glyph.node().parentNode;
+                root.node().appendchild(raw_g);
+            });
+        });
+});
+
+define("sheet/context", function(){});
+
+define('main',['require','exports','module','pane','stage2d','parser/data','parser/scale','glyph/scatter','sheet/axis','sheet/background','sheet/label','sheet/tooltip','sheet/context','core','parser/glyph','parser/sheet','utils/dataframe'],function(require, exports, module){
+    require("pane");
+    require("stage2d");
+
+    require("parser/data");
+    require("parser/scale");
+    require("glyph/scatter");
+
+    require("sheet/axis");
+    require("sheet/background");
+    require("sheet/label");
+    require("sheet/tooltip");
+    require("sheet/context");
+
     return {
         core: require('core'),
         glyph_manager: require('parser/glyph'),

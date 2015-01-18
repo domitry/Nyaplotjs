@@ -4,12 +4,12 @@ require([
     "core"
 ], function(_, node_uuid, core){
     core.register_parser(
-        "stage2D",
-        ["parent", "sheets"],
+        "stage2d",
+        ["sheets"],
         {
             margin_x: 10,
             margin_y: 10,
-            with: 500,
+            width: 500,
             height: 500
         },
         /*
@@ -34,13 +34,13 @@ require([
                     .attr("transform", "translate(" + options.margin_x  + "," + options.margin_y + ")")
                     .attr("class", "root");
 
-            var sheets_root = root.appned("g").attr("class", "sheets_root");
+            var sheets_root = root.append("g").attr("class", "sheets_root");
             
             // component: selection of "g" element.
             _.each(sheets, function(uuid){
                 var component = core.get(uuid);
                 var raw_g = component.node();
-                sheets_root.node().appendchild(raw_g);
+                sheets_root.node().appendChild(raw_g);
             });
 
             return svg;

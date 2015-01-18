@@ -35,20 +35,19 @@ define([
      */
     function parse(model){
         // el: {uuid: "", type: "", args: {}}
-        _.extend(history, _.reduce(model, function(memo, task){
-            var parser = parsers_list[task.type].callback;
-            var func = parser.func;
+        _.each(model, function(task){
+            var parser = parsers_list[task.type];
+            var func = parser.callback;
 
             var args = _.map(parser.required_args, function(name){
                 return task.args[name];
             });
 
-            var optional_args = _.extend(parser.optional_args, task);
-            args.push(optional_args);
-            var ret = func.apply(null, args);
+            var optional_args = _.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args)));
 
-            memo[task.uuid] = ret;
-        }, {}));
+            args.push(optional_args);
+            history[task.uuid] = func.apply(null, args);;
+        });
     }
 
     function register_parser(type_name, required_args, optional_args, callback){

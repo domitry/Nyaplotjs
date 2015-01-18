@@ -15,13 +15,13 @@ models = [
   }},
   {type: "df_scale", uuid: "scalex", args: {
     data_id: "data1",
-    column_name: "x"
-    ranges: ["0%", "100%"]
+    column: "x",
+    range: ["0%", "100%"]
   }},
   {type: "df_scale", uuid: "scaley", args: {
-    df_id: "data1",
-    column_name: "y"
-    ranges: [0, 500]
+    data_id: "data1",
+    column: "y",
+    range: [0, 500]
   }},
   {type: "scatter", uuid: "scatter1", args: {
     x: {sync: "scalex"},
@@ -46,10 +46,12 @@ models = [
   }},
   {type: "pane", uuid: "pane", args: {
     "parent_id":"vis",
-    "layout" {type: "rows", contents: [{"sync": "stage1"}]}:
+    "layout": {type: "rows", contents: [{"sync": "stage"}]}
   }}
 ];
-window.onload = function(){Nyaplot.core.parse(models);};
+window.onload = function(){
+  Nyaplot.core.parse(models);
+ };
 </script>
 </body>
 </html>

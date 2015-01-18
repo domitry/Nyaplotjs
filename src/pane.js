@@ -50,8 +50,11 @@ require([
                             parse_layout(child, next_model);
                         });
                         break;
+                    default:
+                        return;
                     }
                 }
+                return;
             };
 
             parse_layout(parent, layout);

@@ -1,4 +1,4 @@
-require( [
+define( [
     "underscore",
     "core"
 ], function(_, core){

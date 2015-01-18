@@ -8,7 +8,7 @@
 define([
     'underscore'  // module
 ],function(_){
-    function Dataframe(name, data){
+    function Dataframe(data){
         this.raw = data;
 
         // detect the nested column (that should be only one)
