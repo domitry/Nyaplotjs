@@ -1808,17 +1808,28 @@ define('core',[
     function parse(model){
         // el: {uuid: "", type: "", args: {}}
         _.each(model, function(task){
+            function resolve_sync(arg){
+                if(_.isObject(arg) && _.has(arg, "sync")){
+                    var uuid = arg.sync;
+                    return get(uuid);
+                }
+                return arg;
+            }
+
             var parser = parsers_list[task.type];
             var func = parser.callback;
 
             var args = _.map(parser.required_args, function(name){
-                return task.args[name];
+                return resolve_sync(task.args[name]);
             });
 
-            var optional_args = _.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args)));
+            var optional_args = _.reduce(_.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args))), function(memo, v, k){
+                memo[k] = resolve_sync(v);
+                return memo;
+            }, {});
 
             args.push(optional_args);
-            history[task.uuid] = func.apply(null, args);;
+            history[task.uuid] = func.apply(null, args);
         });
     }
 
@@ -2099,8 +2110,7 @@ define('parser/stage2d',[
         "stage2d",
         ["sheets"],
         {
-            margin_x: 10,
-            margin_y: 10,
+            margin: {x: 40, y: 10},
             width: 500,
             height: 500
         },
@@ -2120,10 +2130,14 @@ define('parser/stage2d',[
          * Other components (e.g. axis, background...) are appended to root_layer0.
          */
         function(sheets, options){
-            var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+            var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"))
+                    .style({
+                        width: options.width,
+                        height: options.height
+                    });
 
             var root = svg.append("g")
-                    .attr("transform", "translate(" + options.margin_x  + "," + options.margin_y + ")")
+                    .attr("transform", "translate(" + options.margin.x  + "," + options.margin.y + ")")
                     .attr("class", "root");
 
             var sheets_root = root.append("g").attr("class", "sheets_root");
@@ -2387,7 +2401,7 @@ define('glyph',[
     /*
      Thin layer between parser_manager and glyph.
      */
-    function register_glyph(name, required_args, optional_args, func){
+    function register_glyph(name, required_args, optional_args, callback){
         required_args.shift();
 
         core.register_parser(
@@ -2396,23 +2410,10 @@ define('glyph',[
             optional_args,
             function(){
                 var args = [].slice.call(arguments, 0);
-                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                var g = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
 
-                // resolve dependency
-                var func = function(arg){
-                    if(_.isObject(arg) && _.has("sync")){
-                        var uuid = arg.sync;
-                        return core.get(uuid);
-                    }
-                    return arg;
-                };
-
-                var optional_args = _.map(args.pop(), func);
-                var required_args = _.map(args, func);
-
-                required_args.push(optional_args);
-                required_args.unshift(d3.select(g));
-                return func.apply(null, required_args);
+                args.unshift(g);
+                return callback.apply(null, args);
             }
         );
     };
@@ -2504,7 +2505,7 @@ define('sheet',[
     /*
      Thin layer between parser_manager and sheet.
      */
-    function register_sheet(name, required_args, optional_args, func){
+    function register_sheet(name, required_args, optional_args, callback){
         required_args.shift();
 
         core.register_parser(
@@ -2513,23 +2514,11 @@ define('sheet',[
             optional_args,
             function(){
                 var args = [].slice.call(arguments, 0);
-                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                var g = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
 
-                // resolve dependency
-                var func = function(arg){
-                    if(_.isObject(arg) && _.has("sync")){
-                        var uuid = arg.sync;
-                        return core.get(uuid);
-                    }
-                    return arg;
-                };
-
-                var optional_args = _.map(args.pop(), func);
-                var required_args = _.map(args, func);
-
-                required_args.push(optional_args);
-                required_args.unshift(d3.select(g));
-                return func.apply(null, required_args);
+                args.unshift(g);
+                callback.apply(null, args);
+                return g;
             }
         );
     };
@@ -2558,22 +2547,14 @@ define('sheet/axis',[
 ],function(_){
     return [
         "axis2d",
-        ["context", "xscale", "yscale"],
+        ["context", "xscale", "yscale", "width", "height"],
         {
-            width:0,
-            height:0,
             margin: {top:0,bottom:0,left:0,right:0},
             stroke_color:"#fff",
             stroke_width: 1.0,
-            x_label:'X',
-            y_label:'Y',
-            grid:true,
-            zoom:false,
-            zoom_range:[0.5, 5],
-            rotate_x_label:0,
-            rotate_y_label:0
+            grid:true
         },
-        function(context, xscale, yscale, options){
+        function(context, xscale, yscale, width, height, options){
             var xAxis = d3.svg.axis()
                     .scale(xscale)
                     .orient("bottom");
@@ -2587,12 +2568,16 @@ define('sheet/axis',[
             g.append("g").attr("class", "x_axis");
             g.append("g").attr("class", "y_axis");
 
+            if(options.grid){
+                xAxis.tickSize((-1)*height);
+                yAxis.tickSize((-1)*width);
+            }
+
             g.select(".x_axis").call(xAxis);
             g.select(".y_axis").call(yAxis);
 
             g.selectAll(".x_axis, .y_axis")
                 .selectAll("path, line")
-                .style("z-index", options.z_index)
                 .style("fill","none")
                 .style("stroke",options.stroke_color)
                 .style("stroke-width",options.stroke_width);
@@ -2602,33 +2587,10 @@ define('sheet/axis',[
                 .attr("fill", "rgb(50,50,50)");
 
             g.selectAll(".x_axis")
-                .attr("transform", "translate(0," + (options.height + 4) + ")");
+                .attr("transform", "translate(0," + (height + 4) + ")");
 
             g.selectAll(".y_axis")
                 .attr("transform", "translate(-4,0)");
-            
-            if(options.rotate_y_label != 0){
-                g.selectAll(".y_axis")
-                    .selectAll("text")
-                    .style("text-anchor", "end")
-                    .attr("transform", function(d) {
-                        return "rotate(" + options.rotate_y_label + ")";
-                    });
-            }
-
-            if(options.rotate_x_label != 0){
-                g.selectAll(".x_axis")
-                    .selectAll("text")
-                    .style("text-anchor", "end")
-                    .attr("transform", function(d) {
-                        return "rotate(" + options.rotate_x_label + ")";
-                    });
-            }
-
-            if(options.grid){
-                xAxis.tickSize((-1)*options.height);
-                yAxis.tickSize((-1)*options.width);
-            }
 
             return g;
         }
@@ -2643,15 +2605,13 @@ define('sheet/background',[
 ], function(){
     return [
         "background2d",
-        ["context"],
+        ["context", "width", "height"],
         {
-            width: 500,
-            height: 500,
             bg_color: "#eee",
             stroke_width: 1,
             stroke: "#666"
         },
-        function(context, options){
+        function(context, width, height, options){
             var g = context
                     .append("g")
                     .attr("class", "background");
@@ -2661,8 +2621,8 @@ define('sheet/background',[
                 .attr({
                     "x" : 0,
                     "y" : 0,
-                    "width" : options.width,
-                    "height" : options.height,
+                    "width" : width,
+                    "height" : height,
                     "fill" : options.bg_color,
                     "stroke": options.stroke,
                     "stroke-width": options.stroke_width
@@ -2676,9 +2636,13 @@ define('sheet/background',[
 define('sheet/label',[], function(){
     return [
         "label",
-        ["context"],
-        {},
-        function(context, options){
+        ["context", "x", "y"],
+        {
+            margin: {top:0,bottom:0,left:0,right:0},
+            rotate_x: 0,
+            rotate_y: 0
+        },
+        function(context, x_label, y_label, options){
             var g = context.append("g");
 
             g.append("text")
@@ -2687,7 +2651,34 @@ define('sheet/label',[], function(){
                 .attr("text-anchor", "middle")
                 .attr("fill", "rgb(50,50,50)")
                 .attr("font-size", 22)
-                .text(options.x_label);
+                .text(x_label);
+
+            g.append("text")
+                .attr("x", -options.margin.left/1.5)
+                .attr("y", options.height/2)
+                .attr("text-anchor", "middle")
+                .attr("fill", "rgb(50,50,50)")
+                .attr("font-size", 22)
+                .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + options.height/2 + ")")
+                .text(y_label);
+
+            if(options.rotate_y != 0){
+                g.selectAll(".y_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_y + ")";
+                    });
+            }
+
+            if(options.rotate_x != 0){
+                g.selectAll(".x_axis")
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", function(d) {
+                        return "rotate(" + options.rotate_x + ")";
+                    });
+            }
 
             return g;
         }
@@ -2735,7 +2726,7 @@ define('sheet/context',[
             _.each(glyphs, function(uuid){
                 var glyph = core.get(uuid);
                 var raw_g = glyph.node().parentNode;
-                root.node().appendchild(raw_g);
+                root.node().appendChild(raw_g);
             });
         }
     ];
