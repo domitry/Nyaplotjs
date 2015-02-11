@@ -19,40 +19,29 @@
 define([
     'underscore'
 ],function(_){
-    // pre-process data like: x: [1,3,..,3], y: [2,3,..,4] -> [{x: 1, y: 2}, ... ,{}]
-    var processData = function(x_arr, y_arr, options){
-        var df = df, length = x_arr.length;
-        return _.map(_.zip(x_arr, y_arr), function(d){return {x:d[0], y:d[1]};});
-    };
-
-    return function(context, scales, df, _options){
-        var options = {
-            title: 'line',
-            x: null,
-            y: null,
+    return [
+        "line",
+        ["context", "data", "x", "y", "position"],
+        {
             color:'steelblue',
-            fill_by : null,
-            stroke_width: 2,
-            legend: true
-        };
-        if(arguments.length>3)_.extend(options, _options);
+            stroke_width: 2
+        },
+        function(context, data, x, y, position, options){
+            var path = context
+                    .append("path")
+                    .datum(data);
 
-        var data = processData(df.column(options.x), df.column(options.y), options);
+            var line = d3.svg.line()
+                    .x(function(d){return position(d[x], d[y]).x;})
+                    .y(function(d){return position(d[x], d[y]).y;});
 
-        var path = context
-                .append("path")
-                .datum(data);
+            path
+                .attr("d", line)
+                .attr("stroke", options.color)
+                .attr("stroke-width", options.stroke_width)
+                .attr("fill", "none");
 
-        var line = d3.svg.line()
-                .x(function(d){return scales.get(d.x, d.y).x;})
-                .y(function(d){return scales.get(d.x, d.y).y;});
-
-        path
-            .attr("d", line)
-            .attr("stroke", options.color)
-            .attr("stroke-width", options.stroke_width)
-            .attr("fill", "none");
-
-        return path;
-    };
+            return path;
+        }
+    ];
 });
