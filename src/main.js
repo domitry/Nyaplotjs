@@ -1,6 +1,7 @@
 define(function(require, exports, module){
-    var init = require("init");
-    init();
+    (require("parser/init"))();
+    (require("glyph/init"))();
+    (require("sheet/init"))();
 
     return {
         core: require('core'),
