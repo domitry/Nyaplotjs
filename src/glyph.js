@@ -5,7 +5,7 @@ define([
     /*
      Thin layer between parser_manager and glyph.
      */
-    function register_glyph(name, required_args, optional_args, func){
+    function register_glyph(name, required_args, optional_args, callback){
         required_args.shift();
 
         core.register_parser(
@@ -30,7 +30,7 @@ define([
 
                 required_args.push(optional_args);
                 required_args.unshift(d3.select(g));
-                return func.apply(null, required_args);
+                return callback.apply(null, required_args);
             }
         );
     };
