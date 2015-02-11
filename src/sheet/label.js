@@ -27,23 +27,21 @@ define([], function(){
                 .attr("transform", "rotate(-90," + -options.margin.left/1.5 + ',' + height/2 + ")")
                 .text(y_label);
 
-            if(options.rotate_y != 0){
+            if(options.rotate_y != 0)
                 g.selectAll(".y_axis")
                     .selectAll("text")
                     .style("text-anchor", "end")
                     .attr("transform", function(d) {
                         return "rotate(" + options.rotate_y + ")";
                     });
-            }
 
-            if(options.rotate_x != 0){
+            if(options.rotate_x != 0)
                 g.selectAll(".x_axis")
                     .selectAll("text")
                     .style("text-anchor", "end")
                     .attr("transform", function(d) {
                         return "rotate(" + options.rotate_x + ")";
                     });
-            }
 
             return g;
         }
