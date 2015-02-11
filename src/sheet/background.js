@@ -6,15 +6,13 @@ define([
 ], function(){
     return [
         "background2d",
-        ["context"],
+        ["context", "width", "height"],
         {
-            width: 500,
-            height: 500,
             bg_color: "#eee",
             stroke_width: 1,
             stroke: "#666"
         },
-        function(context, options){
+        function(context, width, height, options){
             var g = context
                     .append("g")
                     .attr("class", "background");
@@ -24,8 +22,8 @@ define([
                 .attr({
                     "x" : 0,
                     "y" : 0,
-                    "width" : options.width,
-                    "height" : options.height,
+                    "width" : width,
+                    "height" : height,
                     "fill" : options.bg_color,
                     "stroke": options.stroke,
                     "stroke-width": options.stroke_width
