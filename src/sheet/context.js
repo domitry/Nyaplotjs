@@ -39,7 +39,7 @@ define([
             _.each(glyphs, function(uuid){
                 var glyph = core.get(uuid);
                 var raw_g = glyph.node().parentNode;
-                root.node().appendchild(raw_g);
+                root.node().appendChild(raw_g);
             });
         }
     ];
