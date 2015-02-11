@@ -36,17 +36,28 @@ define([
     function parse(model){
         // el: {uuid: "", type: "", args: {}}
         _.each(model, function(task){
+            function resolve_sync(arg){
+                if(_.isObject(arg) && _.has(arg, "sync")){
+                    var uuid = arg.sync;
+                    return get(uuid);
+                }
+                return arg;
+            }
+
             var parser = parsers_list[task.type];
             var func = parser.callback;
 
             var args = _.map(parser.required_args, function(name){
-                return task.args[name];
+                return resolve_sync(task.args[name]);
             });
 
-            var optional_args = _.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args)));
+            var optional_args = _.reduce(_.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args))), function(memo, v, k){
+                memo[k] = resolve_sync(v);
+                return memo;
+            }, {});
 
             args.push(optional_args);
-            history[task.uuid] = func.apply(null, args);;
+            history[task.uuid] = func.apply(null, args);
         });
     }
 

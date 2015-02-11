@@ -14,23 +14,11 @@ define([
             optional_args,
             function(){
                 var args = [].slice.call(arguments, 0);
-                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                var g = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
 
-                // resolve dependency
-                var func = function(arg){
-                    if(_.isObject(arg) && _.has(arg, "sync")){
-                        var uuid = arg.sync;
-                        return core.get(uuid);
-                    }
-                    return arg;
-                };
-
-                var optional_args = _.map(args.pop(), func);
-                var required_args = _.map(args, func);
-
-                required_args.push(optional_args);
-                required_args.unshift(d3.select(g));
-                return callback.apply(null, required_args);
+                args.unshift(g);
+                callback.apply(null, args);
+                return g;
             }
         );
     };
