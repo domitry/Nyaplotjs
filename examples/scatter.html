@@ -13,42 +13,51 @@ models = [
   {type: "data", uuid: "data1", args: {
     data: data1
   }},
-  {type: "df_scale", uuid: "scalex", args: {
+  {type: "df_scale", uuid: "xscale", args: {
     data_id: "data1",
     column: "x",
-    range: ["0%", "100%"]
+    range: [0, 500]
   }},
-  {type: "df_scale", uuid: "scaley", args: {
+  {type: "df_scale", uuid: "yscale", args: {
     data_id: "data1",
     column: "y",
     range: [0, 500]
   }},
   {type: "position2d", uuid: "position", args: {
-    x: "scalex",
-    y: "scaley"
+    x: {sync: "xscale"},
+    y: {sync: "yscale"}
   }},
   {type: "scatter", uuid: "scatter1", args: {
-    data: "data1",
+    data: {sync: "data1"},
     x: "x",
     y: "y",
-    position: "position",
-    
+    position: {sync: "position"}
   }},
   {type: "axis2d", uuid: "axis", args: {
-    scalex: {sync: "scalex"},
-    scaley: {sync: "scaley"},
+    xscale: {sync: "xscale"},
+    yscale: {sync: "yscale"},
+    width: 500,
+    height: 500
+  }},
+  {type: "label", uuid: "label", args: {
+    x: "hogehoge",
+    y: "nyanya",
+    width: 500,
+    height: 500,
+    margin: {bottom: 70, left: 60}
   }},
   {type: "background2d", uuid: "background", args: {
     width: 500,
     height: 500
   }},
   {type: "context2d", uuid: "context", args: {
-    glyph: ["scatter"]
+    glyphs: ["scatter1"]
   }},
   {type: "stage2d", uuid: "stage", args: {
-    sheets: ["background", "axis", "context"],
-    width: 500,
-    height: 500,
+    sheets: ["background", "axis", "context", "label"],
+    width: 700,
+    height: 700,
+    margin: {x: 60, y: 10},
     zoom:true
   }},
   {type: "pane", uuid: "pane", args: {
