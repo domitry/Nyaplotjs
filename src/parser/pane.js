@@ -2,11 +2,11 @@
  * Pane: 
  */
 
-require([
+define([
     'underscore',
     'core'
 ],function(_, core){
-    core.register_parser(
+    return [
         "pane",
         ["parent_id", "layout"],
         {
@@ -59,5 +59,5 @@ require([
 
             parse_layout(parent, layout);
         }
-    );
+    ];
 });

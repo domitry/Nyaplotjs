@@ -3,7 +3,7 @@ define([
     "core",
     "utils/dataframe"
 ], function(_, core, Df){
-    core.register_parser(
+    return [
         "df_scale",
         /* args: {data_id: "uuid", column: "hoge", range: []} */
         ["data_id", "column", "range"],
@@ -13,5 +13,5 @@ define([
             var df = new Df(data);
             return df.scale(column_name, range);
         }
-    );
+    ];
 });

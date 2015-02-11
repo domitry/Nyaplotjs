@@ -13,10 +13,9 @@
  */
 
 define([
-    'underscore',
-    'parser/sheet'
-],function(_, sheet){
-    sheet.register_sheet(
+    'underscore'
+],function(_){
+    return [
         "axis2d",
         ["context", "xscale", "yscale"],
         {
@@ -91,5 +90,6 @@ define([
             }
 
             return g;
-        });
+        }
+    ];
 });

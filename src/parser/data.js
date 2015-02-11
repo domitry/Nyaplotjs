@@ -1,13 +1,11 @@
 define( [
-    "underscore",
-    "core"
-], function(_, core){
-    core.register_parser(
+], function(){
+    return [
         "data",
         ["data"],
         {},
-        function(data){
+        function(data, options){
             return data;
         }
-    );
+    ];
 });

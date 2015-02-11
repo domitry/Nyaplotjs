@@ -1,9 +1,8 @@
-require([
+define([
     "underscore",
     "node-uuid",
-    "core",
-    "parser/sheet"
-], function(_, node_uuid, core, sheet){
+    "core"
+], function(_, node_uuid, core){
     /*
      *  parent
      *       +--clipPath--rect
@@ -12,7 +11,7 @@ require([
      *             +--glyph0
      *             +--glyph1
      */
-    sheet.register_sheet(
+    return [
         "context2d",
         ["parent", "glyphs"],
         {
@@ -42,5 +41,6 @@ require([
                 var raw_g = glyph.node().parentNode;
                 root.node().appendchild(raw_g);
             });
-        });
+        }
+    ];
 });

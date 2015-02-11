@@ -23,9 +23,16 @@ models = [
     column: "y",
     range: [0, 500]
   }},
+  {type: "position2d", uuid: "position", args: {
+    x: "scalex",
+    y: "scaley"
+  }},
   {type: "scatter", uuid: "scatter1", args: {
-    x: {sync: "scalex"},
-    y: {sync: "scaley"},
+    data: "data1",
+    x: "x",
+    y: "y",
+    position: "position",
+    
   }},
   {type: "axis2d", uuid: "axis", args: {
     scalex: {sync: "scalex"},

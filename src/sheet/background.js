@@ -3,9 +3,8 @@
  */
 
 define([
-    'parser/sheet'
-], function(sheet){
-    sheet.register_sheet(
+], function(){
+    return [
         "background2d",
         ["context"],
         {
@@ -33,5 +32,6 @@ define([
                 });
 
             return g;
-        });
+        }
+    ];
 });

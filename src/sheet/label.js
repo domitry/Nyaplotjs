@@ -1,8 +1,9 @@
 define([], function(){
-    return {
-        required_args: ["context"],
-        optional_args: {},
-        func: function(context, options){
+    return [
+        "label",
+        ["context"],
+        {},
+        function(context, options){
             var g = context.append("g");
 
             g.append("text")
@@ -13,9 +14,7 @@ define([], function(){
                 .attr("font-size", 22)
                 .text(options.x_label);
 
-
-
             return g;
         }
-    };
+    ];
 });

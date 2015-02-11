@@ -1,9 +1,9 @@
-require([
+define([
     "underscore",
     "node-uuid",
     "core"
 ], function(_, node_uuid, core){
-    core.register_parser(
+    return [
         "stage2d",
         ["sheets"],
         {
@@ -45,5 +45,5 @@ require([
 
             return svg;
         }
-    );
+    ];
 });

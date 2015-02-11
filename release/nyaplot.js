@@ -1820,7 +1820,6 @@ define('core',[
             args.push(optional_args);
             history[task.uuid] = func.apply(null, args);;
         });
-        console.log("hogehoge");
     }
 
     function register_parser(type_name, required_args, optional_args, callback){
@@ -1844,72 +1843,6 @@ define('core',[
         get: get
     };
 });
-
-/*
- * Pane: 
- */
-
-require([
-    'underscore',
-    'core'
-],function(_, core){
-    core.register_parser(
-        "pane",
-        ["parent_id", "layout"],
-        {
-        },
-        /*
-         layout: 
-         e.g.
-             layout: {type: "rows", contents: [{sync: "uuid-of-stage"}]}
-             or
-             layout:{type: "columns", contents: [{type: "rows", contents: []}, {}]}
-         */
-        function(parent_id, layout, options){
-            var parent = d3.select("#" + parent_id);
-
-            var parse_layout = function(parent, model){
-                if(!_.has(model, "type")){
-                    // svg should be d3.selection
-                    var svg = core.get(model.sync);
-                    parent.node().appendChild(svg.node());
-                    return;
-                }else{
-                    switch(model.type){
-                    case "columns":
-                        var columns_root = parent
-                            .append("div")
-                            .style({
-                                "display" : "table"
-                            });
-
-                        _.each(model.contents, function(next_model){
-                            var child = columns_root.append("div")
-                                    .style("display", "table-cell");
-                            parse_layout(child, next_model);
-                        });
-                        break;
-                    case "rows":
-                        var rows_root = parent.append("div");
-
-                        _.each(model.contents, function(next_model){
-                            var child = rows_root.append("div");
-                            parse_layout(child, next_model);
-                        });
-                        break;
-                    default:
-                        return;
-                    }
-                }
-                return;
-            };
-
-            parse_layout(parent, layout);
-        }
-    );
-});
-
-define("pane", function(){});
 
 //     uuid.js
 //
@@ -2157,12 +2090,12 @@ define("pane", function(){});
   }
 }).call(this);
 
-require([
+define('parser/stage2d',[
     "underscore",
     "node-uuid",
     "core"
 ], function(_, node_uuid, core){
-    core.register_parser(
+    return [
         "stage2d",
         ["sheets"],
         {
@@ -2204,23 +2137,7 @@ require([
 
             return svg;
         }
-    );
-});
-
-define("stage2d", function(){});
-
-define( 'parser/data',[
-    "underscore",
-    "core"
-], function(_, core){
-    core.register_parser(
-        "data",
-        ["data"],
-        {},
-        function(data){
-            return data;
-        }
-    );
+    ];
 });
 
 /*
@@ -2339,7 +2256,7 @@ define('parser/scale',[
     "core",
     "utils/dataframe"
 ], function(_, core, Df){
-    core.register_parser(
+    return [
         "df_scale",
         /* args: {data_id: "uuid", column: "hoge", range: []} */
         ["data_id", "column", "range"],
@@ -2349,10 +2266,121 @@ define('parser/scale',[
             var df = new Df(data);
             return df.scale(column_name, range);
         }
-    );
+    ];
 });
 
-define('parser/glyph',[
+define('parser/position',[
+    "underscore"
+], function(_){
+    return [
+        "position2d",
+        ["x", "y"],
+        {},
+        function(x_scale, y_scale){
+            return function(x, y){
+                return {
+                    x: x_scale(x),
+                    y: y_scale(y)
+                };
+            };
+        }
+    ];
+});
+
+/*
+ * Pane: 
+ */
+
+define('parser/pane',[
+    'underscore',
+    'core'
+],function(_, core){
+    return [
+        "pane",
+        ["parent_id", "layout"],
+        {
+        },
+        /*
+         layout: 
+         e.g.
+             layout: {type: "rows", contents: [{sync: "uuid-of-stage"}]}
+             or
+             layout:{type: "columns", contents: [{type: "rows", contents: []}, {}]}
+         */
+        function(parent_id, layout, options){
+            var parent = d3.select("#" + parent_id);
+
+            var parse_layout = function(parent, model){
+                if(!_.has(model, "type")){
+                    // svg should be d3.selection
+                    var svg = core.get(model.sync);
+                    parent.node().appendChild(svg.node());
+                    return;
+                }else{
+                    switch(model.type){
+                    case "columns":
+                        var columns_root = parent
+                            .append("div")
+                            .style({
+                                "display" : "table"
+                            });
+
+                        _.each(model.contents, function(next_model){
+                            var child = columns_root.append("div")
+                                    .style("display", "table-cell");
+                            parse_layout(child, next_model);
+                        });
+                        break;
+                    case "rows":
+                        var rows_root = parent.append("div");
+
+                        _.each(model.contents, function(next_model){
+                            var child = rows_root.append("div");
+                            parse_layout(child, next_model);
+                        });
+                        break;
+                    default:
+                        return;
+                    }
+                }
+                return;
+            };
+
+            parse_layout(parent, layout);
+        }
+    ];
+});
+
+define( 'parser/data',[
+], function(){
+    return [
+        "data",
+        ["data"],
+        {},
+        function(data, options){
+            return data;
+        }
+    ];
+});
+
+define('parser/init',[
+    "underscore",
+    "core",
+    "parser/stage2d",
+    "parser/scale",
+    "parser/position",
+    "parser/pane",
+    "parser/data"
+], function(_, core){
+    var args = [].slice.call(arguments, 2);
+    return function(){
+        _.each(args, function(arg){
+            core.register_parser.apply(core, arg);
+        });
+    };
+});
+
+define('glyph',[
     "underscore",
     "core"
 ], function(_, core){
@@ -2421,13 +2449,12 @@ define('parser/glyph',[
  *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
  */
 
-require([
-    'underscore',
-    'parser/glyph'
-],function(_, glyph){
-    glyph.register_glyph(
+define('glyph/scatter',[
+    'underscore'
+],function(_){
+    return [
         "scatter",
-        ["context", "data", "position"],
+        ["context", "data", "x", "y", "position"],
         {
             color: "steelblue",
             shape: "circle",
@@ -2436,14 +2463,14 @@ require([
             stroke_width: 1,
             hover: true
         },
-        function(context, data, position, options){
+        function(context, data, x, y, position, options){
             var shapes = context.selectAll("path").data(data);
 
             shapes
                 .enter()
                 .append("path")
                 .attr("transform", function(row) {
-                    var d = position(row);
+                    var d = position(row[x], row[y]);
                     return "translate(" + d.x + "," + d.y + ")"; })
                 .attr("fill", options.color)
                 .attr("stroke", options.stroke_color)
@@ -2453,12 +2480,24 @@ require([
 
             return shapes;
         }
-    );
+    ];
 });
 
-define("glyph/scatter", function(){});
+define('glyph/init',[
+    'underscore',
+    'glyph',
+    'glyph/scatter'
+], function(_, glyph, scatter){
+    var args = [scatter];
 
-define('parser/sheet',[
+    return function(){
+        _.each(args, function(arg){
+            glyph.register_glyph.apply(glyph, arg);
+        });
+    };
+});
+
+define('sheet',[
     "underscore",
     "core"
 ], function(_, core){
@@ -2515,10 +2554,9 @@ define('parser/sheet',[
  */
 
 define('sheet/axis',[
-    'underscore',
-    'parser/sheet'
-],function(_, sheet){
-    sheet.register_sheet(
+    'underscore'
+],function(_){
+    return [
         "axis2d",
         ["context", "xscale", "yscale"],
         {
@@ -2593,7 +2631,8 @@ define('sheet/axis',[
             }
 
             return g;
-        });
+        }
+    ];
 });
 
 /*
@@ -2601,9 +2640,8 @@ define('sheet/axis',[
  */
 
 define('sheet/background',[
-    'parser/sheet'
-], function(sheet){
-    sheet.register_sheet(
+], function(){
+    return [
         "background2d",
         ["context"],
         {
@@ -2631,14 +2669,16 @@ define('sheet/background',[
                 });
 
             return g;
-        });
+        }
+    ];
 });
 
 define('sheet/label',[], function(){
-    return {
-        required_args: ["context"],
-        optional_args: {},
-        func: function(context, options){
+    return [
+        "label",
+        ["context"],
+        {},
+        function(context, options){
             var g = context.append("g");
 
             g.append("text")
@@ -2649,276 +2689,16 @@ define('sheet/label',[], function(){
                 .attr("font-size", 22)
                 .text(options.x_label);
 
-
-
             return g;
         }
-    };
+    ];
 });
 
-/* 
- * Return UA information
- */
-
-define('utils/ua_info',['underscore'], function(_){
-    return (function(){
-        var userAgent = window.navigator.userAgent.toLowerCase();
-        if(userAgent.indexOf('chrome')!=-1)return 'chrome';
-        if(userAgent.indexOf('firefox')!=-1)return 'firefox';
-        else return 'unknown';
-    });
-});
-
-/*
- * Tooltip:
- *
- * Tooltip is an module to generate small tool-tips and rendering them.
- * Pane generate its instance and keep it. Then each diagrams send requests to it.
- *
- * options (summary):
- *    arrow_width   -> Float : Width of arrow. See diagram below.
- *    arrow_height  -> Float : Height of arrow.
- *    tooltip_margin-> Object: Margin inside of tool-tip box.
- *
- *    ------
- *    |_  _ |
- *      \/     <=== arrow
- *
- * example: 
- *    http://bl.ocks.org/domitry/78e2a3300f2f27e18cc8
- */
-
-define('sheet/tooltip',[
-    'underscore',
-    'utils/ua_info'
-],function(_, ua){
-    function Tooltip(parent, scales, _options){
-        var options = {
-            bg_color:"#333",
-            stroke_color:"#000",
-            stroke_width:1,
-            text_color:"#fff",
-            context_width:0,
-            context_height:0,
-            context_margin:{top:0,left:0,bottom:0,right:0},
-            arrow_width:10,
-            arrow_height:10,
-            tooltip_margin:{top:2,left:5,bottom:2,right:5},
-            font: "Helvetica, Arial, sans-serif",
-            font_size: "1em"
-        };
-        if(arguments.length>1)_.extend(options, _options);
-        
-        var model=parent.append("g");
-
-        this.scales = scales;
-        this.options = options;
-        this.lists = [];
-        this.model = model;
-
-        return this;
-    }
-
-    // add small tool-tip to context area
-    Tooltip.prototype.add = function(id, x, y, pos, contents){
-        var str = _.map(contents, function(v, k){
-            return String(k) + ":" + String(v);
-        });
-        this.lists.push({id:id, x:x, y:y, pos:pos, contents:str});
-    };
-
-    // add small tool-tip to x-axis
-    Tooltip.prototype.addToXAxis = function(id, x, round){
-        if(arguments.length > 2){
-            var pow10 = Math.pow(10, round);
-            x = Math.round(x*pow10)/pow10;
-        }
-        this.lists.push({id:id, x:x, y:"bottom", pos:'bottom', contents:String(x)});
-    };
-
-    // add small tool-tip to y-axis
-    Tooltip.prototype.addToYAxis = function(id, y, round){
-        if(arguments.length > 2){
-            var pow10 = Math.pow(10, round);
-            y = Math.round(y*pow10)/pow10;
-        }
-        this.lists.push({id:id, x:"left", y:y, pos:'right', contents:String(y)});
-    };
-
-    // remove all exsistng tool-tips
-    Tooltip.prototype.reset = function(){
-        this.lists = [];
-        this.update();
-    };
-
-    // calcurate position, height and width of tool-tip, then update dom objects
-    Tooltip.prototype.update = function(){
-        var style = this.processData(this.lists);
-        var model = this.model.selectAll("g").data(style);
-        this.updateModels(model);
-    };
-
-    // generate dom objects for new tool-tips, and delete old ones
-    Tooltip.prototype.updateModels = function(model){
-        model.exit().remove();
-        var options = this.options;
-
-        (function(enters, options){
-            var lineFunc = d3.svg.line()
-                    .x(function(d){return d.x;})
-                    .y(function(d){return d.y;})
-                    .interpolate("linear");
-
-            enters.append("path")
-                .attr("d", function(d){return lineFunc(d.shape);})
-                .attr("stroke", options.stroke_color)
-                .attr("fill", options.bg_color);
-            //.atrr("stroke-width", options.stroke_width)
-
-            enters.each(function(){
-                var dom;
-                if(_.isArray(this.__data__.text)){
-                    var texts = this.__data__.text;
-                    var x = this.__data__.text_x;
-                    var y = this.__data__.text_y;
-                    var data = _.map(_.zip(texts, y), function(row){return {text: row[0], y: row[1]};});
-                    dom = d3.select(this)
-                        .append("g")
-                        .selectAll("text")
-                        .data(data)
-                        .enter()
-                        .append("text")
-                        .text(function(d){return d.text;})
-                        .attr("x", function(d){return x;})
-                        .attr("y", function(d){return d.y;});
-                }else{
-                    dom = d3.select(this).append("text")
-                        .text(function(d){return d.text;})
-                        .attr("x", function(d){return d.text_x;})
-                        .attr("y", function(d){return d.text_y;});
-                }
-                dom.attr("text-anchor", "middle")
-                    .attr("fill", "#ffffff")
-                    .attr("font-size",options.font_size)
-                    .style("font-family", options.font);
-
-                // Fix for chrome's Issue 143990
-                // https://code.google.com/p/chromium/issues/detail?colspec=ID20Pri20Feature20Status20Modified20Mstone%20OS&sort=-modified&id=143990
-                switch(ua()){
-                    case 'chrome':
-                    dom.attr("dominant-baseline","middle").attr("baseline-shift","50%");break;
-                    default:
-                    dom.attr("dominant-baseline","text-after-edge");break;
-                }
-            });
-
-            enters.attr("transform",function(d){
-                return "translate(" + d.tip_x + "," + d.tip_y + ")";
-            });
-
-        })(model.enter().append("g"), this.options);
-    };
-
-    // calcurate height and width that are necessary for rendering the tool-tip
-    Tooltip.prototype.processData = function(lists){
-        var options = this.options;
-
-        // calcurate shape and center point of tool-tip
-        var calcPoints = function(pos, width, height){
-            var arr_w = options.arrow_width;
-            var arr_h = options.arrow_height;
-            var tt_w = width;
-            var tt_h = height;
-            var points = {
-                'top':[
-                    {x:0, y:0},{x:arr_w/2, y:-arr_h},
-                    {x:tt_w/2, y:-arr_h},{x:tt_w/2, y:-arr_h-tt_h},
-                    {x:-tt_w/2, y:-arr_h-tt_h},{x:-tt_w/2, y:-arr_h},
-                    {x:-arr_w/2, y:-arr_h},{x:0, y:0}
-                ],
-                'right':[
-                    {x:0, y:0},{x:-arr_w, y:-arr_h/2},
-                    {x:-arr_w, y:-tt_h/2},{x:-arr_w-tt_w, y:-tt_h/2},
-                    {x:-arr_w-tt_w, y:tt_h/2},{x:-arr_w, y:tt_h/2},
-                    {x:-arr_w, y:arr_h/2},{x:0, y:0}
-                ]
-            };
-            points['bottom'] = _.map(points['top'], function(p){return {x:p.x, y:-p.y};});
-            points['left'] = _.map(points['right'], function(p){return {x:-p.x, y:p.y};});
-
-            var center = (function(p){
-                var result={};
-                switch(pos){
-                case 'top': case 'bottom':
-                    result = {x:0, y:(p[2].y+p[3].y)/2};
-                    break;
-                case 'right': case 'left':
-                    result = {x:(p[2].x+p[3].x)/2, y:0};
-                    break;
-                }
-                return result;
-            })(points[pos]);
-
-            return {shape:points[pos], text: center};
-        };
-
-        var margin = this.options.tooltip_margin;
-        var context_height = this.options.context_height;
-        var scales = this.scales;
-        var model = this.model;
-
-        var calcText = function(text, size){
-            var dom = model.append("text").text(text).attr("font-size", size).style("font-family", options.font);
-            var text_width = dom[0][0].getBBox().width;
-            var text_height = dom[0][0].getBBox().height;
-            dom.remove();
-            return {w: text_width, h:text_height};
-        };
-
-        return _.map(lists, function(list){
-            var text_num = (_.isArray(list.contents) ? list.contents.length : 1);
-            var str = (_.isArray(list.contents) ? _.max(list.contents, function(d){return d.length;}) : list.contents);
-
-            var text_size = calcText(str, options.font_size);
-            var tip_width = text_size.w + margin.left + margin.right;
-            var tip_height = (text_size.h + margin.top + margin.bottom)*text_num;
-
-            var point = scales.get(list.x, list.y);
-            var tip_x = (list.x == "left" ? 0 : point.x);
-            var tip_y = (list.y == "bottom" ? context_height : point.y);
-
-            var points = calcPoints(list.pos, tip_width, tip_height);
-
-            var text_y;
-            if(_.isArray(list.contents)){
-                var len = list.contents.length;
-                text_y = _.map(list.contents, function(str, i){
-                    return (points.text.y - text_size.h/2*(len-2)) + text_size.h*i;
-                });
-            }else{
-                text_y = points.text.y + text_size.h/2;
-            }
-
-            return {
-                shape: points.shape,
-                tip_x: tip_x,
-                tip_y: tip_y,
-                text_x: points.text.x,
-                text_y: text_y,
-                text: list.contents
-            };
-        });
-    };
-
-    return Tooltip;
-});
-
-require([
+define('sheet/context',[
     "underscore",
     "node-uuid",
-    "core",
-    "parser/sheet"
-], function(_, node_uuid, core, sheet){
+    "core"
+], function(_, node_uuid, core){
     /*
      *  parent
      *       +--clipPath--rect
@@ -2927,7 +2707,7 @@ require([
      *             +--glyph0
      *             +--glyph1
      */
-    sheet.register_sheet(
+    return [
         "context2d",
         ["parent", "glyphs"],
         {
@@ -2957,30 +2737,48 @@ require([
                 var raw_g = glyph.node().parentNode;
                 root.node().appendchild(raw_g);
             });
-        });
+        }
+    ];
 });
 
-define("sheet/context", function(){});
+define('sheet/init',[
+    'underscore',
+    'sheet',
+    'sheet/axis',
+    'sheet/background',
+    'sheet/label',
+    'sheet/context'
+], function(_, sheet){
+    var args = [].slice.call(arguments, 2);
 
-define('main',['require','exports','module','pane','stage2d','parser/data','parser/scale','glyph/scatter','sheet/axis','sheet/background','sheet/label','sheet/tooltip','sheet/context','core','parser/glyph','parser/sheet','utils/dataframe'],function(require, exports, module){
-    require("pane");
-    require("stage2d");
+    return function(){
+        _.each(args, function(arg){
+            sheet.register_sheet.apply(sheet, arg);
+        });
+    };
+});
 
-    require("parser/data");
-    require("parser/scale");
-    require("glyph/scatter");
+define('init',[
+    "underscore",
+    "parser/init",
+    "glyph/init",
+    "sheet/init"
+], function(_, p_init, g_init, s_init){
+    return function(){
+        _.each([p_init, g_init, s_init], function(init){
+            init();
+        });
+    };
+});
 
-    require("sheet/axis");
-    require("sheet/background");
-    require("sheet/label");
-    require("sheet/tooltip");
-    require("sheet/context");
+define('main',['require','exports','module','init','core','glyph','sheet'],function(require, exports, module){
+    var init = require("init");
+    init();
 
     return {
         core: require('core'),
-        glyph_manager: require('parser/glyph'),
-        sheet_manager: require('parser/sheet'),
-        dataframe: require('utils/dataframe')
+        glyph_manager: require('glyph'),
+        sheet_manager: require('sheet')
     };
 });
 

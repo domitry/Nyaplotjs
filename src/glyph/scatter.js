@@ -25,13 +25,12 @@
  *    http://bl.ocks.org/domitry/308e27d8d12c1374e61f
  */
 
-require([
-    'underscore',
-    'parser/glyph'
-],function(_, glyph){
-    glyph.register_glyph(
+define([
+    'underscore'
+],function(_){
+    return [
         "scatter",
-        ["context", "data", "position"],
+        ["context", "data", "x", "y", "position"],
         {
             color: "steelblue",
             shape: "circle",
@@ -40,14 +39,14 @@ require([
             stroke_width: 1,
             hover: true
         },
-        function(context, data, position, options){
+        function(context, data, x, y, position, options){
             var shapes = context.selectAll("path").data(data);
 
             shapes
                 .enter()
                 .append("path")
                 .attr("transform", function(row) {
-                    var d = position(row);
+                    var d = position(row[x], row[y]);
                     return "translate(" + d.x + "," + d.y + ")"; })
                 .attr("fill", options.color)
                 .attr("stroke", options.stroke_color)
@@ -57,5 +56,5 @@ require([
 
             return shapes;
         }
-    );
+    ];
 });
