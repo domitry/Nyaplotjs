@@ -22,43 +22,37 @@
 define([
     'underscore'
 ],function(_){
-    // pre-process data using function embeded in d3.js.
-    var processData = function(column, scales, options){
-        return d3.layout.histogram()
-            .bins(scales.raw.x.ticks(options.bin_num))(column);
-    };
-
-    return function(context, scales, df, _options){
-        var options = {
-            title: 'histogram',
-            value: null,
+    return [
+        "histogram",
+        ["context", "data", "value", "position", "scalex"],
+        {
             bin_num: 20,
             width: 0.9,
             color:'steelblue',
             stroke_color: 'black',
             stroke_width: 1,
-            hover: true,
-            tooltip:null,
-            legend: true
-        };
-        if(arguments.length>3)_.extend(options, _options);
+            hover: true
+        },
+        function(context, data, value, position, scalex, options){
+            var column = _.map(data, function(row){return row[value];});
 
-        var column_value = df.columnWithFilters("123", options.value);
-        var data = processData(column_value, scales, options);
+            d3.layout.histogram()
+                .bins(scalex.ticks(options.bin_num))(column);
 
-        var rects = context.selectAll("rect").data(data);
-        rects.enter().append("rect").attr("height", 0).attr("y", scales.get(0, 0).y);
+            var rects = context.selectAll("rect").data(data);
+            rects.enter().append("rect").attr("height", 0).attr("y", position(0, 0).y);
 
-        rects
-            .attr("x",function(d){return scales.get(d.x, 0).x;})
-            .attr("width", function(d){return scales.get(d.dx, 0).x - scales.get(0, 0).x;})
-            .attr("fill", options.color)
-            .attr("stroke", options.stroke_color)
-            .attr("stroke-width", options.stroke_width)
-            .transition().duration(200)
-            .attr("y", function(d){return scales.get(0, d.y).y;})
-            .attr("height", function(d){return scales.get(0, 0).y - scales.get(0, d.y).y;});
+            rects
+                .attr("x",function(d){return (d.x, 0).x;})
+                .attr("width", function(d){return position(d.dx, 0).x - position(0, 0).x;})
+                .attr("fill", options.color)
+                .attr("stroke", options.stroke_color)
+                .attr("stroke-width", options.stroke_width)
+                .transition().duration(200)
+                .attr("y", function(d){return position(0, d.y).y;})
+                .attr("height", function(d){return position(0, 0).y - position(0, d.y).y;});
 
-        return rects;
-    };
+            return rects;
+        }
+    ];
 });
