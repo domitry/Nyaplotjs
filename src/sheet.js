@@ -18,7 +18,7 @@ define([
 
                 // resolve dependency
                 var func = function(arg){
-                    if(_.isObject(arg) && _.has("sync")){
+                    if(_.isObject(arg) && _.has(arg, "sync")){
                         var uuid = arg.sync;
                         return core.get(uuid);
                     }
