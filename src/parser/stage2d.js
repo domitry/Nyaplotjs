@@ -7,8 +7,7 @@ define([
         "stage2d",
         ["sheets"],
         {
-            margin_x: 10,
-            margin_y: 10,
+            margin: {x: 40, y: 10},
             width: 500,
             height: 500
         },
@@ -28,10 +27,14 @@ define([
          * Other components (e.g. axis, background...) are appended to root_layer0.
          */
         function(sheets, options){
-            var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+            var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"))
+                    .style({
+                        width: options.width,
+                        height: options.height
+                    });
 
             var root = svg.append("g")
-                    .attr("transform", "translate(" + options.margin_x  + "," + options.margin_y + ")")
+                    .attr("transform", "translate(" + options.margin.x  + "," + options.margin.y + ")")
                     .attr("class", "root");
 
             var sheets_root = root.append("g").attr("class", "sheets_root");
