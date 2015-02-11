@@ -21,57 +21,31 @@
 define([
     'underscore'
 ],function(_){
-    // pre-process data like: [{x: 1, y: 2, dx: 0.1, dy: 0.2, fill:'#000'}, {},...,{}]
-    var processData = function(df, options){
-        var labels = ['x', 'y', 'dx', 'dy', 'fill'];
-        var columns = _.map(['x', 'y', 'dx', 'dy'], function(label){return df.column(options[label]);});
-        var length = columns[0].length;
-
-        _.each([{column: 'fill_by', val: 'color'}], function(info){
-            if(options[info.column]){
-                var scale = df.scale(options[info.column], options[info.val]);
-                columns.push(_.map(df.column(options[info.column]), function(val){return scale(val);}));
-            }else{
-                columns.push(_.map(_.range(1, length+1, 1), function(d){
-                    if(_.isArray(options[info.val]))return options[info.val][0];
-                    else return options[info.val];
-                }));
-            }
-        });
-
-        return _.map(_.zip.apply(null, columns), function(d){
-            return _.reduce(d, function(memo, val, i){memo[labels[i]] = val; return memo;}, {});
-        });
-    };
-
-    return function(context, scales, df, _options){
-        var options = {
-            title: 'vectors',
-            x: null,
-            y: null,
-            dx: null,
-            dy: null,
-            fill_by: null,
-            color:['steelblue', '#000000'],
+    return [
+        "vectors",
+        ["context", "data", "x", "y", "dx", "dy", "position"],
+        {
+            color:'steelblue',
             stroke_color: '#000',
             stroke_width: 2,
             hover: true
-        };
-        if(arguments.length>3)_.extend(options, _options);
+        },
+        function(context, data, x, y, dx, dy, position, options){
+            var shapes = context.selectAll("line").data(data);
 
-        var data = processData(df, options);
-        var shapes = context.selectAll("line").data(data);
-        shapes.enter()
-            .append("line")
-            .attr({
-                'x1':function(d){return scales.get(d.x, d.y).x;},
-                'x2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).x;},
-                'y1':function(d){return scales.get(d.x, d.y).y;},
-                'y2':function(d){return scales.get(d.x + d.dx, d.y + d.dy).y;},
-                'stroke':function(d){return d.fill;},
-                'stroke-width':options.stroke_width
-            });
+            shapes.enter()
+                .append("line")
+                .attr({
+                    'x1':function(d){return position(d[x], d[y]).x;},
+                    'x2':function(d){return position(d[x] + d[dx], d[y] + d[dy]).x;},
+                    'y1':function(d){return position(d[x], d[y]).y;},
+                    'y2':function(d){return position(d[x] + d[dx], d[y] + d[dy]).y;},
+                    'fill': options.color,
+                    'stroke': options.stroke_color,
+                    'stroke-width':options.stroke_width
+                });
 
-        return shapes;
-    };
+            return shapes;
+        }
+    ];
 });
