@@ -4,12 +4,13 @@ define([
     "utils/dataframe"
 ], function(_, core, Df){
     return [
-        "scale",
+        "df_scale",
         /* args: {data_id: "uuid", column: "hoge", range: []} */
-        ["domain", "range", "type"],
+        ["data", "column", "range"],
         {},
-        function(domain, range, type){
-            return (d3.scale[type])().domain(domain).range(range);
+        function(data, column_name, range){
+            var df = new Df(data);
+            return df.scale(column_name, range);
         }
     ];
 });

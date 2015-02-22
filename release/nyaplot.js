@@ -2271,14 +2271,12 @@ define('parser/scale',[
     "utils/dataframe"
 ], function(_, core, Df){
     return [
-        "df_scale",
+        "scale",
         /* args: {data_id: "uuid", column: "hoge", range: []} */
-        ["data_id", "column", "range"],
+        ["domain", "range", "type"],
         {},
-        function(data_id, column_name, range){
-            var data = core.get(data_id);
-            var df = new Df(data);
-            return df.scale(column_name, range);
+        function(domain, range, type){
+            return (d3.scale[type])().domain(domain).range(range);
         }
     ];
 });
@@ -2377,6 +2375,43 @@ define( 'parser/data',[
     ];
 });
 
+define('parser/row_scale',[
+    "underscore",
+    "core",
+    "utils/dataframe"
+], function(_, core, Df){
+    return [
+        "row_scale",
+        /* args: {data_id: "uuid", column: "hoge", range: []} */
+        ["data", "column", "range"],
+        {},
+        function(data, column_name, range){
+            var df = new Df(data);
+            var scale = df.scale(column_name, range);
+            return function(row){
+                return scale(row[column_name]);
+            };
+        }
+    ];
+});
+
+define('parser/df_scale',[
+    "underscore",
+    "core",
+    "utils/dataframe"
+], function(_, core, Df){
+    return [
+        "df_scale",
+        /* args: {data_id: "uuid", column: "hoge", range: []} */
+        ["data", "column", "range"],
+        {},
+        function(data, column_name, range){
+            var df = new Df(data);
+            return df.scale(column_name, range);
+        }
+    ];
+});
+
 define('parser/init',[
     "underscore",
     "core",
@@ -2384,7 +2419,9 @@ define('parser/init',[
     "parser/scale",
     "parser/position",
     "parser/pane",
-    "parser/data"
+    "parser/data",
+    "parser/row_scale",
+    "parser/df_scale"
 ], function(_, core){
     var args = [].slice.call(arguments, 2);
     return function(){
@@ -2609,7 +2646,7 @@ define('sheet/background',[
         {
             bg_color: "#eee",
             stroke_width: 1,
-            stroke: "#666"
+            stroke_color: "#666"
         },
         function(context, width, height, options){
             var g = context
@@ -2624,7 +2661,7 @@ define('sheet/background',[
                     "width" : width,
                     "height" : height,
                     "fill" : options.bg_color,
-                    "stroke": options.stroke,
+                    "stroke": options.stroke_color,
                     "stroke-width": options.stroke_width
                 });
 
