@@ -10,7 +10,7 @@ define([
         {
             bg_color: "#eee",
             stroke_width: 1,
-            stroke: "#666"
+            stroke_color: "#666"
         },
         function(context, width, height, options){
             var g = context
@@ -25,7 +25,7 @@ define([
                     "width" : width,
                     "height" : height,
                     "fill" : options.bg_color,
-                    "stroke": options.stroke,
+                    "stroke": options.stroke_color,
                     "stroke-width": options.stroke_width
                 });
 
