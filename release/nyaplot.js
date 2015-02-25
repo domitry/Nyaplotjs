@@ -2521,12 +2521,174 @@ define('glyph/scatter',[
     ];
 });
 
+/*
+ * Line: Line chart
+ *
+ * Attention: 'Line' is totally designed to be used to visualize line chart for Mathematics. So it is not useful to visualize statistical data like stock price.
+ * If you feel so, feel free to add options like 'shape', 'shape_by' and 'fill_by' to this chart and send pull-request.
+ * Please be sure to refer to the code of other chart like scatter at that time.
+ *
+ *
+ * options:
+ *    title        -> String: title of this chart showen on legend
+ *    x,y          -> String: column name.
+ *    color        -> Array : color in which line is filled.
+ *    stroke_width -> Float : stroke width.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb
+ */
+
+define('glyph/line',[
+    'underscore'
+],function(_){
+    return [
+        "line",
+        ["context", "data", "x", "y", "position"],
+        {
+            color:'steelblue',
+            stroke_width: 2
+        },
+        function(context, data, x, y, position, options){
+            var path = context
+                    .append("path")
+                    .datum(data);
+
+            var line = d3.svg.line()
+                    .x(function(d){return position(d[x], d[y]).x;})
+                    .y(function(d){return position(d[x], d[y]).y;});
+
+            path
+                .attr("d", line)
+                .attr("stroke", options.color)
+                .attr("stroke-width", options.stroke_width)
+                .attr("fill", "none");
+
+            return path;
+        }
+    ];
+});
+
+/*
+ * Histogram: Histogram
+ *
+ * Caluculate hights of each bar from column specified by 'value' option and create histogram.
+ * See the page of 'd3.layout.histogram' on d3.js's website to learn more. (https://github.com/mbostock/d3/wiki/Histogram-Layout)
+ * 
+ *
+ * options:
+ *    value        -> String: column name. Build histogram based on this data.
+ *    bin_num      -> Float : number of bin
+ *    width        -> Float : 0..1, width of each bar.
+ *    color        -> Array : color in which bars filled.
+ *    stroke_color -> String: stroke color
+ *    stroke_width -> Float : stroke width
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
+ */
+
+define('glyph/histogram',[
+    'underscore'
+],function(_){
+    return [
+        "histogram",
+        ["context", "data", "value", "position", "scalex"],
+        {
+            bin_num: 20,
+            width: 0.9,
+            color:'steelblue',
+            stroke_color: 'black',
+            stroke_width: 1,
+            hover: true
+        },
+        function(context, data, value, position, scalex, options){
+            var column = _.map(data, function(row){return row[value];});
+
+            d3.layout.histogram()
+                .bins(scalex.ticks(options.bin_num))(column);
+
+            var rects = context.selectAll("rect").data(data);
+            rects.enter().append("rect").attr("height", 0).attr("y", position(0, 0).y);
+
+            rects
+                .attr("x",function(d){return (d.x, 0).x;})
+                .attr("width", function(d){return position(d.dx, 0).x - position(0, 0).x;})
+                .attr("fill", options.color)
+                .attr("stroke", options.stroke_color)
+                .attr("stroke-width", options.stroke_width)
+                .transition().duration(200)
+                .attr("y", function(d){return position(0, d.y).y;})
+                .attr("height", function(d){return position(0, 0).y - position(0, d.y).y;});
+
+            return rects;
+        }
+    ];
+});
+
+/*
+ * Vectors: Vector Field
+ *
+ * Draw vector field from x, y, dx, dy column. This chart is designed to visualize wind vector data.
+ * See Nyaplot's notebook: http://nbviewer.ipython.org/github/domitry/nyaplot/blob/master/examples/notebook/Mapnya2.ipynb
+ *
+ *
+ * options:
+ *    x,y,dx,dy    -> String: column name.
+ *    fill_by      -> String: column name. Fill vectors according to this column. (both of continuous and descrete data are allowed.)
+ *    color        -> Array : color in which vectors are filled.
+ *    stroke_color -> String: stroke color.
+ *    stroke_width -> Float : stroke width.
+ *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
+ *    tooltip      -> Object: instance of Tooltip. set by pane.
+ *
+ * example:
+ *    http://bl.ocks.org/domitry/1e1222cbc48ab3880849
+ */
+
+define('glyph/vectors',[
+    'underscore'
+],function(_){
+    return [
+        "vectors",
+        ["context", "data", "x", "y", "dx", "dy", "position"],
+        {
+            color:'steelblue',
+            stroke_color: '#000',
+            stroke_width: 2,
+            hover: true
+        },
+        function(context, data, x, y, dx, dy, position, options){
+            var shapes = context.selectAll("line").data(data);
+
+            shapes.enter()
+                .append("line")
+                .attr({
+                    'x1':function(d){return position(d[x], d[y]).x;},
+                    'x2':function(d){return position(d[x] + d[dx], d[y] + d[dy]).x;},
+                    'y1':function(d){return position(d[x], d[y]).y;},
+                    'y2':function(d){return position(d[x] + d[dx], d[y] + d[dy]).y;},
+                    'fill': options.color,
+                    'stroke': options.stroke_color,
+                    'stroke-width':options.stroke_width
+                });
+
+            return shapes;
+        }
+    ];
+});
+
 define('glyph/init',[
     'underscore',
     'glyph',
-    'glyph/scatter'
+    'glyph/scatter',
+    'glyph/line',
+    'glyph/histogram',
+    'glyph/vectors'
 ], function(_, glyph, scatter){
-    var args = [scatter];
+    var args = [].slice.call(arguments, 2);
 
     return function(){
         _.each(args, function(arg){
