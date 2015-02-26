@@ -4,8 +4,10 @@ define([
     'glyph/scatter',
     'glyph/line',
     'glyph/histogram',
-    'glyph/vectors'
-], function(_, glyph, scatter){
+    'glyph/vectors',
+    "glyph/rect",
+    "glyph/circle"
+], function(_, glyph){
     var args = [].slice.call(arguments, 2);
 
     return function(){
