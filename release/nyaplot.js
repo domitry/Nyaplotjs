@@ -2385,17 +2385,9 @@ define('parser/row_scale',[
 ], function(_, core, Df){
     return [
         "row_scale",
-        ["data", "column", "range"],
-        {
-            domain: null
-        },
-        function(data, column, range, options){
-            var df = new Df(data);
-            var scale = df.scale(column, range);
-
-            if(options.domain != null)
-                scale.domain(options.domain);
-
+        ["data", "column", "scale"],
+        {},
+        function(column, scale){
             return function(row){
                 return scale(row[column]);
             };
