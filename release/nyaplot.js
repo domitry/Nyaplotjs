@@ -2713,9 +2713,9 @@ define('glyph/rect',[
                         if(options.x_base == "center")
                             return (_.isFunction(options.width) ?
                                     function(d){
-                                        return str + " translate(" + -options.width(d)/2 + ",0)";
+                                        return str + " translate(" + options.width(d)/2 + ",0)";
                                     }
-                                    : str + " translate(" + -options.width/2 + ",0)");
+                                    : str + " translate(" + options.width/2 + ",0)");
                         else return str;
                     })(options.y_base == "bottom" ? "scale(1, -1)" : "")
                 });
