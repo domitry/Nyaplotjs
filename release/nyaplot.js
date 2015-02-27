@@ -2385,7 +2385,7 @@ define('parser/row_scale',[
 ], function(_, core, Df){
     return [
         "row_scale",
-        ["data", "column", "scale"],
+        ["column", "scale"],
         {},
         function(column, scale){
             return function(row){
