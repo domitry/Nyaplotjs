@@ -2611,10 +2611,11 @@ define('glyph/histogram',[
         function(context, data, value, position, scalex, options){
             var column = _.map(data, function(row){return row[value];});
 
-            d3.layout.histogram()
-                .bins(scalex.ticks(options.bin_num))(column);
+            var rects = context.selectAll("rect").data(
+                d3.layout.histogram()
+                    .bins(scalex.ticks(options.bin_num))(column)
+            );
 
-            var rects = context.selectAll("rect").data(data);
             rects.enter().append("rect").attr("height", 0).attr("y", position(0, 0).y);
 
             rects
