@@ -44,9 +44,7 @@ define([
                 };
                 rect.attr(
                     "y", function(d){
-                        var h = getValue(options.height, d);
-                        var y = getValue(options.y, d);
-                        return y-h;
+                        return getValue(y, d) - getValue(options.height, d);
                     }
                 );
             }
