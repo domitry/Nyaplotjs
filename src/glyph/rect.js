@@ -14,7 +14,7 @@ define([
             x_base: "left" // or "center"
         },
         function(context, data, x, y, options){
-            return context
+            var rect = context
                 .selectAll("rect")
                 .data(data)
                 .enter()
@@ -35,8 +35,23 @@ define([
                                     }
                                     : str + " translate(" + options.width/2 + ",0)");
                         else return str;
-                    })(options.y_base == "bottom" ? "scale(1, -1)" : "")
+                    })("")
                 });
+
+            if(options.y_base == "bottom"){
+                var getValue = function(attr, d){
+                    return _.isFunction(attr) ? attr(d) : attr;
+                };
+                rect.attr(
+                    "y", function(d){
+                        var h = getValue(options.height, d);
+                        var y = getValue(options.y, d);
+                        return y-h;
+                    }
+                );
+            }
+
+            return rect;
         }
     ];
 });
