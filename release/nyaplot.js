@@ -2440,6 +2440,7 @@ define('glyph',[
      */
     function register_glyph(name, required_args, optional_args, callback){
         required_args.shift();
+        optional_args["transform"] = null;
 
         core.register_parser(
             name,
@@ -2448,6 +2449,9 @@ define('glyph',[
             function(){
                 var args = [].slice.call(arguments, 0);
                 var g = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
+
+                if(!_.isUndefined(_.last(args)["transform"]))
+                    g.attr("transform", _.last(args)["transform"]);
 
                 args.unshift(g);
                 return callback.apply(null, args);
