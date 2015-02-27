@@ -2276,7 +2276,10 @@ define('parser/scale',[
         ["domain", "range", "type"],
         {},
         function(domain, range, type){
-            return (d3.scale[type])().domain(domain).range(range);
+            var scale = (d3.scale[type])().domain(domain);
+            if(type == "ordinal")scale.rangeBands(range);
+            else scale.range(range);
+            return scale;
         }
     ];
 });
