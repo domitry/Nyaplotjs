@@ -2382,14 +2382,19 @@ define('parser/row_scale',[
 ], function(_, core, Df){
     return [
         "row_scale",
-        /* args: {data_id: "uuid", column: "hoge", range: []} */
         ["data", "column", "range"],
-        {},
-        function(data, column_name, range){
+        {
+            domain: null
+        },
+        function(data, column, range, options){
             var df = new Df(data);
-            var scale = df.scale(column_name, range);
+            var scale = df.scale(column, range);
+
+            if(options.domain != null)
+                scale.domain(options.domain);
+
             return function(row){
-                return scale(row[column_name]);
+                return scale(row[column]);
             };
         }
     ];
