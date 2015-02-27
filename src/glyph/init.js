@@ -6,7 +6,8 @@ define([
     'glyph/histogram',
     'glyph/vectors',
     "glyph/rect",
-    "glyph/circle"
+    "glyph/circle",
+    "glyph/line_segment"
 ], function(_, glyph){
     var args = [].slice.call(arguments, 2);
 
