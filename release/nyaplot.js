@@ -2773,7 +2773,8 @@ define('glyph/line_segment',[
         "line_segment",
         ["context", "data", "x1", "y1", "x2", "y2"],
         {
-            color: "steelblue"
+            color: "steelblue",
+            stroke_width: 3
         },
         function(context, data, x1, y1, x2, y2, options){
             return context
@@ -2786,7 +2787,8 @@ define('glyph/line_segment',[
                     y1: y1,
                     x2: x2,
                     y2: y2,
-                    stroke: options.color
+                    stroke: options.color,
+                    "stroke-width": options.stroke_width
                 });
         }
     ];
