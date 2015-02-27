@@ -21,6 +21,14 @@ define([
         function(parent_id, layout, options){
             var parent = d3.select("#" + parent_id);
 
+            // initialize node
+            (function(){
+                var node = parent.node();
+                _.each(node.children, function(child){
+                    node.removeChild(child);
+                });
+            })();
+
             var parse_layout = function(parent, model){
                 if(!_.has(model, "type")){
                     // svg should be d3.selection
