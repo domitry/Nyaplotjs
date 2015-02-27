@@ -2619,7 +2619,7 @@ define('glyph/histogram',[
             rects.enter().append("rect").attr("height", 0).attr("y", position(0, 0).y);
 
             rects
-                .attr("x",function(d){return (d.x, 0).x;})
+                .attr("x",function(d){return position(d.x, 0).x;})
                 .attr("width", function(d){return position(d.dx, 0).x - position(0, 0).x;})
                 .attr("fill", options.color)
                 .attr("stroke", options.stroke_color)
