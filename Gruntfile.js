@@ -1,16 +1,5 @@
 module.exports = function(grunt){
     grunt.initConfig({
-        yuidoc: {
-            dist: {
-                'name': 'Nyaplotjs',
-                'description': "The javascript back-end for Nyaplot",
-                'version': '0.1.0',
-                options: {
-                    paths: './',
-                    outdir: 'docs/'
-                }
-            }
-        },
         requirejs: {
             options: {
                 baseUrl: 'src',
@@ -39,8 +28,7 @@ module.exports = function(grunt){
     });
     
     grunt.loadNpmTasks("grunt-contrib-requirejs");
-    grunt.loadNpmTasks("grunt-contrib-yuidoc");
     grunt.registerTask("default", ["release"]);
     grunt.registerTask("debug", ["requirejs:development"]);
-    grunt.registerTask("release", ["requirejs", "yuidoc"]);
+    grunt.registerTask("release", ["requirejs"]);
 };
