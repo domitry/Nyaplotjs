@@ -14,7 +14,8 @@
 define(['underscore'], function(_){
     function Scales(domains, ranges, _options){
         var options = {
-            linear: 'linear'
+	    x: 'linear',
+	    y: 'linear'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -28,7 +29,7 @@ define(['underscore'], function(_){
                     .rangeBands(ranges[label]);
             }
             else{
-                var scale = (d3.scale[options.linear])();
+                var scale = (d3.scale[options[label]])();
                 scales[label] = scale
                     .domain(domains[label])
                     .range(ranges[label]);

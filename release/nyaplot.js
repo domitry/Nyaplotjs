@@ -4613,7 +4613,8 @@ define('view/pane',[
             legend_stroke_color: '#000',
             legend_stroke_width: 0,
             font: "Helvetica, Arial, sans-serif",
-            scale: 'linear',
+            x_scale: 'linear',
+	    y_scale: 'linear',
             scale_extra_options: {},
             axis_extra_options: {}
         };
@@ -4673,7 +4674,8 @@ define('view/pane',[
             var domains = {x: options.xrange, y:options.yrange};
             var ranges = {x:[0,areas.plot_width], y:[areas.plot_height,0]};
             return new scale(domains, ranges, {
-                linear: options.scale,
+		x: options.x_scale,
+		y: options.y_scale,
                 extra: options.scale_extra_options
             });
         })();
@@ -4965,7 +4967,8 @@ define('view/components/axis',[
 define('view/components/scale',['underscore'], function(_){
     function Scales(domains, ranges, _options){
         var options = {
-            linear: 'linear'
+	    x: 'linear',
+	    y: 'linear'
         };
         if(arguments.length>1)_.extend(options, _options);
 
@@ -4979,8 +4982,14 @@ define('view/components/scale',['underscore'], function(_){
                     .rangeBands(ranges[label]);
             }
             else{
-                var scale = (d3.scale[options.linear])();
-                scales[label] = scale
+                var scale = (d3.scale[options[label]])();
+		if(options[label] == "log")
+                    scales[label] = scale
+		    .base(Math.E)
+                    .domain(domains[label])
+                    .range(ranges[label]);
+		else
+                    scales[label] = scale
                     .domain(domains[label])
                     .range(ranges[label]);
             }
