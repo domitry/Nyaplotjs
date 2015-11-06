@@ -10,6 +10,7 @@ define([
 ],function(_){
     // {func: , stack: , clear: true}
     var parsers_list = {};
+    var callback_list = {};
     var history = {};
 
     /*
@@ -58,6 +59,11 @@ define([
 
             args.push(optional_args);
             history[task.uuid] = func.apply(null, args);
+
+	    if(!_.isUndefined(callback_list[task.uuid]))
+		_.each(callback_list[task.uuid], function(f){
+		    f(history[task.uuid]);
+		});
         });
     }
 
@@ -76,9 +82,19 @@ define([
         return history[uuid];
     }
 
+    /*
+     register callback called when core finished to construct the specified element.
+     */
+    function on_parsed(uuid, func){
+	if(_.isUndefined(callback_list[uuid]))
+	    callback_list[uuid]=[];
+	callback_list[uuid].push(func);
+    }
+
     return {
         register_parser: register_parser,
         parse: parse,
-        get: get
+        get: get,
+	on_parsed: on_parsed
     };
 });
