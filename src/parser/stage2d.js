@@ -41,7 +41,7 @@ define([
             
             // component: selection of "g" element.
             _.each(sheets, function(uuid){
-                var component = core.get(uuid);
+                var component = core.get(uuid).node;
                 var raw_g = component.node();
                 sheets_root.node().appendChild(raw_g);
             });

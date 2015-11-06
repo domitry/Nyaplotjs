@@ -18,7 +18,9 @@ define([
 
                 args.unshift(g);
                 callback.apply(null, args);
-                return g;
+                return {
+		    node: g
+		};
             }
         );
     };
