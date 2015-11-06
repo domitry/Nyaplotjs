@@ -4,7 +4,8 @@ define([
     'sheet/axis',
     'sheet/background',
     'sheet/label',
-    'sheet/context'
+    'sheet/context',
+    'sheet/interactive_wheel'
 ], function(_, sheet){
     var args = [].slice.call(arguments, 2);
 
