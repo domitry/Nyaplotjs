@@ -1,16 +1,84 @@
 <html lang='en'>
-<head>
-  <title>Nyaplotjs example -- Line chart</title>
-  <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/nyaplot.js'></script>
-</head>
-<body>
-<div id='vis'></div>
-<script>
-var data1 = [], MAX=10, MIN=0;
-for(var x=MIN;x<MAX;x+=0.1)data1.push({x: x, y1: Math.sin(x), y2: Math.cos(x)});
-models = {data:{data1: data1},panes: [{type:'rectangular', diagrams:[{type:'line', data: 'data1', options: {title: 'sin(x)', x:'x', y:'y1', stroke_width:2}},{type: 'line', data: 'data1', options: {title: 'cos(y)', x:'x', y:'y2', stroke_width:2, color:'#000000'}}],options:{width:600, height:500, xrange: [MIN, MAX], yrange: [-2, 2], legend:true, zoom:true}}]};
-window.onload = function(){Nyaplot.core.parse(models, '#vis');};
-</script>
-</body>
+  <head>
+    <title>Nyaplotjs example -- Scatter</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script src="http://underscorejs.org/underscore-min.js"></script>
+  </head>
+  <body>
+    <div id='vis'></div>
+    <script>
+     var data1 = [], MAX=100, MIN=0, nowx=0, nowy1=0, nowy2=0;
+     for(var i=MIN;i < MAX;i++)data1.push({x: nowx++, y1: nowy1+=(Math.random()-0.5), y2: nowy2+=(Math.random()-0.5) });
+     var ys = _.flatten(_.map(data1, function(row){return [row.y1, row.y2];}));
+
+     var models = [
+       {type: "data", uuid: "data1", args: {
+	 data: data1
+       }},
+       {type: "scale", uuid: "xscale", args: {
+	 type: "linear",
+	 domain: [0, MAX-1],
+	 range: [0, 500]
+       }},
+       {type: "scale", uuid: "yscale", args: {
+	 type: "linear",
+	 domain: [_.min(ys), _.max(ys)],
+	 range: [0, 500]
+       }},
+       {type: "position2d", uuid: "position", args: {
+	 x: {sync: "xscale"},
+	 y: {sync: "yscale"}
+       }},
+       {type: "line", uuid: "line1", args: {
+	 data: {sync: "data1"},
+	 x: "x",
+	 y: "y1",
+	 color: "#fbb4ae",
+	 position: {sync: "position"}
+       }},
+       {type: "line", uuid: "line2", args: {
+	 data: {sync: "data1"},
+	 color: "#b3cde3",
+	 x: "x",
+	 y: "y2",
+	 position: {sync: "position"}
+       }},
+       {type: "axis2d", uuid: "axis", args: {
+	 xscale: {sync: "xscale"},
+	 yscale: {sync: "yscale"},
+	 width: 500,
+	 height: 500
+       }},
+       {type: "label", uuid: "label", args: {
+	 x: "xlabel",
+	 y: "ylabel",
+	 width: 500,
+	 height: 500,
+	 margin: {bottom: 70, left: 60}
+       }},
+       {type: "background2d", uuid: "background", args: {
+	 width: 500,
+	 height: 500
+       }},
+       {type: "context2d", uuid: "context", args: {
+	 glyphs: ["line1", "line2"]
+       }},
+       {type: "interactive_wheel", uuid: "in_w", args: {stage_uuid: "stage"}},
+       {type: "stage2d", uuid: "stage", args: {
+	 sheets: ["background", "axis", "context", "label", "in_w"],
+	 width: 700,
+	 height: 700,
+	 margin: {x: 60, y: 10}
+       }},
+       {type: "pane", uuid: "pane", args: {
+	 "parent_id":"vis",
+	 "layout": {type: "rows", contents: [{"sync": "stage"}]}
+       }}
+     ];
+     window.onload = function(){
+       Nyaplot.core.parse(models);
+     };
+    </script>
+  </body>
 </html>
