@@ -37,8 +37,7 @@ define([
 
             var root = g.append("g");
 
-            _.each(glyphs, function(uuid){
-                var glyph = core.get(uuid);
+            _.each(glyphs, function(glyph){
                 var raw_g = glyph.node().parentNode;
                 root.node().appendChild(raw_g);
             });
