@@ -34,7 +34,7 @@ define([
                     .scale(yscale)
                     .orient("left");
 
-            var g = context.append("g");
+            var g = context;
 
             g.append("g").attr("class", "x_axis");
             g.append("g").attr("class", "y_axis");

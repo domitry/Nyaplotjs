@@ -19,9 +19,9 @@ define([
             width: 500,
             height: 500
         },
-        function(parent, glyphs, options){
+        function(context, glyphs, options){
             var unique_id = node_uuid.v4() + "clip_context";
-            var g = parent.append("g").attr("class", "context");
+            var g = context.attr("class", "context");
 
             g
                 .attr("clip-path","url(#" + unique_id + ")")

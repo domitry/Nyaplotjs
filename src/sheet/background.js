@@ -14,11 +14,10 @@ define([
             stroke_color: "#666"
         },
         function(context, width, height, options){
-            var g = context
-                    .append("g")
-                    .attr("class", "background");
+            context
+                .attr("class", "background");
 
-            g
+            context
                 .append("rect")
                 .attr({
                     "x" : 0,

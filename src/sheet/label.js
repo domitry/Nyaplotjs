@@ -10,7 +10,7 @@ define([
             rotate_y: 0
         },
         function(context, width, height, x_label, y_label, options){
-            var g = context.append("g");
+            var g = context;
 
             g.append("text")
                 .attr("x", width/2)
