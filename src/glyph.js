@@ -1,7 +1,8 @@
 define([
     "underscore",
-    "core"
-], function(_, core){
+    "core",
+    "state"
+], function(_, core, State){
     /*
      Thin layer between parser_manager and glyph.
      */
@@ -21,7 +22,12 @@ define([
                     g.attr("transform", _.last(args)["transform"]);
 
                 args.unshift(g);
-                return callback.apply(null, args);
+                return new State({
+                    selection: callback.apply(null, args),
+                    update: function(){
+                        callback.apply(null, args);
+                    }
+                });
             }
         );
     };

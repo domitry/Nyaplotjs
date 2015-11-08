@@ -38,7 +38,7 @@ define([
             var root = g.append("g");
 
             _.each(glyphs, function(glyph){
-                var raw_g = glyph.node().parentNode;
+                var raw_g = glyph.selection.node().parentNode;
                 root.node().appendChild(raw_g);
             });
 
