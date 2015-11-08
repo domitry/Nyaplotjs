@@ -34,36 +34,34 @@ define([
 
      Each task is an Object whose properties are "type", "uuid", and "args".
      */
-    function parse(model){
-        // el: {uuid: "", type: "", args: {}}
-        _.each(model, function(task){
-            function resolve_sync(arg){
-                if(_.isObject(arg) && _.has(arg, "sync")){
-                    var uuid = arg.sync;
-                    return get(uuid);
-                }
-                return arg;
-            }
+    function parse(model, isDebugMode){
+        isDebugMode = isDebugMode===true?true:false;
 
+        _.each(model, function(task, i){
             var parser = parsers_list[task.type];
             var func = parser.callback;
+            var args = _.clone(task.args);
+            
+            if(!_.isUndefined(task.sync_args))
+                _.extend(args, _.reduce(task.sync_args, function(memo, uuid, argname){
+                    memo[argname] = get(uuid);
+                    return memo;
+                }, {}));
 
-            var args = _.map(parser.required_args, function(name){
-                return resolve_sync(task.args[name]);
-            });
-
-            var optional_args = _.reduce(_.extend(parser.optional_args, _.omit.apply(null, [task.args].concat(parser.required_args))), function(memo, v, k){
-                memo[k] = resolve_sync(v);
+            var args_arr = _.map(parser.required_args, function(argname){return args[argname];});
+            
+            args_arr.push(_.reduce(args, function(memo, val, argname){
+                if(_.has(memo, argname))memo[argname]=args[argname];
                 return memo;
-            }, {});
-
-            args.push(optional_args);
-            history[task.uuid] = func.apply(null, args);
-
-	    if(!_.isUndefined(callback_list[task.uuid]))
-		_.each(callback_list[task.uuid], function(f){
-		    f(history[task.uuid]);
-		});
+            }, _.clone(parser.optional_args)));
+            
+            history[task.uuid] = func.apply(null, args_arr);
+            
+            // Call registered callback function after parsing is finished
+	        if(!_.isUndefined(callback_list[task.uuid]))
+		        _.each(callback_list[task.uuid], function(f){
+		            f(history[task.uuid]);
+		        });
         });
     }
 
