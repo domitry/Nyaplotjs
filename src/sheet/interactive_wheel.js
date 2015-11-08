@@ -9,23 +9,24 @@ define([
      */
     return [
         "interactive_wheel",
-        ["context", "stage_uuid", "size"],
+        ["context", "stage_uuid", "xscale", "yscale", "updates", "size"],
         {},
-        function(context, stage_uuid, xscale_uuid, yscale_uuid, size, options){
-	    core.on_parsed(stage_uuid, function(){
-		var root = d3.select(context.node().parentNode);
-		var xscale = core.get(xscale_uuid);
-		var yscale = core.get(yscale_uuid);
-		
-		root.call(d3.behavior.zoom()
-			  .size(size)
-			  .x(xscale)
-			  .y(yscale)
-			  .on("zoom", function(){
-			      
-			  }));
-	    });
-	}
+        function(context, stage_uuid, xscale, yscale, updates, size, options){
+            core.on_parsed(stage_uuid, function(){
+                var root = d3.select(context.node().parentNode);
+
+                root.call(d3.behavior.zoom()
+                          .size(size)
+                          .x(xscale)
+                          .y(yscale)
+                          .on("zoom", function(){
+                              _.each(updates, function(state){
+                                  state.update();
+                              });
+                          }));
+            });
+
             return new State();
+	    }
     ];
 });
