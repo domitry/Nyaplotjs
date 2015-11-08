@@ -36,8 +36,6 @@ define([
             ylabel: "Y"
         });
 
-        console.log(_.isFunction(uuid), uuid());
-
         _.each([
             "xlabel",
             "ylabel",
