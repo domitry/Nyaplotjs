@@ -1,8 +1,9 @@
 define([
     "underscore",
     "node-uuid",
-    "core"
-], function(_, node_uuid, core){
+    "core",
+    "state"
+], function(_, node_uuid, core, State){
     /*
      *  parent
      *       +--clipPath--rect
@@ -41,6 +42,8 @@ define([
                 var raw_g = glyph.node().parentNode;
                 root.node().appendChild(raw_g);
             });
+
+            return new State();
         }
     ];
 });

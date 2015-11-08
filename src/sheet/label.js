@@ -1,4 +1,6 @@
-define([], function(){
+define([
+    "state"
+], function(State){
     return [
         "label",
         ["context", "width", "height", "x", "y"],
@@ -43,7 +45,7 @@ define([], function(){
                         return "rotate(" + options.rotate_x + ")";
                     });
 
-            return g;
+            return new State();
         }
     ];
 });

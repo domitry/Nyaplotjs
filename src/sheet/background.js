@@ -3,7 +3,8 @@
  */
 
 define([
-], function(){
+    'state'
+], function(State){
     return [
         "background2d",
         ["context", "width", "height"],
@@ -29,7 +30,7 @@ define([
                     "stroke-width": options.stroke_width
                 });
 
-            return g;
+            return new State();
         }
     ];
 });

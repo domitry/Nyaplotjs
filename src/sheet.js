@@ -17,10 +17,10 @@ define([
                 var g = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "g"));
 
                 args.unshift(g);
-                callback.apply(null, args);
-                return {
-		    node: g
-		};
+                var ret = callback.apply(null, args);
+                return _.extend(ret, {
+		            selection: g
+		        });
             }
         );
     };

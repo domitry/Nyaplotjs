@@ -40,9 +40,8 @@ define([
             var sheets_root = root.append("g").attr("class", "sheets_root");
             
             // component: selection of "g" element.
-            _.each(sheets, function(uuid){
-                var component = core.get(uuid).node;
-                var raw_g = component.node();
+            _.each(sheets, function(sheet){
+                var raw_g = sheet.selection.node();
                 sheets_root.node().appendChild(raw_g);
             });
 

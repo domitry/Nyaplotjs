@@ -13,8 +13,9 @@
  */
 
 define([
-    'underscore'
-],function(_){
+    'underscore',
+    'state'
+],function(_, State){
     return [
         "axis2d",
         ["context", "xscale", "yscale", "width", "height"],
@@ -62,7 +63,12 @@ define([
             g.selectAll(".y_axis")
                 .attr("transform", "translate(-4,0)");
 
-            return g;
+            return new State({
+                update: function(){
+                    g.select(".x_axis").call(xAxis);
+                    g.select(".y_axis").call(yAxis);
+                }
+            });
         }
     ];
 });

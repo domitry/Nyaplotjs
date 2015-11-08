@@ -1,7 +1,8 @@
 define([
     'underscore',
-    "core"
-],function(_, core){
+    "core",
+    "state"
+],function(_, core, State){
     /*
      * Interactive layer using d3.behavior.zoom
      * Plots created from descrete data are not supported due to d3.behavior.zoom.
@@ -25,5 +26,6 @@ define([
 			  }));
 	    });
 	}
+            return new State();
     ];
 });
