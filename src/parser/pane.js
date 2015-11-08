@@ -8,17 +8,19 @@ define([
 ],function(_, core){
     return [
         "pane",
-        ["parent_id", "layout"],
+        ["parent_id", "layout", "stages"],
         {
         },
         /*
+         parse layout object recursively.
+         
          layout: 
          e.g.
-             layout: {type: "rows", contents: [{sync: "uuid-of-stage"}]}
+             layout: {type: "rows", contents: [0]}
              or
              layout:{type: "columns", contents: [{type: "rows", contents: []}, {}]}
          */
-        function(parent_id, layout, options){
+        function(parent_id, layout, stages, options){
             var parent = d3.select("#" + parent_id);
 
             // initialize node
@@ -30,9 +32,11 @@ define([
             })();
 
             var parse_layout = function(parent, model){
-                if(!_.has(model, "type")){
-                    // svg should be d3.selection
-                    var svg = core.get(model.sync);
+                if(_.isNumber(model)){
+                    if(_.isUndefined(stages[model]))
+                        throw("The required stage not given:"+model+".");
+                    
+                    var svg = stages[model];
                     parent.node().appendChild(svg.node());
                     return;
                 }else{
