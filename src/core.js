@@ -120,6 +120,6 @@ define([
         register_parser: register_parser,
         parse: parse,
         get: get,
-	on_parsed: on_parsed
+	    on_parsed: on_parsed
     };
 });
