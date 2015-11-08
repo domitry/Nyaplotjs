@@ -36,8 +36,32 @@ define([
      */
     function parse(model, isDebugMode){
         isDebugMode = isDebugMode===true?true:false;
+        
+        function validate(task, i){
+            _.each(["type", "uuid", "args"], function(argname){
+                if(_.isUndefined(task[argname]))
+                    throw new Error("Task " + i + ":" + argname  + " is required.");
+            });
+            var parser = parsers_list[task.type];
+            _.each(parser.required_args, function(argname){
+                if(_.isUndefined(task.args))
+                    throw new Error("Task" + task.uuid + "do not have the required argument : " + argname + ".");
+            });
 
+            if(isDebugMode){
+                var args = _.clone(task.args);
+                var argnames = _.extend(_.clone(parser.required_args), parser.optional_args);
+                if(!_.isUndefined(task.sync_args))args.concat(task.sync_args);
+                _.each(args, function(val, argname){
+                    if(!_.has(argnames, argname))
+                        console.warn("warning: the argument: " + argname + " will be ignored.");
+                });
+            }
+        }
+        
         _.each(model, function(task, i){
+            validate(task, i);
+            
             var parser = parsers_list[task.type];
             var func = parser.callback;
             var args = _.clone(task.args);
