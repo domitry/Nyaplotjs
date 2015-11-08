@@ -99,8 +99,11 @@ define([
 
     /*
      get parsed results.
+     uuid: string or array of string (array of uuid)
      */
     function get(uuid){
+        if(_.isArray(uuid))return _.map(uuid, get);
+        //if(_.isUndefined(history[uuid]))throw new Error("Task " + uuid + " is not exists");
         return history[uuid];
     }
 
