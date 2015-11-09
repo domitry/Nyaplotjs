@@ -114,7 +114,10 @@ define([
                 }
             },
             {
-                type: "context2d", uuid: this.context_uuid, args: {},
+                type: "context2d", uuid: this.context_uuid, args: {
+                    width: this.view_width,
+                    height: this.view_height
+                },
                 sync_args: {
                     glyphs: this.plots_uuid
                 }
