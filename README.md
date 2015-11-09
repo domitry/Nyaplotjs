@@ -1,6 +1,8 @@
 Nyaplotjs
 =======
 
+[![Documentation Status](https://readthedocs.org/projects/nyaplotjs/badge/?version=latest)](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest)
+
 ![alt text](https://dl.dropboxusercontent.com/u/47978121/gsoc/top.png)
 
 Nyaplotjs is a back-end library for [Nyaplot](https://github.com/domitry/nyaplot). Its goal is to allow Ruby and other language users to create interactive plots in their favorite styles. Nyaplotjs provides useful interface to generate plots based on JSON object.
