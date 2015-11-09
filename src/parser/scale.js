@@ -8,7 +8,7 @@ define([
         /* args: {data_id: "uuid", column: "hoge", range: []} */
         ["domain", "range", "type"],
         {},
-        function(domain, range, type){
+        function(domain, range, type, options){
             var scale = (d3.scale[type])().domain(domain);
             if(type == "ordinal")scale.rangeBands(range);
             else scale.range(range);

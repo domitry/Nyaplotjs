@@ -7,7 +7,7 @@ define([
         "row_scale",
         ["column", "scale"],
         {},
-        function(column, scale){
+        function(column, scale, options){
             return function(row){
                 return scale(row[column]);
             };
