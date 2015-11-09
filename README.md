@@ -2,6 +2,7 @@ Nyaplotjs
 =======
 
 [![Documentation Status](https://readthedocs.org/projects/nyaplotjs/badge/?version=latest)](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest)
+[![npm version](https://badge.fury.io/js/nyaplot.svg)](https://badge.fury.io/js/nyaplot)
 
 ![alt text](https://dl.dropboxusercontent.com/u/47978121/gsoc/nya_top.png)
 
