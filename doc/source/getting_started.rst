@@ -1,8 +1,6 @@
 Getting Started
 ===============
 
-.. _import-docs:
-
 Installation
 ------------
 
