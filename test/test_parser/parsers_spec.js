@@ -17,17 +17,16 @@ define([
      *  optional arguments (object)
      *  parser (function)
      */
-    (function(){
-        var modules = _.select([].slice.call(arguments, 1));
-        _.each(modules, function(module){
-            describe(module[0] + "parser test", function(){
-                it("should return name, array, object, function", function(){
-                    expect(_.isString(module[0])).to.be(true);
-                    expect(_.isArray(module[1])).to.be(true);
-                    expect(_.isObject(module[2])).to.be(true);
-                    expect(_.isFunction(module[3])).to.be(true);
-                });
+    var modules = [].slice.call(arguments, 1);
+    _.each(modules, function(module){
+        describe(module[0] + " module", function(){
+            it("should return name, array, object, function", function(){
+                expect(_.isString(module[0])).to.be(true);
+                expect(_.isArray(module[1])).to.be(true);
+                expect(_.isObject(module[2])).to.be(true);
+                expect(_.isFunction(module[3])).to.be(true);
+            });
+            
             });
         });
-    })();
 });
