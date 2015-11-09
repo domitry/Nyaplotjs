@@ -1,5 +1,5 @@
 {
-    "name": "Nyaplotjs",
+    "name": "nyaplot",
     "version": "2.0.0",
     "description": "JavaScript plotting library",
     "main": "src/main.js",
