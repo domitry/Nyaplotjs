@@ -5,9 +5,15 @@
  plot.show("vis"); // "vis" is the id of the div element in which the plot will be.
 */
 define([
-    "simple/line"
-], function(line){
+    "simple/plot",
+    "simple/line",
+    "simple/scatter",
+    "simple/histogram",
+], function(plot, line, scatter, histogram){
     return {
-        LinePlot: line
+        Plot: plot,
+        Line: line,
+        Scatter: scatter,
+        Histogram: histogram
     };
 });
