@@ -1,41 +1,42 @@
 define([
     "underscore",
-    "simple/base",
     "utils/uuid"
-], function(_, SimpleBase, uuid){
-    _.extend(LinePlot.prototype, SimpleBase.prototype);
-    /*
-     * A simple charts with one line.
-     * ex:
-     * (new Nyaplot.LinePlot([1,2,3], [1,2,3])).show("vis");
-     */
-    function LinePlot(xarr, yarr, color){
-        if(xarr.length!=yarr.length)
-            throw new Error("Lengths of two given arrays is different.");
-        _.extend(this, new SimpleBase());
+], function(_, uuid){
+    function Line(xarr, yarr, options){
+        this.options = _.extend({
+            color: "#fbb4ae"
+        }, options);
         
-        color = _.isUndefined(color) ? "#fbb4ae" : color;
+        this.data = {
+            type: "data",
+            uuid: uuid(),
+            args: {
+                data: _.map(xarr, function(val, i){
+                    return {x: xarr[i], y: yarr[i]};
+                })
+            }
+        };
 
-        this.data = _.map(xarr, function(val, i){
-            return {x: xarr[i], y: yarr[i]};
-        });
-        
-        this.plots = [{
+        this.xdomain = [_.min(xarr), _.max(xarr)];
+        this.ydomain = [_.min(yarr), _.max(yarr)];
+        this.xscale_type = "linear";
+        this.yscale_type = "linear";
+    }
+
+    Line.prototype.to_json = function(plot){
+        return {
             type: "line",
             uuid: uuid(),
             args: {
 	            x: "x",
 	            y: "y",
-	            color: color
+	            color: this.options.color
             }, sync_args: {
-                position: this.position_uuid,
-                data: this.data_uuid
+                position: plot.position_uuid,
+                data: this.data.uuid
             }
-        }];
+        };
+    };
 
-        this.xdomain = [_.min(xarr), _.max(xarr)];
-        this.ydomain = [_.min(yarr), _.max(yarr)];
-    }
-    
-    return LinePlot;
+    return Line;
 });
