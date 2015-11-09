@@ -45,14 +45,16 @@ define([
             shapes
                 .enter()
                 .append("path")
-                .attr("transform", function(row) {
-                    var d = position(row[x], row[y]);
-                    return "translate(" + d.x + "," + d.y + ")"; })
                 .attr("fill", options.color)
                 .attr("stroke", options.stroke_color)
                 .attr("stroke-width", options.stroke_width)
                 .transition().duration(200)
                 .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
+            
+            context.selectAll("path")
+                .attr("transform", function(row) {
+                    var d = position(row[x], row[y]);
+                    return "translate(" + d.x + "," + d.y + ")"; });
 
             return shapes;
         }
