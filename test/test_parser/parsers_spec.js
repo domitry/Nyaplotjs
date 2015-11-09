@@ -27,6 +27,9 @@ define([
                 expect(_.isFunction(module[3])).to.be(true);
             });
             
+            it("\'s parser should take the correct number of arguments", function(){
+                expect(module[3].length).to.be(module[1].length+1);
             });
         });
+    });
 });
