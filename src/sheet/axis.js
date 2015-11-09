@@ -47,11 +47,15 @@ define([
             g.select(".x_axis").call(xAxis);
             g.select(".y_axis").call(yAxis);
 
-            g.selectAll(".x_axis, .y_axis")
-                .selectAll("path, line")
-                .style("fill","none")
-                .style("stroke",options.stroke_color)
-                .style("stroke-width",options.stroke_width);
+            function updateStyle(){
+                g.selectAll(".x_axis, .y_axis")
+                    .selectAll("path, line")
+                    .style("fill","none")
+                    .style("stroke",options.stroke_color)
+                    .style("stroke-width",options.stroke_width);
+            }
+
+            updateStyle();
 
             g.selectAll(".x_axis, .y_axis")
                 .selectAll("text")
@@ -67,6 +71,7 @@ define([
                 update: function(){
                     g.select(".x_axis").call(xAxis);
                     g.select(".y_axis").call(yAxis);
+                    updateStyle();
                 }
             });
         }
