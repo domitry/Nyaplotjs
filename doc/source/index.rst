@@ -20,7 +20,6 @@ A simple JavaScript interface was added in v2 and Python wrapper is now being de
 
    getting_started
    api
-   for_developers
    architecture
    
 
