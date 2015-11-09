@@ -1,15 +1,36 @@
-<html lang='en'>
-<head>
-  <title>Nyaplotjs example -- Histogram</title>
-  <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/nyaplot.js'></script>
-</head>
-<body>
-<div id='vis'></div>
-<script>
-var values = d3.range(100).map(function(val){return {val1: d3.random.bates(10)(val)};});
-models = {data:{data1: values},panes: [{type:'rectangular', diagrams:[{type: 'histogram', data: 'data1', options: {value:'val1'}}], options:{width:500, height:500, xrange: [0,1], yrange: [0,30]}}]};
-window.onload = function(){Nyaplot.core.parse(models, '#vis');};
-</script>
-</body>
+<html>
+  <head>
+    <title>Histogram with Nyaplotjs</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script src='./data/plane.dat'></script>
+    <script>
+     window.onload = function(){
+       var plot = new Nyaplot.Plot({
+         ylabel: "", xlabel: "luminance",
+         stage_height: 400,
+         view_height: 330,
+         view_width: 550,
+         xrange: [10, 560],
+         yrange: [330, 0]
+       });
+       var hist = new Nyaplot.Histogram(window.raw_data, {maxval: 25000});
+       
+       plot.add(hist);
+       plot.show("vis");
+
+       d3.select("#N").text(N);
+       d3.select("#PI").text(4*inside.x.length/N);
+     };
+    </script>
+  </head>
+  <body>
+    <h1>Histogram</h1>
+    <img src="data/plane.jpg"><br><br>
+    <a href="https://www.flickr.com/photos/rich701/11209574446/in/photolist-i5xZWW-csFQAN-csjkfQ-pfcFKn-9ZPuEZ-9ZPpsR-dAjX7v-7zgiNb-g9VEHJ-9VyYbm-9ZT3pG-9ZPsjg-9ZShxG-9ZSg3h-9ZPpht-9DJwXe-8Pfswy-5YuX9D-e9y4Pb-a7HhZw-9ZSkV9-9ZSjV3-9ZSjGU-9ZSjbL-9ZPq9B-nMqjPh-9ZSjau-9ZPshD-9ZPp4e-9ZPo84-ad4hBH-63uoZe-ah48H2-6LT6Up-9ZQ6KX-9ZSkWL-nMqDT7-5o5Mg-9ZSkTN-9ZPtj6-iceDKg-8yX7TH-5eoPeW-7fpuK7-poKQbo-8BdJrH-65zbhS-pLN8PZ-8bZ29H-2tQ1yA">"1937 Cleveland Air Race, Fuller's plane"</a>
+    by <a href="https://www.flickr.com/photos/rich701/">rich701</a>
+    is licensed under <a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>
+    <br><br>
+    <div id="vis"></div>
+  </body>
 </html>
