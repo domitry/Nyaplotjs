@@ -5,11 +5,11 @@ define([
 ], function(_, core, uuid){
     function Base(){
         this.plots=[];
-        this.data=[];
+        this.data_arr=[];
         
         _.extend(this, {
             div_id: "unknown",
-            data_uuid: uuid(),
+            interactive: true,
             stage_uuid: uuid(),
             axis_uuid: uuid(),
             position_uuid: uuid(),
@@ -62,11 +62,6 @@ define([
         
         var prefix = [
             {
-                type: "data", uuid: this.data_uuid, args: {
-	                data: this.data
-                }
-            },
-            {
                 type: "scale", uuid: this.xscale_uuid, args: {
 	                type: this.xscale_type,
 	                domain: this.xdomain,
@@ -88,7 +83,7 @@ define([
                 }
             }];
 
-        var sufix = [
+        var sheets = [
             {
                 type: "axis2d", uuid: this.axis_uuid, args: {
 	                width: this.view_width,
@@ -121,8 +116,11 @@ define([
                 sync_args: {
                     glyphs: this.plots_uuid
                 }
-            },
-            {
+            }
+        ];
+
+        if(this.interactive){
+            sheets.push({
                 type: "interactive_wheel", uuid: this.interactive_uuid, args: {
                     size: [this.view_width, this.view_height],
                     stage_uuid: this.stage_uuid
@@ -131,7 +129,10 @@ define([
                     yscale: this.yscale_uuid,
                     updates: [this.axis_uuid].concat(this.plots_uuid)
                 }
-            },
+            });
+        }
+
+        var sufix = [
             {
                 type: "stage2d", uuid: this.stage_uuid, args: {
 	                width: this.stage_width,
@@ -142,8 +143,7 @@ define([
                         this.background_uuid,
                         this.axis_uuid,
                         this.context_uuid,
-                        this.label_uuid,
-                        this.interactive_uuid
+                        this.label_uuid
                     ]
                 }
             },
@@ -157,7 +157,10 @@ define([
             }
         ];
 
-        return Array.prototype.concat(prefix, this.plots, sufix);
+        if(this.interactive)
+            sufix[0].sync_args.sheets.push(this.interactive_uuid);
+
+        return Array.prototype.concat(this.data_arr, prefix, this.plots, sheets, sufix);
     };
 
     return Base;
