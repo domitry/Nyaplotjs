@@ -1,73 +1,39 @@
-<html lang='en'>
-<head>
-  <title>Nyaplotjs example -- Scatter</title>
-  <script src='http://d3js.org/d3.v3.min.js'></script>
-  <script src='../release/nyaplot.js'></script>
-</head>
-<body>
-<div id='vis'></div>
-<script>
-var data1 = [], MAX=50, MIN=0;
-for(var i=0;i<50;i++)data1.push({x: Math.random()*MAX, y: Math.random()*MAX})
-var models = [
-  {type: "data", uuid: "data1", args: {
-    data: data1
-  }},
-  {type: "df_scale", uuid: "xscale", args: {
-    data: {sync: "data1"},
-    column: "x",
-    range: [0, 500]
-  }},
-  {type: "df_scale", uuid: "yscale", args: {
-    data: {sync: "data1"},
-    column: "y",
-    range: [0, 500]
-  }},
-  {type: "position2d", uuid: "position", args: {
-    x: {sync: "xscale"},
-    y: {sync: "yscale"}
-  }},
-  {type: "scatter", uuid: "scatter1", args: {
-    data: {sync: "data1"},
-    x: "x",
-    y: "y",
-    position: {sync: "position"}
-  }},
-  {type: "axis2d", uuid: "axis", args: {
-    xscale: {sync: "xscale"},
-    yscale: {sync: "yscale"},
-    width: 500,
-    height: 500
-  }},
-  {type: "label", uuid: "label", args: {
-    x: "hogehoge",
-    y: "nyanya",
-    width: 500,
-    height: 500,
-    margin: {bottom: 70, left: 60}
-  }},
-  {type: "background2d", uuid: "background", args: {
-    width: 500,
-    height: 500
-  }},
-  {type: "context2d", uuid: "context", args: {
-    glyphs: ["scatter1"]
-  }},
-  {type: "stage2d", uuid: "stage", args: {
-    sheets: ["background", "axis", "context", "label"],
-    width: 700,
-    height: 700,
-    margin: {x: 60, y: 10},
-    zoom:true
-  }},
-  {type: "pane", uuid: "pane", args: {
-    "parent_id":"vis",
-    "layout": {type: "rows", contents: [{"sync": "stage"}]}
-  }}
-];
-window.onload = function(){
-  Nyaplot.core.parse(models);
- };
-</script>
-</body>
+<html>
+  <head>
+    <title>Scatter with Nyaplotjs</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var inside={x: [], y: []}, outside={x: [], y: []}, N=7000;
+       
+       for(var i=0;i < N;i++){
+         var x= Math.random();
+         var y= Math.random();
+         if(Math.sqrt(x*x+y*y)<1.0){
+           inside.x.push(x);
+           inside.y.push(y);
+         }else{
+           outside.x.push(x);
+           outside.y.push(y);
+         }
+       }
+       var plot = new Nyaplot.Plot();
+       var sc1 = new Nyaplot.Scatter(inside.x, inside.y, {color: "#1b9e77"});
+       var sc2 = new Nyaplot.Scatter(outside.x, outside.y, {color: "#d95f02"});
+       
+       plot.add([sc1, sc2]);
+       plot.show("vis");
+
+       d3.select("#N").text(N);
+       d3.select("#PI").text(4*inside.x.length/N);
+     };
+    </script>
+  </head>
+  <body>
+    <h1>PI = ?</h1>
+    N=<span id="N"></span>, PI~=<span id="PI"></span>
+    <br>
+    <div id="vis"></div>
+  </body>
 </html>
