@@ -6,10 +6,8 @@ define([
     "parser/scale",
     "parser/position",
     "parser/pane",
-    "parser/data",
-    "parser/row_scale",
-    "parser/df_scale"
-], function(_, stage, scale, position, pane, data, row_scale, df_scale){
+    "parser/data"
+], function(_, stage, scale, position, pane, data){
     /*
      * All parser module should return the array of:
      *  name of parser (string)
