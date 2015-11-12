@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <title>MultiPlot with Nyaplotjs</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script src='./data/plane.dat'></script>
+    <script>
+     window.onload = function(){
+       var p1 = (function(){
+         var xarr=[], yarr1=[], yarr2=[], N=1000, curry1=0.0, curry2=0.0;
+         
+         for(var i=0;i < N;i++){
+           xarr.push(i);
+           yarr1.push(curry1+=(Math.random()-0.5));
+           yarr2.push(curry2+=(Math.random()-0.5));
+         }
+         var plot = new Nyaplot.Plot({xlabel: "Number of steps"});
+         var line1 = new Nyaplot.Line(xarr, yarr1, {color: "#fbb4ae"});
+         var line2 = new Nyaplot.Line(xarr, yarr2, {color: "#b3cde3"});
+         plot.add([line1, line2]);
+         return plot;
+       })();
+
+       var p2 = (function(){
+         var plot = new Nyaplot.Plot({
+           ylabel: "", xlabel: "luminance"
+         });
+         var hist = new Nyaplot.Histogram(window.raw_data, {maxval: 25000});
+         plot.add(hist);
+         return plot;
+       })();
+
+       var mp = new Nyaplot.MultiPlot([p1, p2]);
+       mp.show("vis");
+     };
+    </script>
+  </head>
+  <body>
+    <h1>Random walk</h1>
+    <div id="vis"></div>
+  </body>
+</html>
