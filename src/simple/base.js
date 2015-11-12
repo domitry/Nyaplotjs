@@ -146,16 +146,7 @@ define([
                         this.label_uuid
                     ]
                 }
-            },
-            {
-                type: "pane", uuid: "pane", args: {
-	                "parent_id":"vis",
-	                "layout": {type: "rows", contents: [0]}
-                }, sync_args: {
-                    stages: [this.stage_uuid]
-                }
-            }
-        ];
+            }];
 
         if(this.interactive)
             sufix[0].sync_args.sheets.push(this.interactive_uuid);

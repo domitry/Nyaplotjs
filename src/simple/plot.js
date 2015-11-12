@@ -44,7 +44,9 @@ define([
         this.charts.push(chart);
     };
 
-    Plot.prototype.create_models = function(){
+    Plot.prototype.create_models = function(standalone){
+        standalone = _.isUndefined(standalone) ? true : false;
+        
         this.data_arr = _.map(this.charts, function(c){
             return c.data;
         });
@@ -53,7 +55,22 @@ define([
             return c.to_json(this);
         }, this));
 
-        return SimpleBase.prototype.create_models.apply(this);
+        var arr = SimpleBase.prototype.create_models.apply(this);
+
+        if(standalone == true){
+            arr.push(
+                {
+                    type: "pane", uuid: "pane", args: {
+	                    "parent_id":"vis",
+	                    "layout": {type: "rows", contents: [0]}
+                    }, sync_args: {
+                        stages: [this.stage_uuid]
+                    }
+                }
+            );
+        }
+
+        return arr;
     };
 
     return Plot;

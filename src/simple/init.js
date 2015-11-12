@@ -9,9 +9,11 @@ define([
     "simple/line",
     "simple/scatter",
     "simple/histogram",
-], function(plot, line, scatter, histogram){
+    "simple/multi_plot"
+], function(plot, line, scatter, histogram, multi_plot){
     return {
         Plot: plot,
+        MultiPlot: multi_plot,
         Line: line,
         Scatter: scatter,
         Histogram: histogram
