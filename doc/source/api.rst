@@ -2,6 +2,36 @@
 API Reference
 =============
 
+External API
+============
+
+
+
+Plot
+----
+
+.. code-block:: javascript
+
+   new Nyaplot.Plot(options)
+
+Base class for general 2D plots.
+
+
+Charts
+------
+
+.. code-block:: javascript
+
+   new Nyaplot.Scatter(xarr, yarr, options)
+
+.. code-block:: javascript
+
+   new Nyaplot.Histogram(arr, options)
+
+.. code-block:: javascript
+
+   new Nyaplot.Line(xarr, yarr, options)
+
 
 Internal API
 ============
