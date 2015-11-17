@@ -1,11 +1,8 @@
 define([
-    "underscore",
-    "core",
-    "utils/dataframe"
-], function(_, core, Df){
+    "underscore"
+], function(_){
     return [
         "scale",
-        /* args: {data_id: "uuid", column: "hoge", range: []} */
         ["domain", "range", "type"],
         {},
         function(domain, range, type, options){
