@@ -18,8 +18,7 @@ Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 201
 * [Histogram](http://www.domitry.com/gsoc/histogram.html)
 * [Interactive 3-pane plot](http://www.domitry.com/gsoc/multi_pane2.html)
 
-## How to use
-## How to contribute
+## How to use & How to contribute
 
 **Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
 
