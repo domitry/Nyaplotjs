@@ -13,13 +13,10 @@ This software has been developed as a product in Google Summer of Code 2014 (GSo
 Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 2014 term. 
 
 ## Demos
+* [Scatter](http://bl.ocks.org/domitry/4e9e02acc18ad6b83d56)
+* [Line](http://bl.ocks.org/domitry/2433a5d1b4bfb72ac816)
+* [Histogram](http://www.domitry.com/gsoc/histogram.html)
 * [Interactive 3-pane plot](http://www.domitry.com/gsoc/multi_pane2.html)
-* [Bar](http://bl.ocks.org/domitry/2f53781449025f772676)
-* [Histogram](http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e)
-* [Scatter](http://bl.ocks.org/domitry/308e27d8d12c1374e61f)
-* [Line](http://bl.ocks.org/domitry/e9a914b78f3a576ed3bb)
-* [Venn](http://bl.ocks.org/domitry/d70dff56885218c7ad9a)
-* [Histogram in another theme](http://bl.ocks.org/domitry/f215d5ff3bd3f5fec2ad)
 
 ## How to use
 ### General use
