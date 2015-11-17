@@ -5,7 +5,8 @@ define([
     "parser/scale",
     "parser/position",
     "parser/pane",
-    "parser/data"
+    "parser/data",
+    "parser/accessor"
 ], function(_, core){
     var args = [].slice.call(arguments, 2);
     return function(){
