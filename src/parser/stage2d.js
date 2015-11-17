@@ -1,8 +1,7 @@
 define([
     "underscore",
-    "node-uuid",
     "core"
-], function(_, node_uuid, core){
+], function(_, core){
     return [
         "stage2d",
         ["sheets"],

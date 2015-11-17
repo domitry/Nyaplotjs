@@ -1,9 +1,9 @@
 define([
     "underscore",
-    "node-uuid",
+    "utils/uuid",
     "core",
     "state"
-], function(_, node_uuid, core, State){
+], function(_, uuid, core, State){
     /*
      *  parent
      *       +--clipPath--rect
@@ -20,7 +20,7 @@ define([
             height: 500
         },
         function(context, glyphs, options){
-            var unique_id = node_uuid.v4() + "clip_context";
+            var unique_id = uuid() + "clip_context";
             var g = context.attr("class", "context");
 
             g
