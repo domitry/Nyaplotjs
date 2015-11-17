@@ -57,8 +57,56 @@ define([
         core.parse(models);
     };
 
+    Base.prototype.create_axis = function(){
+        this.axis = {
+            type: "axis2d", uuid: this.axis_uuid, args: {
+	            width: this.view_width,
+	            height: this.view_height
+            }, sync_args:{
+                xscale: this.xscale_uuid,
+                yscale: this.yscale_uuid
+            }
+        };
+    };
+
+    Base.prototype.create_position = function(){
+        this.position = {
+            type: "position2d", uuid: this.position_uuid, args: {},
+            sync_args: {
+                x: this.xscale_uuid,
+                y: this.yscale_uuid
+            }
+        };
+    };
+
+    Base.prototype.create_sheets = function(){
+        this.sheets = [
+            this.background_uuid,
+            this.axis_uuid,
+            this.context_uuid,
+            this.label_uuid
+        ];
+    };
+
+    Base.prototype.create_interactive = function(){
+        this.interactive_layer =  {
+            type: "interactive_wheel", uuid: this.interactive_uuid, args: {
+                size: [this.view_width, this.view_height],
+                stage_uuid: this.stage_uuid
+            }, sync_args: {
+                xscale: this.xscale_uuid,
+                yscale: this.yscale_uuid,
+                updates: [this.axis_uuid].concat(this.plots_uuid)
+            }
+        };
+    };
+
     Base.prototype.create_models = function(){
         this.plots_uuid = _.map(this.plots, function(p){return p.uuid;});
+        this.create_axis();
+        this.create_position();
+        this.create_sheets();
+        this.create_interactive();
         
         var prefix = [
             {
@@ -75,24 +123,11 @@ define([
 	                range: this.yrange
                 }
             },
-            {
-                type: "position2d", uuid: this.position_uuid, args: {},
-                sync_args: {
-                    x: this.xscale_uuid,
-                    y: this.yscale_uuid
-                }
-            }];
+            this.position
+        ];
 
         var sheets = [
-            {
-                type: "axis2d", uuid: this.axis_uuid, args: {
-	                width: this.view_width,
-	                height: this.view_height
-                }, sync_args:{
-                    xscale: this.xscale_uuid,
-                    yscale: this.yscale_uuid
-                }
-            },
+            this.axis,
             {
                 type: "label", uuid: this.label_uuid, args: {
 	                x: this.xlabel,
@@ -120,16 +155,7 @@ define([
         ];
 
         if(this.interactive){
-            sheets.push({
-                type: "interactive_wheel", uuid: this.interactive_uuid, args: {
-                    size: [this.view_width, this.view_height],
-                    stage_uuid: this.stage_uuid
-                }, sync_args: {
-                    xscale: this.xscale_uuid,
-                    yscale: this.yscale_uuid,
-                    updates: [this.axis_uuid].concat(this.plots_uuid)
-                }
-            });
+            sheets.push(this.interactive_layer);
         }
 
         var sufix = [
@@ -139,12 +165,7 @@ define([
 	                height: this.stage_height,
 	                margin: this.stage_margin
                 },sync_args: {
-                    sheets: [
-                        this.background_uuid,
-                        this.axis_uuid,
-                        this.context_uuid,
-                        this.label_uuid
-                    ]
+                    sheets: this.sheets
                 }
             }];
 
