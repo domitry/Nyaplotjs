@@ -6,10 +6,14 @@ define([
         ["x", "y"],
         {},
         function(x_scale, y_scale, options){
-            return function(x, y){
+            return function(xlabel, ylabel){
                 return {
-                    x: x_scale(x),
-                    y: y_scale(y)
+                    x: function(d){
+                        return x_scale(d[xlabel]);
+                    },
+                    y: function(d){
+                        return y_scale(d[ylabel]);
+                    }
                 };
             };
         }

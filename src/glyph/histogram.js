@@ -33,26 +33,27 @@ define([
             stroke_width: 1,
             hover: true
         },
-        function(context, data, value, position, scalex, options){
+        function(context, data, value_label, position, scalex, options){
             data = data.data;
-            var column = _.map(data, function(row){return row[value];});
+            var column = _.map(data, function(row){return row[value_label];});
+            var pos1 = position('x', 'y'), pos2 = position('dx', 'y');
 
             var rects = context.selectAll("rect").data(
                 d3.layout.histogram()
                     .bins(scalex.ticks(options.bin_num))(column)
             );
 
-            rects.enter().append("rect").attr("height", 0).attr("y", position(0, 0).y);
+            rects.enter().append("rect").attr("height", 0).attr("y", pos1.y({y: 0}));
 
             rects
-                .attr("x",function(d){return position(d.x, 0).x;})
-                .attr("width", function(d){return position(d.dx, 0).x - position(0, 0).x;})
+                .attr("x", pos1.x)
+                .attr("width", function(d){return pos2.x(d) - pos2.x({'dx': 0});})
                 .attr("fill", options.color)
                 .attr("stroke", options.stroke_color)
                 .attr("stroke-width", options.stroke_width)
                 .transition().duration(200)
-                .attr("y", function(d){return position(0, d.y).y;})
-                .attr("height", function(d){return position(0, 0).y - position(0, d.y).y;});
+                .attr("y", pos1.y)
+                .attr("height", function(d){return pos1.y({y: 0}) - pos1.y(d);});
 
             return rects;
         }

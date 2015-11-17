@@ -39,8 +39,10 @@ define([
             stroke_width: 1,
             hover: true
         },
-        function(context, data, x, y, position, options){
+        function(context, data, xlabel, ylabel, position, options){
+            data = data.data;
             var shapes = context.selectAll("path").data(data);
+            var pos = position(xlabel, ylabel);
 
             shapes
                 .enter()
@@ -52,9 +54,8 @@ define([
                 .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
             
             context.selectAll("path")
-                .attr("transform", function(row) {
-                    var d = position(row[x], row[y]);
-                    return "translate(" + d.x + "," + d.y + ")"; });
+                .attr("transform", function(d) {
+                    return "translate(" + pos.x(d) + "," + pos.y(d) + ")"; });
 
             return shapes;
         }

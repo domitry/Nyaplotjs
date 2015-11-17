@@ -26,14 +26,14 @@ define([
             color:'steelblue',
             stroke_width: 2
         },
-        function(context, data, x, y, position, options){
+        function(context, data, xlabel, ylabel, position, options){
             data = data.data;
             var path = (context.select("path").node()==null ? context.append("path") : context.select("path"));
 	        path.datum(data);
 
             var line = d3.svg.line()
-                    .x(function(d){return position(d[x], d[y]).x;})
-                    .y(function(d){return position(d[x], d[y]).y;});
+                    .x(position(xlabel, ylabel).x)
+                    .y(position(xlabel, ylabel).y);
 
             path
                 .attr("d", line)
