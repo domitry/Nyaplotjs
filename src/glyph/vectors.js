@@ -1,23 +1,3 @@
-/*
- * Vectors: Vector Field
- *
- * Draw vector field from x, y, dx, dy column. This chart is designed to visualize wind vector data.
- * See Nyaplot's notebook: http://nbviewer.ipython.org/github/domitry/nyaplot/blob/master/examples/notebook/Mapnya2.ipynb
- *
- *
- * options:
- *    x,y,dx,dy    -> String: column name.
- *    fill_by      -> String: column name. Fill vectors according to this column. (both of continuous and descrete data are allowed.)
- *    color        -> Array : color in which vectors are filled.
- *    stroke_color -> String: stroke color.
- *    stroke_width -> Float : stroke width.
- *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *    tooltip      -> Object: instance of Tooltip. set by pane.
- *
- * example:
- *    http://bl.ocks.org/domitry/1e1222cbc48ab3880849
- */
-
 define([
     'underscore'
 ],function(_){

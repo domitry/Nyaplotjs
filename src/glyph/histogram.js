@@ -13,7 +13,6 @@
  *    stroke_color -> String: stroke color
  *    stroke_width -> Float : stroke width
  *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *    tooltip      -> Object: instance of Tooltip. set by pane.
  *
  * example:
  *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
