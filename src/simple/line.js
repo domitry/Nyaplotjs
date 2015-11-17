@@ -17,6 +17,7 @@ define([
             }
         };
 
+        this.uuid = uuid();
         this.xdomain = [_.min(xarr), _.max(xarr)];
         this.ydomain = [_.min(yarr), _.max(yarr)];
         this.xscale_type = "linear";
@@ -26,7 +27,7 @@ define([
     Line.prototype.to_json = function(plot){
         return {
             type: "line",
-            uuid: uuid(),
+            uuid: this.uuid,
             args: {
 	            x: "x",
 	            y: "y",
