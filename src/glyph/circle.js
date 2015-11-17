@@ -3,22 +3,23 @@ define([
 ], function(_){
     return [
         "circle",
-        ["context", "data", "cx", "cy"],
+        ["context", "data", "cx", "cy", "position"],
         {
             radius: 100,
             color: "steelblue",
             stroke_width: 1,
             stroke_color: "black"
         },
-        function(context, data, cx, cy, options){
+        function(context, data, cx, cy, position, options){
+            var pos = position(cx, cy);
             return context
                 .selectAll("circle")
-                .data(data)
+                .data(data.asarray())
                 .enter()
                 .append("circle")
                 .attr({
-                    cx: cx,
-                    cy: cy,
+                    cx: pos.x,
+                    cy: pos.y,
                     r: options.radius,
                     fill: options.color,
                     stroke_width: options.stroke_width,
