@@ -22,9 +22,7 @@ Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 201
 
 **Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
 
-## Building
-You need to install npm before building Nyaplotjs.
-
+## How to build
 ```shell:
 cd Nyaplotjs
 npm install
