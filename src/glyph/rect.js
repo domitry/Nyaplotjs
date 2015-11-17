@@ -3,53 +3,41 @@ define([
 ], function(_){
     return [
         "rect",
-        ["context", "data", "x", "y"],
+        ["context", "data", "x", "y", "position"],
         {
             width: 100,
             height: 100,
             color: "steelblue",
             stroke_width: 1,
             stroke_color: "black",
-            y_base: "top", // or "bottom"
-            x_base: "left" // or "center"
+            center_x: false,
+            center_y: false,
+            rotate: 0
         },
-        function(context, data, x, y, options){
-            var rect = context
+        function(context, data, x, y, position, options){
+            var pos = position(x, y);
+            return context
                 .selectAll("rect")
-                .data(data)
+                .data(data.asarray())
                 .enter()
                 .append("rect")
                 .attr({
-                    x: x,
-                    y: y,
+                    x: pos.x,
+                    y: pos.y,
                     width: options.width,
                     height: options.height,
                     fill: options.color,
                     stroke_width: options.stroke_width,
                     stroke: options.stroke_color,
-                    transform: (function(str){
-                        if(options.x_base == "center")
-                            return (_.isFunction(options.width) ?
-                                    function(d){
-                                        return str + " translate(" + options.width(d)/2 + ",0)";
-                                    }
-                                    : str + " translate(" + options.width/2 + ",0)");
-                        else return str;
-                    })("")
-                });
-
-            if(options.y_base == "bottom"){
-                var getValue = function(attr, d){
-                    return _.isFunction(attr) ? attr(d) : attr;
-                };
-                rect.attr(
-                    "y", function(d){
-                        return getValue(y, d) - getValue(options.height, d);
+                    transform: function(){
+                        var txt = "translate(";
+                        txt += (options.center_x ? d3.select(this).attr("width")/2: 0) + ",";
+                        txt += (options.center_y ? d3.select(this).attr("height")/2: 0) + ") ";
+                        if(options.rotate != 0)
+                            txt += "rotate(" + options.rotate + ")";
+                        return txt;
                     }
-                );
-            }
-
-            return rect;
+                });
         }
     ];
 });
