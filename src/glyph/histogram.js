@@ -34,6 +34,7 @@ define([
             hover: true
         },
         function(context, data, value, position, scalex, options){
+            data = data.data;
             var column = _.map(data, function(row){return row[value];});
 
             var rects = context.selectAll("rect").data(

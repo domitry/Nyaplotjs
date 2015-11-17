@@ -27,6 +27,7 @@ define([
             stroke_width: 2
         },
         function(context, data, x, y, position, options){
+            data = data.data;
             var path = (context.select("path").node()==null ? context.append("path") : context.select("path"));
 	        path.datum(data);
 
