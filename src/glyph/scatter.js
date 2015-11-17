@@ -40,8 +40,7 @@ define([
             hover: true
         },
         function(context, data, xlabel, ylabel, position, options){
-            data = data.data;
-            var shapes = context.selectAll("path").data(data);
+            var shapes = context.selectAll("path").data(data.asarray());
             var pos = position(xlabel, ylabel);
 
             shapes

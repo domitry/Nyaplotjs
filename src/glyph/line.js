@@ -27,9 +27,8 @@ define([
             stroke_width: 2
         },
         function(context, data, xlabel, ylabel, position, options){
-            data = data.data;
             var path = (context.select("path").node()==null ? context.append("path") : context.select("path"));
-	        path.datum(data);
+	        path.datum(data.asarray());
 
             var line = d3.svg.line()
                     .x(position(xlabel, ylabel).x)
