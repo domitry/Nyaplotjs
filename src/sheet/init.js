@@ -5,7 +5,7 @@ define([
     'sheet/background',
     'sheet/label',
     'sheet/context',
-    'sheet/interactive_wheel'
+    'sheet/zoom_wheel'
 ], function(_, sheet){
     var args = [].slice.call(arguments, 2);
 

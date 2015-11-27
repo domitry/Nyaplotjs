@@ -8,7 +8,7 @@ define([
      * Plots created from descrete data are not supported due to d3.behavior.zoom.
      */
     return [
-        "interactive_wheel",
+        "zoom_wheel",
         ["context", "stage_uuid", "xscale", "yscale", "updates", "size"],
         {},
         function(context, stage_uuid, xscale, yscale, updates, size, options){

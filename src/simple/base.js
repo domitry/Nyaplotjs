@@ -90,7 +90,7 @@ define([
 
     Base.prototype.create_interactive = function(){
         this.interactive_layer =  {
-            type: "interactive_wheel", uuid: this.interactive_uuid, args: {
+            type: "zoom_wheel", uuid: this.interactive_uuid, args: {
                 size: [this.view_width, this.view_height],
                 stage_uuid: this.stage_uuid
             }, sync_args: {
