@@ -4,7 +4,7 @@ module.exports = function(grunt){
             options: {
                 baseUrl: 'src',
 		        mainConfigFile: './src/config.js',
-                name: '../contrib/almond/almond',
+                name: '../node_modules/almond/almond',
 		        include: ['main'],
                 wrap: {
                     startFile: 'src/wrap/start.js',

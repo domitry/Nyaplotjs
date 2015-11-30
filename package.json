@@ -7,11 +7,15 @@
         "example": "examples"
     },
     "scripts": {
+        "preinstall": "npm i -g grunt-cli",
         "test": "echo \"\\n\\033[1;40m\\033[1;37m!!! run karma start karma.conf.js before testing !!!\\033[0;39m\\n\"; karma run"
     },
     "author": "Naoki Nishida",
     "license": "MIT License",
     "devDependencies": {
+        "d3": "~3.5.10",
+        "almond": "~0.3.1",
+        "underscore": "~1.8.3",
         "mocha": "~2.3.3",
         "chai": "~3.4.1",
         "karma": "~0.13.15",

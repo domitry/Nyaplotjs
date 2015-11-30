@@ -1,7 +1,6 @@
 require.config({
     paths: {
-        'underscore': '../contrib/underscore/underscore',
-        'node-uuid':'../contrib/node-uuid/uuid',
-        'colorbrewer': '../contrib/colorbrewer/colorbrewer'
+        'd3': '../node_modules/d3/d3.min',
+        'underscore': '../node_modules/underscore/underscore'
     }
 });
