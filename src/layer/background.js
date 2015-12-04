@@ -12,9 +12,9 @@ define([
             dy: 0,
             width: "auto",
             height: "auto",
-            color: "#eeeeee",
+            color: "#eee",
             stroke_width: 1,
-            stroke_color: "#666666"
+            stroke_color: "#333"
         },
         t.auto_append(
             "rect",
