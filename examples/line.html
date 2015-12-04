@@ -4,7 +4,7 @@
     <script src='../release/nyaplot.js'></script>
     <script>
      window.onload = function(){
-       var xarr=[], yarr1=[], yarr2=[], N=500, curry1=0.0, curry2=0.0;
+       var xarr=[], yarr1=[], yarr2=[], N=50, curry1=0.0, curry2=0.0;
        
        for(var i=0;i < N;i++){
          xarr.push(i);
@@ -12,9 +12,11 @@
          yarr2.push(curry2+=(Math.random()-0.5));
        }
        var plot = new Nyaplot.Simple.Plot();
-       plot.line(xarr, yarr1, {color: "#66c2a5"});
-       plot.line(xarr, yarr2, {color: "#fc8d62"});
+       plot.line(xarr, yarr1, {color: "#66c2a5", name: "A-san"});
+       plot.line(xarr, yarr2, {color: "#fc8d62", name: "B-san"});
        plot.xlabel("Number of steps");
+       plot.legend(true);
+       plot.props._legend.props.fill_color = "#fff";
        plot.render("#vis");
      };
     </script>
