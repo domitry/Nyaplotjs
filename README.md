@@ -15,7 +15,7 @@ This software has been developed as a product in Google Summer of Code 2014 (GSo
 
 ## Demos
 
-You can try Nyaplotjs interactively on [JSFiddle](https://jsfiddle.net/yu8kzoyx/).
+You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z73kjsxo/).
 
 ### Charts
 
