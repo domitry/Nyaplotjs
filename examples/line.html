@@ -14,6 +14,7 @@
        var plot = new Nyaplot.Simple.Plot();
        plot.line(xarr, yarr1, {color: "#66c2a5", name: "A-san"});
        plot.line(xarr, yarr2, {color: "#fc8d62", name: "B-san"});
+       plot.title("Walking A-san and B-san");
        plot.xlabel("Number of steps");
        plot.legend(true);
        plot.props._legend.props.fill_color = "#fff";
@@ -22,7 +23,6 @@
     </script>
   </head>
   <body>
-    <h1>Random walk</h1>
     <div id="vis"></div>
   </body>
 </html>
