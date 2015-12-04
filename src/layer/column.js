@@ -14,16 +14,22 @@ define([
         "column",
         [],
         {
-            width: "auto",
-            height: "auto",
             children: [],
             percent: [0.5, 0.5]
         },
         function(g, options){
-            var rw = options.children[0].width;
-            var lw = options.children[1].width;
-            var rh = options.children[0].height;
-            var lh = options.children[1].height;
+            function get_w(c){
+                return c.width + c.margin.left + c.margin.right;
+            }
+
+            function get_h(c){
+                return c.height + c.margin.top + c.margin.bottom;
+            }
+            
+            var rw = get_w(options.children[0]);
+            var lw = get_w(options.children[1]);
+            var rh = get_h(options.children[0]);
+            var lh = get_h(options.children[1]);
             
             var auto2zero = function(val){
                 return _.isNumber(val) ? val : 0;
@@ -61,15 +67,16 @@ define([
             var trans = [{x: 0, y: 0}, {x: 0, y: 0}];
             
             // Move the right child
-            if(_.isNumber(lw = options.children[0].width))
+            if(_.isNumber(lw = get_w(options.children[0])))
                 trans[1].x += lw;
 
             _.each(options.children, function(child, i){
+                trans[i].x += child.margin.left;
+                trans[i].y += child.margin.top;
+                
                 if(child.xalign == "center")
                     trans[i].x += child.width/2;
-            });
 
-            _.each(options.children, function(child, i){
                 if(child.yalign == "center")
                     trans[i].y += (options.height - child.height)/2;
             });

@@ -8,22 +8,29 @@ Order two child layers as rows:
 */
 define([
     'underscore',
-    'd3'
-],function(_, d3){
+    'd3',
+    'utils/parser_tools'
+],function(_, d3, t){
     return [
         "row",
         [],
         {
-            width: "auto",
-            height: "auto",
             children: [],
             percent: [0.5, 0.5]
         },
         function(g, options){
-            var bw = options.children[0].width;
-            var tw = options.children[1].width;
-            var bh = options.children[0].height;
-            var th = options.children[1].height;
+            function get_w(c){
+                return c.width + c.margin.left + c.margin.right;
+            }
+
+            function get_h(c){
+                return c.height + c.margin.top + c.margin.bottom;
+            }
+            
+            var tw = get_w(options.children[0]);
+            var bw = get_w(options.children[1]);
+            var th = get_h(options.children[0]);
+            var bh = get_h(options.children[1]);
             
             var auto2zero = function(val){
                 return _.isNumber(val) ? val : 0;
@@ -61,18 +68,19 @@ define([
             var trans = [{x: 0, y: 0}, {x: 0, y: 0}];
 
             // Move the bottom child
-            if(_.isNumber(th = options.children[0].height)){
+            if(_.isNumber(th = get_h(options.children[0]))){
                 trans[1].y = th;
             }
 
             _.each(options.children, function(child, i){
+                trans[i].x += child.margin.left;
+                trans[i].y += child.margin.top;
+                
                 if(child.xalign == "center")
-                    trans[i].x += (options.width - child.width)/2;
-            });
+                    trans[i].x += (options.width - get_w(child))/2;
 
-            _.each(options.children, function(child, i){
                 if(child.yalign == "center")
-                    trans[i].y += child.height/2;
+                    trans[i].y += get_h(child)/2;
             });
 
             _.each(g.node().childNodes, function(node, i){
