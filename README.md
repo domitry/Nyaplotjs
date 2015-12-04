@@ -27,6 +27,7 @@ Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 201
 * [Log scale](https://www.domitry.com/nyaplot/scale.html)
 * [Annotation](http://www.domitry.com/nyaplot/annotation.html)
 * [MathLabel](http://www.domitry.com/nyaplot/mathlabel.html)
+* [Theme](http://www.domitry.com/nyaplot/theme.html)
 
 ### Experimental
 
