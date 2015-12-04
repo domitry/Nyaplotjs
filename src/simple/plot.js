@@ -218,7 +218,8 @@ define([
                 font_size: 26,
                 text_anchor: "start",
                 xalign: "center",
-                yalign: "center"
+                yalign: "center",
+                margin: {top: 4, bottom: 20, left: 2, right: 2}
             };
             if(text.match(/\$\$(.+)\$\$/))
                 this.props._title = new S.Mathlabel(p);
