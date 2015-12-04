@@ -5,6 +5,7 @@ define(function(require, exports, module){
     (require('tool/_init'))();
 
     return {
+        d3: require('d3'),
         core: require('core'),
         Simple: (require('simple/_init'))()
     };
