@@ -23,6 +23,7 @@ You can try Nyaplotjs interactively on [JSFiddle](https://jsfiddle.net/yu8kzoyx/
 * [Histogram](http://www.domitry.com/nyaplot/histogram.html)
 * [Vectors](http://www.domitry.com/nyaplot/vectors.html)
 * [Benn](http://www.domitry.com/nyaplot/benn.html)
+* [Rect and Circle](http://www.domitry.com/nyaplot/rect_circle.html)
 
 ### Features
 
