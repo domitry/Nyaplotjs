@@ -21,8 +21,8 @@ define([
                         viewBox: '0 0 10 10',
                         refX: 8,
                         refY: 5,
-                        markerWidth: 8,
-                        markerHeight: 8,
+                        markerWidth: 4,
+                        markerHeight: 4,
                         orient: "auto"
                     })
                     .append('path')
