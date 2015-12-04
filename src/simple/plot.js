@@ -193,7 +193,10 @@ define([
                 if(!_.isNull(this.props._title))
                     current = row(this.props._title, current);
                 
-                return newNode(this.props._stage.uuid, [current]);
+                current = newNode(this.props._stage.uuid, [current]);
+                current.parser_type = "svg";
+                
+                return current;
             }.bind(this))();
 
             // calc range and data type

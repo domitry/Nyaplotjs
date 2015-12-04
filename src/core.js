@@ -13,11 +13,11 @@ define([
     // {func: , stack: , clear: true}
     var layer_list = {};
     var plots = {};
+    var parsers = {};
 
-    function parse(root, model){
-        var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
-        d3.select(root).node().appendChild(svg.node());
-        
+    function parse(root_txt, model){
+        var root_node = d3.select(root_txt);
+
         var plot = {root: null, layers: {}, render: function(){
             function dfs(l){
                 _.each(l.children, function(c){dfs(c);});
@@ -27,7 +27,7 @@ define([
         }};
         
         plots[model.uuid] = plot;
-        
+
         //// Instantiate each components based on defs
         (function(){
             function sync(uuid){
@@ -46,26 +46,44 @@ define([
                 plot.layers[task.uuid]= layer;
             });
         })();
-        
+
         //// Build components-tree based on layout
         //// Construct DOM tree based on layout
         //// def: {uuid: "u-u-i-d", children: []}
         (function(){
             function dfs(p, def){
-                var v = plot.layers[def.uuid];
-                v.node = p;
-                if(!_.isUndefined(def.children))
-                    v.children = _.map(def.children, function(c){
-                        return dfs(v.node.append("g"), c);
-                    });
-                return v;
+                if(!_.isUndefined(def.parser_type)){
+                    if(_.isUndefined(parsers[def.parser_type])){
+                        throw new Error("No root parser named " + def.parser_type);
+                    }else{
+                        return parsers[def.parser_type](p, def, plot.layers);
+                    }
+                }else{
+                    var v = plot.layers[def.uuid];
+                    if(v.type == "html_column" || v.type == "html_row"){
+                        var div = p.append("div");
+                        v.node = div;
+                        _.each(def.children, function(cdef){
+                            dfs(div, cdef);
+                        });
+                        return v;
+                    }
+                    else {
+                        throw new Error("Invalid layout: " + def);
+                    }
+                }
             }
-            plot.root = dfs(svg, model.layout);
+            
+            plot.root = dfs(root_node, model.layout);
         })();
 
         //// Apply given functions to each components
         plot.render();
     }
+
+    function register_root_parser(name, parser){
+        parsers[name]= parser;
+    };
 
     function register_parser(type_name, required_args, optional_args, parser){
         layer_list[type_name] = LayerBase.inherit(required_args, optional_args, parser);
@@ -126,6 +144,7 @@ define([
         layers: layer_list,
         plots: plots,
         register_parser: register_parser,
+        register_root_parser: register_root_parser,
         parse: parse,
         to_png: to_png
     };
