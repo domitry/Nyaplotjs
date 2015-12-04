@@ -34,13 +34,13 @@ You can try Nyaplotjs interactively on [JSFiddle](https://jsfiddle.net/yu8kzoyx/
 * [MathLabel](http://www.domitry.com/nyaplot/mathlabel.html)
 * [Theme](http://www.domitry.com/nyaplot/theme.html)
 
-### Experimental
+### Experimental features
 
 * [Interactive 3-pane plot](http://www.domitry.com/gsoc/multi_pane2.html)
 
 ## How to use & How to contribute
 
-**Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
+** The Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
 
 ## How to build
 ```shell
