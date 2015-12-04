@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>Try Legend</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr1=[], yarr2=[], N=50, curry1=0.0, curry2=0.0;
+       
+       for(var i=0;i < N;i++){
+         xarr.push(i);
+         yarr1.push(curry1+=(Math.random()-0.5));
+         yarr2.push(curry2+=(Math.random()-0.5));
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       plot.line(xarr, yarr1, {color: "#66c2a5", name: "A-san"});
+       plot.scatter(xarr, yarr1, {color: "#66c2a5", stroke_color: "black", size: 50, legend: false});
+       plot.line(xarr, yarr2, {color: "#fc8d62", name: "B-san"});
+       plot.scatter(xarr, yarr2, {color: "#fc8d62", stroke_color: "black", size: 50, legend: false});
+       
+       // small hack for multiple switching
+       var glyphs = plot._glyphs;
+       plot.props._legend.props.updates = [[glyphs[0], glyphs[1]], [glyphs[2], glyphs[3]]];
+       
+       plot.xlabel("Number of steps");
+       plot.title("Try Legend");
+       plot.legend(true);
+       plot.props._legend.props.fill_color = "#fff";
+
+       function render(){
+         d3.select("svg").remove();
+         plot.inner_legend = !this.checked;
+         plot.render("#vis");
+       }
+
+       console.log(plot.create_models());
+       d3.select("input").on("mousedown", render);
+       render();
+       
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    <br>
+    <table>
+      <tr><td><input type="checkbox" checked="true"></td><td>legend position: innner?</td></tr>
+    </table>
+    <br>
+    <h1>Legend</h1>
+    <p>
+      A functional legend can be added to all 2D plot.
+    </p>
+  </body>
+</html>
