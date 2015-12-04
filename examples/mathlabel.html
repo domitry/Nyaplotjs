@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <title>MathLabel</title>
+    <style>
+     .MathJax_SVG_Display {
+       text-align: left !important;
+       position: static !important;
+     }
+    </style>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.05;
+         xarr.push(x);
+         if(x==0)
+           yarr.push(2.);
+         else
+           yarr.push((x+Math.sin(x))/x);
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       plot.line(xarr, yarr, {});
+       plot.title("$$\TeX (y = e^x \sin(x))$$");
+       plot.props._title.props.width = 130;
+       plot.ylabel("Y");
+       plot.xlabel("X");
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    <p>
+      <h2>MathLabel (<b>experimental</b>)</h2>
+      TeX-style label using MathJax is implemented experimentally.<br>
+      Pass words surrounded by "\$\$" to plot.xlabel or plot.ylabel to try it.<br>
+    </p>
+  </body>
+</html>
