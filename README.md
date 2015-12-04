@@ -45,5 +45,4 @@ grunt release
 ```
 
 ## License
-Copyright (C) 2014 by Naoki Nishida  
-This version of Nyaplotjs is licensed under the MIT license.
+MIT License
