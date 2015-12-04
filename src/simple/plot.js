@@ -84,7 +84,12 @@ define([
                 _title: null,
                 _legend: null,
                 _grid: grid,
-                _background: new S.Background(wh),
+                _background: new S.Background({
+                    width: wh.width+4,
+                    height: wh.height+4,
+                    dx: -2,
+                    dy: -2
+                }),
                 _context: new S.Context(wh),
                 _wheelzoom: new S.Wheelzoom(_.extend({
                     xscale: xscale,
