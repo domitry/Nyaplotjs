@@ -6,11 +6,13 @@ Nyaplotjs
 
 ![alt text](https://dl.dropboxusercontent.com/u/47978121/gsoc/nya_top.png)
 
-Nyaplotjs is the back-end library for [Nyaplot](https://github.com/domitry/nyaplot). Its goal is to allow Ruby and other language users to create interactive plots in their favorite styles. Nyaplotjs provides a useful interface to generate plots based on a given JSON object.
+Nyaplotjs is a 2D/3D plotting library built on the top of [d3](http://d3js.org/).
 
-This software has been developed as a product in Google Summer of Code 2014 (GSoC2014). Please visit the website of [SciRuby project](http://sciruby.com/blog/) to see the progress of this project.
+Nyaplotjs was originally developed as the back-end library for [Nyaplot](https://github.com/domitry/nyaplot), an interactive plot library for Ruby language.
+It is frienendly with other script languages like Ruby and Python due to its origin.
 
-Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 2014 term. 
+This software has been developed as a product in Google Summer of Code 2014 (GSoC2014).
+It had been developed under the support of [SciRuby](http://sciruby.com/). The mentor was [Pjotr Prins](http://thebird.nl/).
 
 ## Demos
 
