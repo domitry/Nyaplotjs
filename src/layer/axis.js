@@ -41,9 +41,8 @@ define([
                         .selectAll("text")
                         .attr("fill", options.text_color);
 
-                    if(options.orient=="left"){
-                        var width = g.node().getBoundingClientRect().width;
-                        g.attr("transform", "translate(" + width + ", 0)");
+                    if(options.orient=="left" && !_.isUndefined(options.width)){
+                        g.attr("transform", "translate(" + options.width + ", 0)");
                     }   
                     
                     return g;
