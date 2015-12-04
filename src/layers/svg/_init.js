@@ -10,7 +10,6 @@ define([
     'layers/svg/stage2d',
     'layers/svg/column',
     'layers/svg/row',
-    'layers/svg/stack',
     'layers/svg/legend',
     'layers/svg/wheel_zoom'
     //'layers/svg/brush_zoom',
