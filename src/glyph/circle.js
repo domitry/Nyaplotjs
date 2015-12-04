@@ -3,7 +3,7 @@ define([
 ], function(_){
     return [
         "circle",
-        ["context", "data", "cx", "cy", "position"],
+        ["data", "x", "y", "position"],
         {
             radius: 100,
             color: "steelblue",

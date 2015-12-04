@@ -3,7 +3,7 @@ define([
 ], function(_){
     return [
         "text",
-        ["context", "data", "text", "x", "y", "position"],
+        ["data", "x", "y", "position"],
         {
             color: "black",
             font_size: 10,

@@ -23,7 +23,7 @@ define([
 ],function(_){
     return [
         "histogram",
-        ["context", "data", "value", "position", "scalex"],
+        ["data", "value", "position", "scalex"],
         {
             bin_num: 20,
             width: 0.9,

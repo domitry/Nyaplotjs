@@ -3,7 +3,7 @@ define([
 ], function(_){
     return [
         "rect",
-        ["context", "data", "x", "y", "position"],
+        ["data", "x", "y", "position"],
         {
             width: 100,
             height: 100,

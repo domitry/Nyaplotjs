@@ -3,7 +3,7 @@ define([
 ],function(_){
     return [
         "scatter",
-        ["context", "data", "x", "y", "position"],
+        ["data", "x", "y", "position"],
         {
             color: "steelblue",
             shape: "circle",

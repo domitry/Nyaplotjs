@@ -3,7 +3,7 @@ define([
 ],function(_){
     return [
         "line",
-        ["context", "data", "x", "y", "position"],
+        ["data", "x", "y", "position"],
         {
             color:'steelblue',
             stroke_width: 2

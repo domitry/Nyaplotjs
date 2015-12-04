@@ -3,7 +3,7 @@ define([
 ],function(_){
     return [
         "vectors",
-        ["context", "data", "x1", "y1", "x2", "y2", "position"],
+        ["data", "x1", "y1", "x2", "y2", "position"],
         {
             color:'steelblue',
             stroke_color: '#000',
