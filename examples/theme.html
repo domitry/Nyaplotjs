@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <title>Theme</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.05;
+         xarr.push(x);
+         if(x==0)
+           yarr.push(2.);
+         else
+           yarr.push((x+Math.sin(x))/x);
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       
+       plot.line(xarr, yarr, {});
+       plot.title("Another style");
+       plot.ylabel("y");
+       plot.xlabel("x");
+
+       function render(){
+         plot._glyphs[0].props.color = d3.select("#line_color").node().value;
+         plot.props._background.props.color = d3.select("#bg_color").node().value;
+         plot.props._background.props.stroke_width = d3.select("#stroke_width").node().value;
+         
+         plot.with_grid(Boolean(d3.select("#show_grid").node().checked));
+
+         plot.props._grid.props.color = d3.select("#grid_color").node().value;
+         plot.props._grid.props.dashed = Boolean(d3.select("#dashed_grid").node().checked);
+         
+         d3.select("svg").remove();
+         plot.render("#vis");
+       }
+       d3.select("button").on("mouseup", render);
+       render();
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    <table>
+      <tr>
+        <td>line color?</td>
+        <td><input id="line_color" type="text" value="steelblue"></td>
+      </tr>
+      <tr>
+        <td>grid color?</td>
+        <td><input id="grid_color" type="text" value="#ddd"></td>
+      </tr>
+      <tr>
+        <td>background color?</td>
+        <td><input id="bg_color" type="text" value="#fff"></td>
+      </tr>
+      <tr>
+        <td>border width</td>
+        <td><input id="stroke_width" type="text" value="0px"></td>
+      </tr>
+      <tr>
+        <td>show grid?</td>
+        <td><input id="show_grid" type="checkbox" checked="true"></td>
+      </tr>
+      <tr>
+        <td>dashed grid?</td>
+        <td><input id="dashed_grid" type="checkbox" checked="true"></td>
+      </tr>
+    </table>
+    <button>render</button>
+  </body>
+</html>
