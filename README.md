@@ -11,8 +11,7 @@ Nyaplotjs is a 2D/3D plotting library built on the top of [d3](http://d3js.org/)
 Nyaplotjs was originally developed as the back-end library for [Nyaplot](https://github.com/domitry/nyaplot), an interactive plot library for Ruby language.
 It is frienendly with other script languages like Ruby and Python due to its origin.
 
-This software has been developed as a product in Google Summer of Code 2014 (GSoC2014).
-It had been developed under the support of [SciRuby](http://sciruby.com/). The mentor was [Pjotr Prins](http://thebird.nl/).
+This software has been developed as a product in Google Summer of Code 2014 (GSoC2014) under the support of [SciRuby](http://sciruby.com/). The mentor was [Pjotr Prins](http://thebird.nl/).
 
 ## Demos
 
