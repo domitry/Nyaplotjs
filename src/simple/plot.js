@@ -133,8 +133,9 @@ define([
                     else return simple;
                 };
 
-                var row = function(right, left){
-                    var r = new S.Row();
+                var row = function(right, left, options){
+                    options = _.extend({}, options);
+                    var r = new S.Row(options);
                     others.push(r);
                     return {
                         uuid: r.uuid,
@@ -142,8 +143,9 @@ define([
                     };
                 };
 
-                var column = function(top, bottom){
-                    var c = new S.Column();
+                var column = function(top, bottom, options){
+                    options = _.extend({}, options);
+                    var c = new S.Column(options);
                     others.push(c);
                     return {
                         uuid: c.uuid,
@@ -162,7 +164,9 @@ define([
                     current = newNode(this.props._wheelzoom.uuid, [current]);
 
                 current = column(this.props._yaxis,
-                                 row(current, this.props._xaxis));
+                                 row(current, this.props._xaxis),{
+                                     margin: {top: 15, bottom: 5, left: 5, right: 5}
+                                 });
 
                 if(!_.isNull(this.props._xlabel))
                     current = row(current, this.props._xlabel);
