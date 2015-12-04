@@ -28,8 +28,8 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 
 ### Features
 
-* [to_png](https://www.domitry.com/nyaplot/to_png.html)
-* [Log scale](https://www.domitry.com/nyaplot/scale.html)
+* [to_png](http://www.domitry.com/nyaplot/to_png.html)
+* [Log scale](http://www.domitry.com/nyaplot/scale.html)
 * [Annotation](http://www.domitry.com/nyaplot/annotation.html)
 * [MathLabel](http://www.domitry.com/nyaplot/mathlabel.html)
 * [Legend](http://www.domitry.com/nyaplot/legend.html)
