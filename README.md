@@ -38,7 +38,7 @@ Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 201
 **Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
 
 ## How to build
-```shell:
+```shell
 cd Nyaplotjs
 npm install
 grunt release
