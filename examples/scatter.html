@@ -4,37 +4,51 @@
     <script src='../release/nyaplot.js'></script>
     <script>
      window.onload = function(){
-       var inside={x: [], y: []}, outside={x: [], y: []}, N=7000;
+       var N=7000;
        
-       for(var i=0;i < N;i++){
-         var x= Math.random();
-         var y= Math.random();
-         if(Math.sqrt(x*x+y*y)<1.0){
-           inside.x.push(x);
-           inside.y.push(y);
-         }else{
-           outside.x.push(x);
-           outside.y.push(y);
+       function render(){
+         d3.select("svg").remove();
+         
+         var inside={x: [], y: []}, outside={x: [], y: []};
+         
+         for(var i=0;i < N;i++){
+           var x= Math.random();
+           var y= Math.random();
+           if(Math.sqrt(x*x+y*y)<1.0){
+             inside.x.push(x);
+             inside.y.push(y);
+           }else{
+             outside.x.push(x);
+             outside.y.push(y);
+           }
          }
+         var plot = new Nyaplot.Simple.Plot();
+         plot.scatter(inside.x, inside.y, {color: "#1b9e77", name: "points inside"});
+         plot.scatter(outside.x, outside.y, {color: "#d95f02", name: "points outside"});
+         plot.title("PI = ?");
+         plot.legend(true);
+         plot.render("#vis");
+         
+         d3.select("#PI").text(4*inside.x.length/N);
        }
-       var plot = new Nyaplot.Simple.Plot();
-       plot.scatter(inside.x, inside.y, {color: "#1b9e77"});
-       plot.scatter(outside.x, outside.y, {color: "#d95f02"});
-       plot.title("Hello");
-       plot.xlabel("XLABEL");
-       plot.ylabel("YLABEL");
-       console.log(plot.create_models());
-       plot.render("#vis");
 
-       d3.select("#N").text(N);
-       d3.select("#PI").text(4*inside.x.length/N);
+       d3.select("input").on("input", function(){
+         N = parseInt(this.value);
+         render();
+       });
+
+       render();
      };
     </script>
   </head>
   <body>
-    <h1>PI = ?</h1>
-    N=<span id="N"></span>, PI~=<span id="PI"></span>
     <br>
     <div id="vis"></div>
+    N=<input type="text" value="7000" style="width:80">, PI~=<span id="PI"></span>
+    <br>
+    <h1>Scatter</h1>
+    <p>
+      
+    </p>
   </body>
 </html>
