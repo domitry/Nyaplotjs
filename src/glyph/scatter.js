@@ -27,7 +27,8 @@ define([
             
             context.selectAll("path")
                 .attr("transform", function(d) {
-                    return "translate(" + pos.x(d) + "," + pos.y(d) + ")"; });
+                    return "translate(" + pos.x(d) + "," + pos.y(d) + ")"; })
+                .style("visibility", options.visible ? "visible" : "hidden");
 
             return shapes;
         }

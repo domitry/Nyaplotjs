@@ -24,7 +24,8 @@ define([
                 .attr("d", line)
                 .attr("stroke", options.color)
                 .attr("stroke-width", options.stroke_width)
-                .attr("fill", options.fill_color);
+                .attr("fill", options.fill_color)
+                .style("visibility", options.visible ? "visible" : "hidden");
 
             if(options.dashed)
                 path

@@ -49,7 +49,8 @@ define([
                     'x2': p2.x,
                     'y1': p1.y,
                     'y2': p2.y
-                });
+                })
+                .style("visibility", options.visible ? "visible" : "hidden");
 
             return shapes;
         }

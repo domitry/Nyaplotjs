@@ -55,7 +55,8 @@ define([
                         next[y] = d[y] + options.box_height;
                         return Math.abs(pos.y(d) - pos.y(next));
                     }
-                });
+                })
+                .style("visibility", options.visible ? "visible" : "hidden");
         }
     ];
 });

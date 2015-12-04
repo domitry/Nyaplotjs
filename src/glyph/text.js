@@ -32,7 +32,8 @@ define([
                 .attr({
                     x: pos.x,
                     y: pos.y
-                });
+                })
+                .style("visibility", options.visible ? "visible" : "hidden");
         }
     ];
 });

@@ -48,7 +48,8 @@ define([
 
                         return "matrix(" + sx + ",0,0," + sy + "," + (cx_-sx*cx_).toString() + "," + (cy_-sy*cy_).toString() + ")";
                     }
-                });
+                })
+                .style("visibility", options.visible ? "visible" : "hidden");
         }
     ];
 });

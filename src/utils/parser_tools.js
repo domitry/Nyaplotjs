@@ -64,7 +64,8 @@ define([
             return _.extend({
                 width: "auto",
                 height: "auto",
-                margin: {top: 0, bottom: 0, left: 0, right:0}
+                margin: {top: 0, bottom: 0, left: 0, right:0},
+                visible: true
             }, obj);
         }
     };

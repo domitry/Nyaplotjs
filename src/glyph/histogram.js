@@ -52,7 +52,8 @@ define([
                 .attr("stroke-width", options.stroke_width)
                 .transition().duration(200)
                 .attr("y", pos1.y)
-                .attr("height", function(d){return pos1.y({y: 0}) - pos1.y(d);});
+                .attr("height", function(d){return pos1.y({y: 0}) - pos1.y(d);})
+                .style("visibility", options.visible ? "visible" : "hidden");
 
             return rects;
         }
