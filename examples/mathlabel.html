@@ -24,7 +24,10 @@
        var plot = new Nyaplot.Simple.Plot();
        plot.line(xarr, yarr, {});
        plot.title("$$\TeX (y = e^x \sin(x))$$");
-       plot.props._title.props.width = 130;
+
+       // Mathlabel of now cannot calculate its position propery.
+       plot.props._title.props.dx = 120;
+       
        plot.ylabel("Y");
        plot.xlabel("X");
        plot.render("#vis");
