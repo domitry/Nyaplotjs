@@ -60,17 +60,12 @@ define([
                     }
                 }else{
                     var v = plot.layers[def.uuid];
-                    if(v.type == "html_column" || v.type == "html_row"){
-                        var div = p.append("div");
-                        v.node = div;
-                        _.each(def.children, function(cdef){
-                            dfs(div, cdef);
-                        });
-                        return v;
-                    }
-                    else {
-                        throw new Error("Invalid layout: " + def);
-                    }
+                    var div = p.append("div");
+                    v.node = div;
+                    _.each(def.children, function(cdef){
+                        dfs(div, cdef);
+                    });
+                    return v;
                 }
             }
             
