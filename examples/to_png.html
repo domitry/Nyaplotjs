@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>to_png</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr1=[], yarr2=[], N=1000, curry1=0.0, curry2=0.0;
+       
+       for(var i=0;i < N;i++){
+         xarr.push(i);
+         yarr1.push(curry1+=(Math.random()-0.5));
+         yarr2.push(curry2+=(Math.random()-0.5));
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       plot.line(xarr, yarr1, {color: "#fbb4ae"});
+       plot.line(xarr, yarr2, {color: "#b3cde3"});
+       plot.title("Random walk");
+       plot.xlabel("Number of steps");
+       plot.to_png("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    <h2>Plot#to_png</h2>
+    <p>
+      All 2D graphs created with Nyaplot can be translated to PNG format.<br>
+      Call plot.to_png(node_name) to generate PNG.
+    </p>
+  </body>
+</html>
