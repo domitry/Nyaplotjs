@@ -1,7 +1,7 @@
 define(function(require, exports, module){
     var _ = require('underscore');
     (require('layer_svg/_init'))();
-    (require('glyph/_init'))();
+    (require('layer_svg/glyph/_init'))();
     (require('layer_tool/_init'))();
     
     var core = require('core');

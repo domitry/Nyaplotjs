@@ -2,14 +2,14 @@ define([
     'underscore',
     'core',
     'utils/parser_tools',
-    'glyph/scatter',
-    'glyph/line',
-    'glyph/histogram',
-    'glyph/vectors',
-    'glyph/rect',
-    'glyph/circle',
-    'glyph/text'
-//  'glyph/box'
+    'layer_svg/glyph/scatter',
+    'layer_svg/glyph/line',
+    'layer_svg/glyph/histogram',
+    'layer_svg/glyph/vectors',
+    'layer_svg/glyph/rect',
+    'layer_svg/glyph/circle',
+    'layer_svg/glyph/text'
+//  'layer_svg/glyph/box'
 ], function(_, core, t){
     var args = [].slice.call(arguments, 2);
 
