@@ -73,6 +73,7 @@ define([
             this.reset_xdomain = true;
             this.reset_ydomian = true;
             this.interactive = true;
+            this.y_axis_w = 70;
             
             this.props = {
                 _stage: stage,
@@ -208,9 +209,10 @@ define([
 
         Plot.prototype.title = function(text){
             var p = {
+                dx: this.y_axis_w/2,
                 text: text,
                 font_size: 26,
-                text_anchor: "auto",
+                text_anchor: "start",
                 xalign: "center",
                 yalign: "center"
             };
@@ -222,9 +224,10 @@ define([
 
         Plot.prototype.xlabel = function(text){
             var p = {
+                dx: this.y_axis_w/2,
                 text: text,
                 xalign: "center",
-                yalign: "center"
+                dominant_baseline: "text-before-edge"
             };
             
             if(text.match(/\$\$(.+)\$\$/))
