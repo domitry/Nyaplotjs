@@ -8,8 +8,15 @@ define([
             return function(){
                 var s = func.apply(this, args2arr(arguments));
                 var rect = s.node().getBoundingClientRect();
-                this.width = rect.width;
-                this.height = rect.height;
+
+                if(this.width == "auto" || this.width < rect.width){
+                    this.width = rect.width;
+                }
+                
+                if(this.height == "auto" || this.height < rect.height){
+                    this.height = rect.height;
+                }
+                
                 return s;
             };
         },
@@ -52,6 +59,13 @@ define([
         },
         auto2zero: function(val){
             return val == "auto" ? 0 : val;
+        },
+        add_default_args: function(obj){
+            return _.extend({
+                width: "auto",
+                height: "auto",
+                margin: {top: 0, bottom: 0, left: 0, right:0}
+            }, obj);
         }
     };
 });

@@ -1,7 +1,8 @@
 define([
     'underscore',
-    'utils/args2arr'
-], function(_, args2arr){
+    'utils/args2arr',
+    'utils/parser_tools'
+], function(_, args2arr, t){
     function LayerBase(args, sync_args){
         _.extend(this, args);
         this.sync_args = sync_args;
@@ -40,7 +41,7 @@ define([
             node: undefined,
             parser: parser,
             required_args: required_args,
-            optional_args: optional_args
+            optional_args: t.add_default_args(optional_args)
         })));
 
         return NewLayer;
