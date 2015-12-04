@@ -44,9 +44,6 @@ npm install
 grunt release
 ```
 
-## Dependency
-* d3.js version 3.4.4 or up
-
 ## License
 Copyright (C) 2014 by Naoki Nishida  
 This version of Nyaplotjs is licensed under the MIT license.
