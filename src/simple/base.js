@@ -37,6 +37,13 @@ define([
             if(val.is_simple == true)memo.sync_args[key] = val.uuid;
             else if(_.isArray(val) && _.all(val, function(s){return s.is_simple==true;}))
                 memo.sync_args[key] = _.map(val, function(s){return s.uuid;});
+            else if(_.isArray(val) && _.all(val, function(s){
+                return _.isArray(s) && _.all(s, function(a){
+                    return a.is_simple == true;
+                });
+            }))memo.sync_args[key] = _.map(val, function(s){
+                return _.map(s, function(a){return a.uuid;});
+            });
             else memo.args[key] = val;
             return memo;
         }, {args: {}, sync_args: {}});

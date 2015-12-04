@@ -11,9 +11,17 @@ define([
     LayerBase.prototype.construct = function(){
         // process sync_args
         _.extend(this, _.reduce(this.sync_args, function(memo, uuid, key){
-            if(_.isArray(uuid))
-                memo[key] = _.map(uuid, function(n){return this.sync(n);}.bind(this));
+            if(_.isArray(uuid)){
+                if(_.all(uuid, function(u){return _.isArray(u);})){
+                    memo[key]= _.map(uuid, function(u){
+                        return _.map(u, this.sync);
+                    }.bind(this));
+                }
+                else
+                    memo[key] = _.map(uuid, this.sync);
+            }
             else memo[key] = this.sync(uuid);
+            
             return memo;
         }.bind(this), {}));
         
