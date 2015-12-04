@@ -62,17 +62,25 @@ define([
                 y: yscale
             });
 
+            var legend = new S.Legend({
+                margin: {top: 13, bottom: 0, left: 0, right: 0},
+                updates: [],
+                colors: [],
+                names: []
+            });
+
             this._data = [];
             this._glyphs = [];
-            this._names = [];
             this.xdomain = null;
             this.ydomain = null;
             this.xarrs = [];
             this.yarrs = [];
             this.show_grid = true;
+            this.show_legend = false;
             this.reset_xdomain = true;
             this.reset_ydomian = true;
             this.interactive = true;
+            this.inner_legend = false;
             this.y_axis_w = 70;
             
             this.props = {
@@ -85,7 +93,7 @@ define([
                 _xlabel: null,
                 _ylabel: null,
                 _title: null,
-                _legend: null,
+                _legend: legend,
                 _grid: grid,
                 _background: new S.Background({
                     width: wh.width+4,
@@ -127,6 +135,10 @@ define([
                         return newNode(glyph.uuid, []);
                     }));
                 }.bind(this))();
+
+                if(this.show_legend && this.inner_legend){
+                    context.children.push(newNode(this.props._legend.uuid, []));
+                }
 
                 var simple2node = function(simple){
                     if(simple.is_simple)return newNode(simple.uuid, []);
@@ -174,8 +186,7 @@ define([
                 if(!_.isNull(this.props._ylabel))
                     current = column(this.props._ylabel, current);
 
-                if(!_.isNull(this.props._legend)){
-                    this.props._legend.props.names = this._names;
+                if(this.show_legend && !this.inner_legend){
                     current = column(current, this.props._legend);
                 }
                 
@@ -255,11 +266,7 @@ define([
         };
 
         Plot.prototype.legend = function(yn){
-            if(yn){
-                this.props._legend = new S.Legend({});
-            }else{
-                this.props._legend = null;
-            }
+            this.show_legend = yn;
         };
 
         Plot.prototype.ylabel = function(text){

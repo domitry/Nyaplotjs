@@ -48,8 +48,15 @@ define([
                 this.yarrs.push(yarr);
 
                 // for legend
-                var name = _.isUndefined(options.name) ? str : options.name;
-                this._names.push(name);
+                if(options.legend != false){
+                    var name = _.isUndefined(options.name) ? str : options.name;
+                    this.props._legend.props.names.push(name);
+                    
+                    if(!_.isUndefined(options.color))
+                        this.props._legend.props.colors.push(options.color);
+
+                    this.props._legend.props.updates.push(glyph);
+                }
 
                 // for wheel_zoom
                 this.props._wheelzoom.props.updates.push(glyph);
