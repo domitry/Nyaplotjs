@@ -36,17 +36,22 @@ define([
             shapes.enter()
                 .append("line")
                 .attr({
-                    'x1': p1.x,
-                    'x2': p1.y,
-                    'y1': p2.x,
-                    'y2': p2.y,
                     'fill': options.color,
                     'stroke': options.stroke_color,
                     'stroke-width':options.stroke_width,
-                    'marker-end': (options.with_arrow ? 'arrow' : 'none')
+                    'marker-end': (options.with_arrow ? 'url(#arrow)' : 'none')
+                });
+
+            shapes
+                .attr({
+                    'x1': p1.x,
+                    'x2': p2.x,
+                    'y1': p1.y,
+                    'y2': p2.y
                 });
 
             return shapes;
         }
     ];
 });
+
