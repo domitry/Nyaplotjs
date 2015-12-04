@@ -1,10 +1,10 @@
 define([
     "underscore",
     "core",
-    "layer_tool/scale",
-    "layer_tool/position",
-    "layer_tool/data",
-    "layer_tool/accessor"
+    "layers/tool/scale",
+    "layers/tool/position",
+    "layers/tool/data",
+    "layers/tool/accessor"
 ], function(_, core){
     var args = [].slice.call(arguments, 2);
     return function(){
