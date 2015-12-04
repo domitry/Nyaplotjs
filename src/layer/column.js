@@ -58,12 +58,6 @@ define([
                 }
             }
 
-            /*
-            if(options.height != "auto"){
-                options.children[0].height = options.height;
-                options.children[1].height = options.height;
-            }*/
-
             var trans = [{x: 0, y: 0}, {x: 0, y: 0}];
             
             // Move the right child

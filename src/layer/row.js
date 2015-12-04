@@ -59,12 +59,6 @@ define([
                 }
             }
 
-            /*
-            if(options.width != "auto"){
-                options.children[0].width = options.width;
-                options.children[1].width = options.width;
-            }*/
-
             var trans = [{x: 0, y: 0}, {x: 0, y: 0}];
 
             // Move the bottom child
