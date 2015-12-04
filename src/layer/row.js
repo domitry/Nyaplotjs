@@ -1,5 +1,5 @@
 /**
- Order two child layers as rows:
+Order two child layers as rows:
  +------+
  |  c1  |
  +------+
@@ -7,8 +7,9 @@
  +------+
 */
 define([
-    'underscore'
-],function(_){
+    'underscore',
+    'd3'
+],function(_, d3){
     return [
         "row",
         [],

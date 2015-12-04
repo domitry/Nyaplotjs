@@ -7,8 +7,9 @@
 
 define([
     'underscore',
+    'd3',
     'layer'
-],function(_, LayerBase){
+],function(_, d3, LayerBase){
     // {func: , stack: , clear: true}
     var layer_list = {};
     var plots = {};

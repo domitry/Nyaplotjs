@@ -1,7 +1,7 @@
 define([
     'underscore',
-    'utils/parser_tools'
-], function(_, t){
+    'd3'
+], function(_, d3){
     return [
         "rect",
         ["data", "x", "y", "position"],

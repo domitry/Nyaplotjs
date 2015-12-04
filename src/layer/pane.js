@@ -4,8 +4,9 @@
 
 define([
     'underscore',
+    'd3',
     'core'
-],function(_, core){
+],function(_, d3, core){
     return [
         "pane",
         ["parent_id", "layout", "stages"],

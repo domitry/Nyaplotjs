@@ -1,6 +1,7 @@
 define([
-    'underscore'
-], function(_){
+    'underscore',
+    'd3'
+], function(_, d3){
     return [
         "text",
         ["data", "x", "y", "position"],

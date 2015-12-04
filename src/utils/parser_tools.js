@@ -1,7 +1,8 @@
 define([
     'underscore',
+    'd3',
     'utils/args2arr'
-], function(_, args2arr){
+], function(_, d3, args2arr){
     return {
         auto_bbox: function(func){
             return function(){

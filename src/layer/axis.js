@@ -1,7 +1,8 @@
 define([
     'underscore',
+    'd3',
     'utils/parser_tools'
-],function(_, t){
+],function(_, d3, t){
     return [
         "axis",
         ["scale"],

@@ -21,7 +21,8 @@
 
 define([
     'underscore'
-],function(_){
+    'd3',
+],function(_, d3){
     // convert raw data into style information for box
     var processData = function(column){
         var getMed = function(arr){
