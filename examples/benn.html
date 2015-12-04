@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <title>Circle and Rect</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.01;
+         xarr.push(x);
+         yarr.push(Math.exp(x));
+       }
+       var plot = new Nyaplot.Simple.Plot();
+
+       plot.title("Benn plot");
+
+       plot.add_circle(-50, 0, 50, {color: "#7fc97f", opacity: 0.5});
+       plot.add_circle(25, 50, 80, {color: "#beaed4", opacity: 0.5});
+       plot.add_circle(25, -50, 80, {color: "#fdc086", opacity: 0.5});
+
+       plot.add_text(-50, 0, "A-san", {text_anchor: "middle"});
+       plot.add_text(25, 50, "B-san", {text_anchor: "middle"});
+       plot.add_text(25, -50, "C-san", {text_anchor: "middle"});
+       
+       plot.xdomain = [-150, 150];
+       plot.ydomain = [-150, 150];
+
+       plot.with_grid(false);
+
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>
