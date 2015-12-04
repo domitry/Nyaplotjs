@@ -3,28 +3,28 @@ module.exports = function(grunt){
         requirejs: {
             options: {
                 baseUrl: 'src',
-		        mainConfigFile: './src/config.js',
+                mainConfigFile: './src/config.js',
                 name: '../node_modules/almond/almond',
-		        include: ['main'],
+                include: ['main'],
                 wrap: {
                     startFile: 'src/wrap/start.js',
                     endFile: 'src/wrap/end.js'
                 }
-	        },
+            },
             production: {
                 options: {
-		            optimizeAllPluginResources: true,
-		            optimize: 'uglify2',
-		            out: "release/nyaplot.min.js"
-		        }
-	        },
+                    optimizeAllPluginResources: true,
+                    optimize: 'uglify2',
+                    out: "release/nyaplot.min.js"
+                }
+            },
             development: {
-		        options: {
+                options: {
                     optimize: "none",
                     out: "release/nyaplot.js"
-		        }
-	        }
-	    }
+                }
+            }
+        }
     });
     
     grunt.loadNpmTasks("grunt-contrib-requirejs");
