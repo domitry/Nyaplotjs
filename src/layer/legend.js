@@ -1,7 +1,8 @@
 define([
     'underscore',
+    'd3',
     'utils/parser_tools'
-],function(_, t){
+],function(_, d3, t){
     return [
         "legend",
         ["names"],
@@ -16,7 +17,8 @@ define([
             fill_color: "none",
             stroke_color: "#000",
             stroke_width: 1,
-            clickable: true,
+            interactive: true,
+            updates: [],
             interval_x: 5,
             interval_y: 3,
             padding: {left: 10, right: 10, top: 20, bottom: 20}
@@ -70,14 +72,14 @@ define([
                             }
                         });
 
-                boxes.append("circle")
-                    .attr("cx", 0)
-                    .attr("cy", 0)
-                    .attr("r", options.radius)
-                    .attr("stroke", function(d){return d.color;})
-                    .attr("stroke-width","2")
-                    .attr("fill",function(d){return d.color;})
-                    .attr("fill-opacity", function(d){return (d.visible ? 0 : 1);});
+                var circles = boxes.append("circle")
+                        .attr("cx", 0)
+                        .attr("cy", 0)
+                        .attr("r", options.radius)
+                        .attr("stroke", function(d){return d.color;})
+                        .attr("stroke-width","2")
+                        .attr("fill",function(d){return d.color;})
+                        .attr("fill-opacity", function(d){return (d.visible ? 1 : 0);});
 
                 boxes.append("text")
                     .attr("x", options.radius + options.interval_x)
@@ -85,6 +87,24 @@ define([
                     .attr("font-size", options.font_size)
                     .attr("dominant-baseline", "middle")
                     .text(function(d){return d.name;});
+
+                if(options.interactive)
+                    circles.on("click", function(d, i){
+                        d.visible = !d.visible;
+                        d3.select(this).attr("fill-opacity", (d.visible ? 1 : 0));
+                        
+                        var target = options.updates[i];
+                        if(!_.isUndefined(target)){
+                            var f = function(l){
+                                l.visible = d.visible;
+                                l.construct();
+                            };
+                            if(_.isArray(target))_.each(target, f);
+                            else f(target);
+                        }
+                        d3.event.preventDefault();
+                    })
+                    .style("cursor", "hand");
 
                 var r = g.node().getBoundingClientRect();
                 
