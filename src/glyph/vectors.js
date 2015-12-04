@@ -3,7 +3,7 @@ define([
 ],function(_){
     return [
         "vectors",
-        ["context", "data", "x1", "y1", "x2", "y2", "position"],
+        ["data", "x1", "y1", "x2", "y2", "position"],
         {
             color:'steelblue',
             stroke_color: '#000',
@@ -21,8 +21,8 @@ define([
                         viewBox: '0 0 10 10',
                         refX: 8,
                         refY: 5,
-                        markerWidth: 8,
-                        markerHeight: 8,
+                        markerWidth: 4,
+                        markerHeight: 4,
                         orient: "auto"
                     })
                     .append('path')
@@ -36,17 +36,22 @@ define([
             shapes.enter()
                 .append("line")
                 .attr({
-                    'x1': p1.x,
-                    'x2': p1.y,
-                    'y1': p2.x,
-                    'y2': p2.y,
                     'fill': options.color,
                     'stroke': options.stroke_color,
                     'stroke-width':options.stroke_width,
-                    'marker-end': (options.with_arrow ? 'arrow' : 'none')
+                    'marker-end': (options.with_arrow ? 'url(#arrow)' : 'none')
+                });
+
+            shapes
+                .attr({
+                    'x1': p1.x,
+                    'x2': p2.x,
+                    'y1': p1.y,
+                    'y2': p2.y
                 });
 
             return shapes;
         }
     ];
 });
+

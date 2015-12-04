@@ -6,21 +6,17 @@
     <script src='./data/plane.dat'></script>
     <script>
      window.onload = function(){
-       var plot = new Nyaplot.Plot({
-         ylabel: "", xlabel: "luminance",
-         stage_height: 400,
-         view_height: 330,
-         view_width: 550,
-         xrange: [10, 560],
-         yrange: [330, 0]
+       var plot = new Nyaplot.Simple.Plot({
+         width: 570,
+         height: 330
        });
-       var hist = new Nyaplot.Histogram(window.raw_data, {maxval: 25000});
-       
-       plot.add(hist);
-       plot.show("vis");
 
-       d3.select("#N").text(N);
-       d3.select("#PI").text(4*inside.x.length/N);
+       plot.histogram(window.raw_data, {
+         color: "#fbb4ae"
+       });
+       plot.ydomain = [0, 25000];
+       plot.xlabel("luminance");
+       plot.render("#vis");
      };
     </script>
   </head>

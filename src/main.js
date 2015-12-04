@@ -1,12 +1,11 @@
 define(function(require, exports, module){
-    var _ = require("underscore");
-    (require("parser/init"))();
-    (require("glyph/init"))();
-    (require("sheet/init"))();
+    var _ = require('underscore');
+    (require('layer/_init'))();
+    (require('glyph/_init'))();
+    (require('tool/_init'))();
 
-    return _.extend({
+    return {
         core: require('core'),
-        glyph_manager: require('glyph'),
-        sheet_manager: require('sheet')
-    }, require('simple/init'));
+        Simple: (require('simple/_init'))()
+    };
 });

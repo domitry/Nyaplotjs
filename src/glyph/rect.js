@@ -1,12 +1,13 @@
 define([
-    'underscore'
-], function(_){
+    'underscore',
+    'utils/parser_tools'
+], function(_, t){
     return [
         "rect",
-        ["context", "data", "x", "y", "position"],
+        ["data", "x", "y", "position"],
         {
-            width: 100,
-            height: 100,
+            box_width: 100,
+            box_height: 100,
             color: "steelblue",
             stroke_width: 1,
             stroke_color: "black",
@@ -14,18 +15,16 @@ define([
             center_y: false,
             rotate: 0
         },
-        function(context, data, x, y, position, options){
+        function(g, data, x, y, position, options){
             var pos = position(x, y);
-            return context
+            g
                 .selectAll("rect")
                 .data(data.asarray())
                 .enter()
                 .append("rect")
                 .attr({
-                    x: pos.x,
-                    y: pos.y,
-                    width: options.width,
-                    height: options.height,
+                    x: 0,
+                    y: 0,
                     fill: options.color,
                     stroke_width: options.stroke_width,
                     stroke: options.stroke_color,
@@ -36,6 +35,25 @@ define([
                         if(options.rotate != 0)
                             txt += "rotate(" + options.rotate + ")";
                         return txt;
+                    }
+                });
+
+            return g.selectAll("rect")
+                .attr("transform", function(d){
+                    return "translate(" + pos.x(d) +  "," + pos.y(d) + ")";
+                })
+                .attr({
+                    width: function(d){
+                        var next = {};
+                        next[x] = d[x] + options.box_width;
+                        next[y] = d[y] + options.box_height;
+                        return Math.abs(pos.x(d) - pos.x(next));
+                    },
+                    height: function(d){
+                        var next = {};
+                        next[x] = d[x] + options.box_width;
+                        next[y] = d[y] + options.box_height;
+                        return Math.abs(pos.y(d) - pos.y(next));
                     }
                 });
         }

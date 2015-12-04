@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>MathLabel</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var src=[], dst=[];
+       
+       for(var x=0; x<20; x++){
+         for(var y=0; y<20; y++){
+           src.push([x, y]);
+           dst.push([x + 2*(Math.random()-0.5), y + 2*(Math.random()-0.5)]);
+         }
+       }
+       
+       var plot = new Nyaplot.Simple.Plot();
+       plot.vectors(src, dst, {
+         with_arrow: true
+       });
+       plot.title("Vectors");
+       plot.props._title.props.width = 200;
+       plot.ylabel("Y");
+       plot.xlabel("X");
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>

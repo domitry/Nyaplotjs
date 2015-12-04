@@ -4,7 +4,9 @@ define([
     return [
         "position2d",
         ["x", "y"],
-        {},
+        {
+            is_raw: true
+        },
         function(x_scale, y_scale, options){
             return function(xlabel, ylabel){
                 return {

@@ -6,120 +6,126 @@
  */
 
 define([
-    'underscore'
-],function(_){
+    'underscore',
+    'layer'
+],function(_, LayerBase){
     // {func: , stack: , clear: true}
-    var parsers_list = {};
-    var callback_list = {};
-    var history = {};
+    var layer_list = {};
+    var plots = {};
 
-    /*
-     Nyaplot.core.parse
-
-     "model" is given as "stacked task" style:
-     e.g.
-
-      [
-        {type: "Pane", uuid: "245ef3d2-35a0-40d6-846b-9477955dfe1a", args: {
-          rows: ["4ced96c4-01f9-4d30-8763-efff798ab57d"],
-          width:500,
-          height:500,
-        }},
-        {type: "Stage2D", uuid: "4ced96c4-01f9-4d30-8763-efff798ab57d", args: {
-          layer0: ["", "", ""],
-          layer1: ["", "", ""],
-          zoom:true
-        }}
-      ]
-
-     Each task is an Object whose properties are "type", "uuid", and "args".
-     */
-    function parse(model, isDebugMode){
-        isDebugMode = isDebugMode===true?true:false;
+    function parse(root, model){
+        var svg = d3.select(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+        d3.select(root).node().appendChild(svg.node());
         
-        function validate(task, i){
-            _.each(["type", "uuid", "args"], function(argname){
-                if(_.isUndefined(task[argname]))
-                    throw new Error("Task " + i + ":" + argname  + " is required.");
-            });
-            var parser = parsers_list[task.type];
-            _.each(parser.required_args, function(argname){
-                if(_.isUndefined(task.args))
-                    throw new Error("Task" + task.uuid + "do not have the required argument : " + argname + ".");
-            });
-
-            if(isDebugMode){
-                var args = _.clone(task.args);
-                var argnames = _.extend(_.clone(parser.required_args), parser.optional_args);
-                if(!_.isUndefined(task.sync_args))args.concat(task.sync_args);
-                _.each(args, function(val, argname){
-                    if(!_.has(argnames, argname))
-                        console.warn("warning: the argument: " + argname + " will be ignored.");
-                });
+        var plot = {root: null, layers: {}, render: function(){
+            function dfs(l){
+                _.each(l.children, function(c){dfs(c);});
+                l.construct();
             }
-        }
+            dfs(this.root);
+        }};
         
-        _.each(model, function(task, i){
-            validate(task, i);
+        plots[model.uuid] = plot;
+        
+        //// Instantiate each components based on defs
+        (function(){
+            function sync(uuid){
+                var layer = plot.layers[uuid];
+                if(layer.is_raw)
+                    return layer.construct();
+                else
+                    return layer;
+            }
             
-            var parser = parsers_list[task.type];
-            var func = parser.callback;
-            var args = _.clone(task.args);
-            
-            if(!_.isUndefined(task.sync_args))
-                _.extend(args, _.reduce(task.sync_args, function(memo, uuid, argname){
-                    memo[argname] = get(uuid);
-                    return memo;
-                }, {}));
+            _.each(model.defs, function(task){
+                var Layer = layer_list[task.type];
+                if(_.isUndefined(Layer))console.warn("No layer type named " + task.type + ".");
+                var layer = new Layer(task.args, task.sync_args);
+                layer.sync = sync;
+                plot.layers[task.uuid]= layer;
+            });
+        })();
+        
+        //// Build components-tree based on layout
+        //// Construct DOM tree based on layout
+        //// def: {uuid: "u-u-i-d", children: []}
+        (function(){
+            function dfs(p, def){
+                var v = plot.layers[def.uuid];
+                v.node = p;
+                if(!_.isUndefined(def.children))
+                    v.children = _.map(def.children, function(c){
+                        return dfs(v.node.append("g"), c);
+                    });
+                return v;
+            }
+            plot.root = dfs(svg, model.layout);
+        })();
 
-            var args_arr = _.map(parser.required_args, function(argname){return args[argname];});
+        //// Apply given functions to each components
+        plot.render();
+    }
+
+    function register_parser(type_name, required_args, optional_args, parser){
+        layer_list[type_name] = LayerBase.inherit(required_args, optional_args, parser);
+    }
+
+    function to_png(_root, model){
+        this.parse(_root, model);
+        var root = d3.select(_root);
+        var svg = root.select("svg");
+        var origSvgNode = svg.node();
+        var rect = svg.node().getBoundingClientRect();
+        var width = rect.width;
+        var height = rect.height;
+
+        var svgNode = origSvgNode.cloneNode(true);
+            d3.select(svgNode).attr({
+                version: '1.1',
+                xmlns: 'http://www.w3.org/2000/svg',
+                'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+                width: width,
+                height: height
+            });
+        
+        var base64SvgText = window
+                .btoa(encodeURIComponent(svgNode.outerHTML)
+                      .replace(/%([0-9A-F]{2})/g, function (match, p1) {
+                          return String.fromCharCode('0x' + p1);
+                      }));
+        
+        (function(svgData, width, height){
+            var src = 'data:image/svg+xml;charset=utf-8;base64,' + svgData;
+            var canvas = document.createElement('canvas');
+            var context = canvas.getContext('2d');
+            var image = new window.Image();
             
-            args_arr.push(_.reduce(args, function(memo, val, argname){
-                if(_.has(memo, argname))memo[argname]=args[argname];
-                return memo;
-            }, _.clone(parser.optional_args)));
-            
-            history[task.uuid] = func.apply(null, args_arr);
-            
-            // Call registered callback function after parsing is finished
-	        if(!_.isUndefined(callback_list[task.uuid]))
-		        _.each(callback_list[task.uuid], function(f){
-		            f(history[task.uuid]);
-		        });
+            canvas.width = width;
+            canvas.height = height;
+
+            return new Promise(function(resolve, reject){
+                image.onload = function () {
+                    context.drawImage(image, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                image.src = src;
+            });
+        })(
+            base64SvgText,
+            width,
+            height
+        ).then(function(uri){
+            svg.remove();
+            root.append("img")
+                .attr("src", uri);
         });
-    }
-
-    function register_parser(type_name, required_args, optional_args, callback){
-        parsers_list[type_name] = {
-            required_args: required_args,
-            optional_args: optional_args,
-            callback: callback
-        };
-    }
-
-    /*
-     get parsed results.
-     uuid: string or array of string (array of uuid)
-     */
-    function get(uuid){
-        if(_.isArray(uuid))return _.map(uuid, get);
-        //if(_.isUndefined(history[uuid]))throw new Error("Task " + uuid + " is not exists");
-        return history[uuid];
-    }
-
-    /*
-     register callback called when core finished to construct the specified element.
-     */
-    function on_parsed(uuid, func){
-	if(_.isUndefined(callback_list[uuid]))
-	    callback_list[uuid]=[];
-	callback_list[uuid].push(func);
-    }
+    };
 
     return {
+        layers: layer_list,
+        plots: plots,
         register_parser: register_parser,
         parse: parse,
-        get: get,
-	    on_parsed: on_parsed
+        to_png: to_png
     };
 });

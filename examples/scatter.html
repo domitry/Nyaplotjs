@@ -18,12 +18,14 @@
            outside.y.push(y);
          }
        }
-       var plot = new Nyaplot.Plot();
-       var sc1 = new Nyaplot.Scatter(inside.x, inside.y, {color: "#1b9e77"});
-       var sc2 = new Nyaplot.Scatter(outside.x, outside.y, {color: "#d95f02"});
-       
-       plot.add([sc1, sc2]);
-       plot.show("vis");
+       var plot = new Nyaplot.Simple.Plot();
+       plot.scatter(inside.x, inside.y, {color: "#1b9e77"});
+       plot.scatter(outside.x, outside.y, {color: "#d95f02"});
+       plot.title("Hello");
+       plot.xlabel("XLABEL");
+       plot.ylabel("YLABEL");
+       console.log(plot.create_models());
+       plot.render("#vis");
 
        d3.select("#N").text(N);
        d3.select("#PI").text(4*inside.x.length/N);

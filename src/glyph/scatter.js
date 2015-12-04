@@ -3,7 +3,7 @@ define([
 ],function(_){
     return [
         "scatter",
-        ["context", "data", "x", "y", "position"],
+        ["data", "x", "y", "position"],
         {
             color: "steelblue",
             shape: "circle",
@@ -22,7 +22,6 @@ define([
                 .attr("fill", options.color)
                 .attr("stroke", options.stroke_color)
                 .attr("stroke-width", options.stroke_width)
-                .transition().duration(200)
                 .attr("d", d3.svg.symbol().type(options.shape).size(options.size));
             
             context.selectAll("path")

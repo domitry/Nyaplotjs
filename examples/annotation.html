@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>MathLabel</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.05;
+         xarr.push(x);
+         if(x==0)
+           yarr.push(2.);
+         else
+           yarr.push((x+Math.sin(x))/x);
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       plot.line(xarr, yarr, {});
+       plot.annotation([12, 1.76], [0., 2.0], "max value (0.0, 2.0)")
+       plot.title("Annotation");
+       plot.ylabel("Y");
+       plot.xlabel("X");
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>

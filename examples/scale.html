@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>Scale</title>
+    <script src='http://d3js.org/d3.v3.min.js'></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.01;
+         xarr.push(x);
+         yarr.push(Math.exp(x));
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       plot.line(xarr, yarr, {});
+       plot.ylabel("y");
+       plot.xlabel("x");
+
+       function render(){
+         d3.select("svg").remove();
+         if(Boolean(d3.select("input").node().checked)){
+           plot.title("Log scale: on");
+           plot.yscale("log");
+         }
+         else{
+           plot.title("Log scale: off");
+           plot.yscale("linear");
+         }
+         
+         plot.render("#vis");
+       }
+
+       d3.select("input").on("click", render);
+       render();
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    <table>
+      <tr>
+        <td>Log scale?</td>
+        <td><input type="checkbox" checked="true"></td>
+      </tr>
+    </table>
+  </body>
+</html>

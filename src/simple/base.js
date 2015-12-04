@@ -1,179 +1,73 @@
 define([
     "underscore",
     "core",
-    "utils/uuid"
-], function(_, core, uuid){
-    function Base(){
-        this.plots=[];
-        this.data_arr=[];
+    "utils/uuid",
+    "utils/args2arr"
+], function(_, core, uuid, args2arr){
+    function SimpleBase(){
+        var args = args2arr(arguments);
+        if(args.length==0)args.push({});
         
-        _.extend(this, {
-            div_id: "unknown",
-            interactive: true,
-            stage_uuid: uuid(),
-            axis_uuid: uuid(),
-            position_uuid: uuid(),
-            label_uuid: uuid(),
-            context_uuid: uuid(),
-            background_uuid: uuid(),
-            interactive_uuid: uuid(),
-            plots_uuid: [],
-            xscale_uuid: uuid(),
-            yscale_uuid: uuid(),
-            xscale_type: "linear",
-            yscale_type: "linear",
-            xdomain: [0,1],
-            ydomain: [0,1],
-            xrange: [10, 490],
-            yrange: [490, 10],
-            view_width: 500,
-            view_height: 500,
-            stage_width: 700,
-            stage_height: 700,
-            stage_margin: {x: 60, y: 10},
-            label_margin: {bottom: 70, left: 60},
-            xlabel: "X",
-            ylabel: "Y"
-        });
-
-        _.each([
-            "xlabel",
-            "ylabel",
-            "view_width",
-            "view_height",
-            "stage_width",
-            "stage_height"
-        ], _.bind(function(propname){
-            this[propname+"_"] = _.bind(function(val){
-                this[propname] = val;
-                return this;
-            }, this);
-        }, this));
+        this.uuid = uuid();
+        this.props = {};
+        
+        if(args.length==1 && _.isObject(args)){
+            _.extend(this.props, args[0]);
+        }else{
+            if(args.length < this.required_args.length)
+                console.warn("The number of arguments is less than required.");
+            else if(args.length > this.required_args.length + 1)
+                console.warn("The number of arguments is more than required.");
+            else if(args.length == this.required_args.length + 1){
+                var options = args[args.length-1];
+                _.extend(this.props, options);
+                args = args.slice(0, args.length-1);
+            }
+            _.extend(this.props, _.reduce(this.required_args, function(memo, name, i){
+                memo[name] = args[i];
+                return memo;
+            }, {}));
+        }
     }
 
-    Base.prototype.show = function(div_id){
-        this.div_id = div_id;
-        var models = this.create_models();
-        core.parse(models);
-    };
+    SimpleBase.prototype.to_json = function(){
+        this.validate();
 
-    Base.prototype.create_axis = function(){
-        this.axis = {
-            type: "axis2d", uuid: this.axis_uuid, args: {
-	            width: this.view_width,
-	            height: this.view_height
-            }, sync_args:{
-                xscale: this.xscale_uuid,
-                yscale: this.yscale_uuid
-            }
+        var as = _.reduce(this.props, function(memo, val, key){
+            if(val.is_simple == true)memo.sync_args[key] = val.uuid;
+            else if(_.isArray(val) && _.all(val, function(s){return s.is_simple==true;}))
+                memo.sync_args[key] = _.map(val, function(s){return s.uuid;});
+            else memo.args[key] = val;
+            return memo;
+        }, {args: {}, sync_args: {}});
+
+        return {
+            uuid: this.uuid,
+            type: this.type,
+            args: as.args,
+            sync_args: as.sync_args
         };
     };
 
-    Base.prototype.create_position = function(){
-        this.position = {
-            type: "position2d", uuid: this.position_uuid, args: {},
-            sync_args: {
-                x: this.xscale_uuid,
-                y: this.yscale_uuid
-            }
-        };
+    SimpleBase.prototype.validate = function(){
+        //TODO
     };
 
-    Base.prototype.create_sheets = function(){
-        this.sheets = [
-            this.background_uuid,
-            this.axis_uuid,
-            this.context_uuid,
-            this.label_uuid
-        ];
-    };
-
-    Base.prototype.create_interactive = function(){
-        this.interactive_layer =  {
-            type: "zoom_wheel", uuid: this.interactive_uuid, args: {
-                size: [this.view_width, this.view_height],
-                stage_uuid: this.stage_uuid
-            }, sync_args: {
-                xscale: this.xscale_uuid,
-                yscale: this.yscale_uuid,
-                updates: [this.axis_uuid].concat(this.plots_uuid)
-            }
-        };
-    };
-
-    Base.prototype.create_models = function(){
-        this.plots_uuid = _.map(this.plots, function(p){return p.uuid;});
-        this.create_axis();
-        this.create_position();
-        this.create_sheets();
-        this.create_interactive();
-        
-        var prefix = [
-            {
-                type: "scale", uuid: this.xscale_uuid, args: {
-	                type: this.xscale_type,
-	                domain: this.xdomain,
-	                range: this.xrange
-                }
-            },
-            {
-                type: "scale", uuid: this.yscale_uuid, args: {
-	                type: this.yscale_type,
-	                domain: this.ydomain,
-	                range: this.yrange
-                }
-            },
-            this.position
-        ];
-
-        var sheets = [
-            this.axis,
-            {
-                type: "label", uuid: this.label_uuid, args: {
-	                x: this.xlabel,
-	                y: this.ylabel,
-	                width: this.view_width,
-	                height: this.view_height,
-	                margin: this.label_margin
-                }
-            },
-            {
-                type: "background2d", uuid: this.background_uuid, args: {
-	                width: this.view_width,
-	                height: this.view_height
-                }
-            },
-            {
-                type: "context2d", uuid: this.context_uuid, args: {
-                    width: this.view_width,
-                    height: this.view_height
-                },
-                sync_args: {
-                    glyphs: this.plots_uuid
-                }
-            }
-        ];
-
-        if(this.interactive){
-            sheets.push(this.interactive_layer);
+    SimpleBase.inherit = function(type, required_args, optional_args){
+        function NewSimpleObject(){
+            return SimpleBase.apply(this, args2arr(arguments));
         }
 
-        var sufix = [
-            {
-                type: "stage2d", uuid: this.stage_uuid, args: {
-	                width: this.stage_width,
-	                height: this.stage_height,
-	                margin: this.stage_margin
-                },sync_args: {
-                    sheets: this.sheets
-                }
-            }];
+        _.extend(NewSimpleObject.prototype, (_.extend(new SimpleBase(), {
+            type: type,
+            is_simple: true,
+            props: undefined,
+            required_args: required_args,
+            optional_args: optional_args
+        })));
 
-        if(this.interactive)
-            sufix[0].sync_args.sheets.push(this.interactive_uuid);
-
-        return Array.prototype.concat(this.data_arr, prefix, this.plots, sheets, sufix);
+        return NewSimpleObject;
     };
-
-    return Base;
+    
+    return SimpleBase;
 });
