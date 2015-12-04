@@ -40,7 +40,7 @@ You can try Nyaplotjs interactively on [JSFiddle](https://jsfiddle.net/yu8kzoyx/
 
 ## How to use & How to contribute
 
-** The Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
+**The Latest document is [here](http://nyaplotjs.readthedocs.org/en/latest/?badge=latest).**
 
 ## How to build
 ```shell
