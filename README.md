@@ -13,6 +13,9 @@ This software has been developed as a product in Google Summer of Code 2014 (GSo
 Nyaplotjs and Nyaplot will be merged into one library before the end of GSoC 2014 term. 
 
 ## Demos
+
+You can try Nyaplotjs interactively on [JSFiddle](https://jsfiddle.net/yu8kzoyx/).
+
 ### Charts
 
 * [Scatter](http://www.domitry.com/nyaplot/scatter.html)
