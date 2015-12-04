@@ -42,12 +42,14 @@ define([
             });
 
             var xaxis = new S.Axis({
-                scale: xscale
+                scale: xscale,
+                height: 35
             });
 
             var yaxis = new S.Axis({
                 scale: yscale,
-                orient: "left"
+                orient: "left",
+                width: 70
             });
 
             var grid = new S.Grid(_.extend({
