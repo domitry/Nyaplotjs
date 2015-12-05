@@ -63,44 +63,49 @@ define([
             };
         });
 
-        /**
-         @examples
-         plot.vectors([[0, 0], [1, 2]], [[1,2], [3,4]]);
-         */
-        Glyphs.vectors = function(src, dst, options){
-            var _data = (function(){
-                var d = {x1: [], y1: [], x2: [], y2: []};
-                _.each(src, function(arr){
-                    d.x1.push(arr[0]);
-                    d.y1.push(arr[1]);
-                });
+        _.each(["vectors", "rect"], function(str){
+            /**
+             @examples
+             plot.vectors([[x, y], [x, y]], [[1,2], [3,4]]);
+             */
+            Glyphs[str] = function(src, dst, options){
+                var _data = (function(){
+                    var d = {x1: [], y1: [], x2: [], y2: []};
+                    _.each(src, function(arr){
+                        d.x1.push(arr[0]);
+                        d.y1.push(arr[1]);
+                    });
 
-                _.each(dst, function(arr){
-                    d.x2.push(arr[0]);
-                    d.y2.push(arr[1]);
-                });
-                return d;
-            })();
+                    _.each(dst, function(arr){
+                        d.x2.push(arr[0]);
+                        d.y2.push(arr[1]);
+                    });
+                    return d;
+                })();
 
-            var data = new S.Data({data: _data});
+                var data = new S.Data({data: _data});
 
-            var glyph = new S.Vectors(_.extend({
-                x1: 'x1',
-                y1: 'y1',
-                x2: 'x2',
-                y2: 'y2',
-                data: data,
-                position: this.props._position
-            }, _.isUndefined(options) ? {} : options));
+                var glyph = new S[getClassName(str)](_.extend({
+                    x1: 'x1',
+                    y1: 'y1',
+                    x2: 'x2',
+                    y2: 'y2',
+                    data: data,
+                    position: (
+                        _.isUndefined(options.position) ? 
+                            this.props._position : options.position
+                    )
+                }, _.isUndefined(options) ? {} : options));
 
-            this._data.push(data);
-            this.xarrs.push(_data.x1);
-            this.xarrs.push(_data.x2);
-            this.yarrs.push(_data.y1);
-            this.yarrs.push(_data.y2);
-            this._glyphs.push(glyph);
-            this.props._wheelzoom.props.updates.push(glyph);
-        };
+                this._data.push(data);
+                this.xarrs.push(_data.x1);
+                this.xarrs.push(_data.x2);
+                this.yarrs.push(_data.y1);
+                this.yarrs.push(_data.y2);
+                
+                process_glyph.call(this, glyph, options);
+            };
+        });
 
         Glyphs.histogram = function(arr, options){
             var xlabel = "x" + uuid();
@@ -135,7 +140,7 @@ define([
                 box_width: width,
                 box_height: height
             });
-            this.rect([x], [y], ops);
+            this.rect([[x, y]], [[x+width, y+height]], ops);
         };
 
         Glyphs.add_circle = function(x, y, radius, _options){
