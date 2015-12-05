@@ -6,8 +6,8 @@ define([
         "vectors",
         ["data", "x1", "y1", "x2", "y2", "position"],
         {
-            color:'steelblue',
-            stroke_color: '#000',
+            color:'#000',
+            fill_color: '#000',
             stroke_width: 2,
             with_arrow: false
         },
@@ -30,15 +30,15 @@ define([
                     .attr({
                         d: 'M10 5 0 0 0 10Z',
                         stroke: 'none',
-                        fill: 'black'
+                        fill: options.color
                     });
             }
             
             shapes.enter()
                 .append("line")
                 .attr({
-                    'fill': options.color,
-                    'stroke': options.stroke_color,
+                    'fill': options.fill_color,
+                    'stroke': options.color,
                     'stroke-width':options.stroke_width,
                     'marker-end': (options.with_arrow ? 'url(#arrow)' : 'none')
                 });
