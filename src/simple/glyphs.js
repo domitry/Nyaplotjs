@@ -199,7 +199,8 @@ define([
             _.each(xarr, function(label, i){
                 this.rect([[-0.8, yarr[i]]],
                           [[ 0.8, 0]], _.extend(options, {
-                              position: create_x_descrete_position.call(this, label)
+                              position: create_x_descrete_position.call(this, label),
+                              color: _.isUndefined(options.colors) ? undefined : options.colors[i]
                           }));
             }.bind(this));
             
