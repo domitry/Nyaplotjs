@@ -27,6 +27,8 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 * [Bar chart](http://www.domitry.com/nyaplot/bar.html)
 * [Multiple bar chart](http://www.domitry.com/nyaplot/multi_bar.html)
 * [Box plot](http://www.domitry.com/nyaplot/box.html)
+* [Beans plot](http://www.domitry.com/nyaplot/beans.html)
+* [Area plot](http://www.domitry.com/nyaplot/area.html)
 * [Rect and Circle](http://www.domitry.com/nyaplot/rect_circle.html)
 
 ### Features
