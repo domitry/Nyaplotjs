@@ -3,7 +3,7 @@ define([
     "core",
     "utils/uuid",
     "utils/args2arr",
-    "simple/glyphs"
+    "simple/glyphs/_init"
 ], function(_, core, uuid, args2arr, generate_glyphs){
     return function(S){
         _.extend(Plot.prototype, generate_glyphs(S));
