@@ -101,6 +101,38 @@ define([
             };
         });
 
+        Glyphs.area = function(xarr, yarr1, yarr2, options){
+            var _data = (function(){
+                var d = {x: [], y1: [], y2: []};
+                _.each(xarr, function(x, i){
+                    d.x.push(x);
+                    d.y1.push(yarr1[i]);
+                    d.y2.push(yarr2[i]);
+                });
+                return d;
+            })();
+
+            var data = new S.Data({data: _data});
+
+            var glyph = new S.Area(_.extend({
+                x: 'x',
+                y0: 'y1',
+                y1: 'y2',
+                data: data,
+                position: (
+                    _.isUndefined(options.position) ? 
+                        this.props._position : options.position
+                )
+            }, _.isUndefined(options) ? {} : options));
+
+            this._data.push(data);
+            this.xarrs.push(_data.x);
+            this.yarrs.push(_data.y1);
+            this.yarrs.push(_data.y2);
+            
+            process_glyph.call(this, glyph, options);
+        };
+        
         Glyphs.histogram = function(arr, options){
             var xlabel = "x" + uuid();
             var data = (function(){

@@ -8,7 +8,8 @@ define([
     'layers/svg/glyph/vectors',
     'layers/svg/glyph/rect',
     'layers/svg/glyph/circle',
-    'layers/svg/glyph/text'
+    'layers/svg/glyph/text',
+    'layers/svg/glyph/area'
 ], function(_, core, t){
     var args = [].slice.call(arguments, 2);
 
