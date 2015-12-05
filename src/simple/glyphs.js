@@ -207,6 +207,12 @@ define([
             this.xarrs = [xarr];
         };
 
+        Glyphs.box = function(){
+        };
+
+        Glyphs.beans = function(){
+        };
+
         Glyphs.add_rect = function(x, y, width, height, _options){
             if(_.isUndefined(_options))_options = {};
             
