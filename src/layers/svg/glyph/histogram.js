@@ -1,23 +1,3 @@
-/*
- * Histogram: Histogram
- *
- * Caluculate hights of each bar from column specified by 'value' option and create histogram.
- * See the page of 'd3.layout.histogram' on d3.js's website to learn more. (https://github.com/mbostock/d3/wiki/Histogram-Layout)
- * 
- *
- * options:
- *    value        -> String: column name. Build histogram based on this data.
- *    bin_num      -> Float : number of bin
- *    width        -> Float : 0..1, width of each bar.
- *    color        -> Array : color in which bars filled.
- *    stroke_color -> String: stroke color
- *    stroke_width -> Float : stroke width
- *    hover        -> Bool  : set whether pop-up tool-tips when bars are hovered.
- *
- * example:
- *    http://bl.ocks.org/domitry/f0e3f5c91cb83d8d715e
- */
-
 define([
     'underscore',
     'd3'

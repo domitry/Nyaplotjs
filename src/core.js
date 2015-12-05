@@ -1,10 +1,3 @@
-/*
- * parse:
- *
- * parse JSON model and generate plots based on the order.
- *
- */
-
 define([
     'underscore',
     'd3',
