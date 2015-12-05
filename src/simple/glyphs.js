@@ -209,6 +209,52 @@ define([
             this.xarrs = [xarr];
         };
 
+        /**
+         @example
+         plot.multi_bar(['A', 'B', 'C'], [[10, 20, 30], [1, 10, 50], [23, 1, 9]])
+         */
+        Glyphs.multi_bar = function(xarr, yarrs, options){
+            options = _.extend({
+                width: 0.8,
+                interval: 0.01
+            }, options);
+            
+            if(options.stacked == true){
+                var start = -options.width/2;
+                var end = options.width/2;
+                
+                _.each(xarr, function(label, i){
+                    var position = create_x_descrete_position.call(this, label);
+                    var y = 0;
+                    _.each(yarrs[i], function(dy, j){
+                        this.rect([[start, y+dy]], [[end, y]], _.extend(options, {
+                            position: position,
+                            color: _.isUndefined(options.colors) ? undefined : options.colors[j]
+                        }));
+                        y+=dy;
+                    }.bind(this));
+                }.bind(this));
+            }else{
+                _.each(xarr, function(label, i){
+                    var position = create_x_descrete_position.call(this, label);
+                    var x = -1+options.interval;
+                    var l = yarrs[i].length;
+                    var dx = (2.0 - options.interval*(l+1))/l;
+                    _.each(yarrs[i], function(y, j){
+                        this.rect([[x, y]], [[x+dx, 0]], _.extend(options, {
+                            position: position,
+                            color: _.isUndefined(options.colors) ? undefined : options.colors[j]
+                        }));
+                        x += (dx + options.interval);
+                    }.bind(this));
+                }.bind(this));
+            }
+            
+            this.xscale("ordinal");
+            this.interactive = false;
+            this.xarrs = [xarr];
+        };
+
         Glyphs.box = function(xarr, yarrs, options){
             options = _.extend({
                 width: 0.8

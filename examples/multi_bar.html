@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <title>Multiple bar chart</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.01;
+         xarr.push(x);
+         yarr.push(Math.exp(x));
+       }
+
+       function render(){
+         d3.select("svg").remove();
+         var plot = new Nyaplot.Simple.Plot();
+
+         plot.title("Multiple Bar chart");
+         plot.multi_bar(["A-san", "B-san", "C-san"], [[10, 20, 30], [1, 10, 50], [23, 1, 9]], {
+           stacked: Boolean(d3.select("input").node().checked),
+           interval: 0.15,
+           colors: ["#8da0cb","#e78ac3","#a6d854"]
+         });
+         plot.render("#vis");
+       }
+
+       d3.select("input").on("click", render);
+
+       render();
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    <input type="checkbox" checked="checked"> stacked?
+  </body>
+</html>
