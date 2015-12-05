@@ -9,6 +9,7 @@ define([
             color:'steelblue',
             stroke_width: 0,
             stroke_color: 'none',
+            interpolate: 'linear',
             opacity: 0.6
         },
         function(context, data, xlabel, y0label, y1label, position, options){
@@ -18,7 +19,8 @@ define([
             var area = d3.svg.area()
                     .x(position(xlabel, y0label).x)
                     .y0(position(xlabel, y0label).y)
-                    .y1(position(xlabel, y1label).y);
+                    .y1(position(xlabel, y1label).y)
+                    .interpolate(options.interpolate);
 
             return path
                 .attr("d", area)
