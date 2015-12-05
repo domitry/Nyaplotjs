@@ -9,7 +9,6 @@ define([
     'layers/svg/glyph/rect',
     'layers/svg/glyph/circle',
     'layers/svg/glyph/text'
-//  'layers/svg/glyph/box'
 ], function(_, core, t){
     var args = [].slice.call(arguments, 2);
 

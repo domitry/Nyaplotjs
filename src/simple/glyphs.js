@@ -1,7 +1,8 @@
 define([
     'underscore',
-    "utils/uuid"
-], function(_, uuid){
+    "utils/uuid",
+    'utils/statistics'
+], function(_, uuid, stats){
     return function(S){
         var Glyphs = {};
 
@@ -207,7 +208,57 @@ define([
             this.xarrs = [xarr];
         };
 
-        Glyphs.box = function(){
+        Glyphs.box = function(xarr, yarrs, options){
+            options = _.extend({
+                width: 0.8
+            }, options);
+
+            console.log(xarr);
+
+            _.each(xarr, function(label, i){
+                var start = -options.width/2;
+                var end = options.width/2;
+                var yarr = yarrs[i];
+                var med = stats.med(yarr);
+                var q1 = stats.q1(yarr);
+                var q3 = stats.q3(yarr);
+                var h = q3-q1;
+                var max = (_.max(yarr)-q3 > 1.5*h ? q3+1.5*h : _.max(yarr));
+                var min = (q1-_.min(yarr) > 1.5*h ? q1-1.5*h : _.min(yarr));
+                var outliers = _.select(yarr, function(val){
+                    return val > max || val < min;
+                });
+                var position = create_x_descrete_position.call(this, label);
+
+                this.vectors([[0, max]],
+                             [[0, min]], {
+                                 color: "#000",
+                                 position: position
+                             });
+                
+                this.rect([[start, q3]],
+                          [[end,   q1]], _.extend(options, {
+                              color: !_.isUndefined(options.colors) ? options.colors[i] : undefined,
+                              position: position
+                          }));
+
+                this.vectors([[start, med]],
+                             [[end, med]], {
+                                 color: "#000",
+                                 position: position
+                             });
+
+                this.scatter(_(outliers.length).times(_.constant(0)),
+                             outliers, {
+                                 color: "#000",
+                                 size: 50,
+                                 position: position
+                             });
+            }.bind(this));
+            
+            this.xscale("ordinal");
+            this.interactive = false;
+            this.xarrs = [xarr];
         };
 
         Glyphs.beans = function(){
