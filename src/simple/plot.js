@@ -69,6 +69,7 @@ define([
                 names: []
             });
 
+            this.uuid = uuid();
             this._data = [];
             this._glyphs = [];
             this._dependencies = [];
@@ -221,7 +222,7 @@ define([
             }.bind(this))();
 
             return {
-                uuid: uuid(),
+                uuid: this.uuid,
                 defs: defs,
                 layout: layout
             };
