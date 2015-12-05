@@ -4,10 +4,8 @@ define([
 ], function(_, d3){
     return [
         "rect",
-        ["data", "x", "y", "position"],
+        ["data", "x1", "y1", "x2", "y2", "position"],
         {
-            box_width: 100,
-            box_height: 100,
             color: "steelblue",
             stroke_width: 1,
             stroke_color: "black",
@@ -15,8 +13,10 @@ define([
             center_y: false,
             rotate: 0
         },
-        function(g, data, x, y, position, options){
-            var pos = position(x, y);
+        function(g, data, x1, y1, x2, y2, position, options){
+            var pos1 = position(x1, y1);
+            var pos2 = position(x2, y2);
+            
             g
                 .selectAll("rect")
                 .data(data.asarray())
@@ -40,20 +40,14 @@ define([
 
             return g.selectAll("rect")
                 .attr("transform", function(d){
-                    return "translate(" + pos.x(d) +  "," + pos.y(d) + ")";
+                    return "translate(" + pos1.x(d) +  "," + pos1.y(d) + ")";
                 })
                 .attr({
                     width: function(d){
-                        var next = {};
-                        next[x] = d[x] + options.box_width;
-                        next[y] = d[y] + options.box_height;
-                        return Math.abs(pos.x(d) - pos.x(next));
+                        return Math.abs(pos1.x(d) - pos2.x(d));
                     },
                     height: function(d){
-                        var next = {};
-                        next[x] = d[x] + options.box_width;
-                        next[y] = d[y] + options.box_height;
-                        return Math.abs(pos.y(d) - pos.y(next));
+                        return Math.abs(pos1.y(d) - pos2.y(d));
                     }
                 })
                 .style("visibility", options.visible ? "visible" : "hidden");

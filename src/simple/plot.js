@@ -71,6 +71,7 @@ define([
 
             this._data = [];
             this._glyphs = [];
+            this._dependencies = [];
             this.xdomain = null;
             this.ydomain = null;
             this.xarrs = [];
@@ -211,6 +212,7 @@ define([
                     _.values(this.props)
                         .concat(others)
                         .concat(this._glyphs)
+                        .concat(this._dependencies)
                         .concat(this._data), function(val){return !_.isNull(val);});
                 
                 return _.map(arr, function(l){

@@ -6,21 +6,74 @@ define([
         var Glyphs = {};
 
         Glyphs.decide_domain = function(){
-            _.each([{pname: "xdomain", arrs: this.xarrs},
-                    {pname: "ydomain", arrs: this.yarrs}
-                   ], function(hash){
-                       var p = hash.pname;
-                       if(_.isNull(this[p])){
-                           var arrs = _.flatten(hash.arrs);
-                           this[p] = [_.min(arrs), _.max(arrs)];
-                       }else{
-                           this["reset_" + p] = false;
+            _.each([["xdomain", "_xscale", this.xarrs],
+                    ["ydomain", "_yscale", this.yarrs]
+                   ],
+                   function(arr){
+                       var dname = arr[0], sname = arr[1];
+                       var arrs = arr[2];
+                       
+                       switch(this.props[sname].props.type){
+                       case "linear":
+                       case "log":
+                       case "power":
+                           decide_linear_domain.call(this, dname, arrs);
+                           break;
+                       case "ordinal":
+                           decide_ordinal_domain.call(this, dname, arrs);
+                           break;
+                       case "time":
+                           decide_time_domain.call(this, dname, arrs);
+                           break;
+                       default:
+                           throw new Error("no type named");
                        }
                    }.bind(this));
         };
 
+        function decide_linear_domain(pname, arrs){
+            if(_.isNull(this[pname])){
+                arrs = _.flatten(arrs);
+                this[pname] = [_.min(arrs), _.max(arrs)];
+            }else{
+                this["reset_" + pname] = false;
+            }
+        }
+
+        function decide_ordinal_domain(pname, arrs){
+            if(_.isNull(this[pname])){
+                this[pname] = _.uniq(_.flatten(arrs));
+            }else{
+                this["reset_" + pname] = false;
+            }
+        }
+
+        function decide_time_domain(pname, arrs){
+            // TODO
+        }
+
+        function process_glyph(glyph, options){
+            this._glyphs.push(glyph);
+            
+            // for legend
+            if(options.legend != false && !_.isUndefined(options.name)){
+                this.props._legend.props.names.push(options.name);
+                
+                if(!_.isUndefined(options.color))
+                    this.props._legend.props.colors.push(options.color);
+
+                this.props._legend.props.updates.push(glyph);
+            }
+
+            // for wheel_zoom
+            this.props._wheelzoom.props.updates.push(glyph);
+        }
+
+        function getClassName(str){
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
         _.each(["scatter", "line", "rect", "circle", "text"], function(str){
-            var className = str.charAt(0).toUpperCase() + str.slice(1);
             Glyphs[str] = function(xarr, yarr, options){
                 var xlabel = _.isUndefined(options.labels) ? "x" + uuid() : options.labels[0];
                 var ylabel = _.isUndefined(options.labels) ? "y" + uuid() : options.labels[1];
@@ -34,73 +87,68 @@ define([
                 
                 this._data.push(data);
 
-                var glyph = new S[className](_.extend({
+                var glyph = new S[getClassName(str)](_.extend({
                     x: xlabel,
                     y: ylabel,
                     data: data,
-                    position: this.props._position
+                    position: (
+                        _.isUndefined(options.position) ? 
+                            this.props._position : options.position
+                    )
                 }, options));
-                
-                this._glyphs.push(glyph);
+               
 
                 // for domain
                 this.xarrs.push(xarr);
                 this.yarrs.push(yarr);
 
-                // for legend
-                if(options.legend != false){
-                    var name = _.isUndefined(options.name) ? str : options.name;
-                    this.props._legend.props.names.push(name);
-                    
-                    if(!_.isUndefined(options.color))
-                        this.props._legend.props.colors.push(options.color);
-
-                    this.props._legend.props.updates.push(glyph);
-                }
-
-                // for wheel_zoom
-                this.props._wheelzoom.props.updates.push(glyph);
+                process_glyph.call(this, glyph, options);
             };
         });
 
-        /**
-         @examples
-         plot.vectors([[0, 0], [1, 2]], [[1,2], [3,4]]);
-         */
-        Glyphs.vectors = function(src, dst, options){
-            var _data = (function(){
-                var d = {x1: [], y1: [], x2: [], y2: []};
-                _.each(src, function(arr){
-                    d.x1.push(arr[0]);
-                    d.y1.push(arr[1]);
-                });
+        _.each(["vectors", "rect"], function(str){
+            /**
+             @examples
+             plot.vectors([[x, y], [x, y]], [[1,2], [3,4]]);
+             */
+            Glyphs[str] = function(src, dst, options){
+                var _data = (function(){
+                    var d = {x1: [], y1: [], x2: [], y2: []};
+                    _.each(src, function(arr){
+                        d.x1.push(arr[0]);
+                        d.y1.push(arr[1]);
+                    });
 
-                _.each(dst, function(arr){
-                    d.x2.push(arr[0]);
-                    d.y2.push(arr[1]);
-                });
-                return d;
-            })();
+                    _.each(dst, function(arr){
+                        d.x2.push(arr[0]);
+                        d.y2.push(arr[1]);
+                    });
+                    return d;
+                })();
 
-            var data = new S.Data({data: _data});
+                var data = new S.Data({data: _data});
 
-            var glyph = new S.Vectors(_.extend({
-                x1: 'x1',
-                y1: 'y1',
-                x2: 'x2',
-                y2: 'y2',
-                data: data,
-                position: this.props._position
-            }, _.isUndefined(options) ? {} : options));
+                var glyph = new S[getClassName(str)](_.extend({
+                    x1: 'x1',
+                    y1: 'y1',
+                    x2: 'x2',
+                    y2: 'y2',
+                    data: data,
+                    position: (
+                        _.isUndefined(options.position) ? 
+                            this.props._position : options.position
+                    )
+                }, _.isUndefined(options) ? {} : options));
 
-            this._data.push(data);
-            this.xarrs.push(_data.x1);
-            this.xarrs.push(_data.x2);
-            this.yarrs.push(_data.y1);
-            this.yarrs.push(_data.y2);
-            this._glyphs.push(glyph);
-            this.props._wheelzoom.props.updates.push(glyph);
-        };
+                this._data.push(data);
+                this.xarrs.push(_data.x1);
+                this.xarrs.push(_data.x2);
+                this.yarrs.push(_data.y1);
+                this.yarrs.push(_data.y2);
+                
+                process_glyph.call(this, glyph, options);
+            };
+        });
 
         Glyphs.histogram = function(arr, options){
             var xlabel = "x" + uuid();
@@ -124,10 +172,47 @@ define([
             this.props._wheelzoom.props.updates.push(glyph);
         };
 
-        Glyphs.bar = function(xarr, yarr){
+        // ** shortcut methods from here ** //
+
+        function create_x_descrete_position(label){
+            var d2c = new S.D2c({
+                scale: this.props._xscale,
+                label: label
+            });
+
+            var position = new S.Position2d({
+                x: d2c,
+                y: this.props._yscale
+            });
+
+            this._dependencies.push(d2c);
+            this._dependencies.push(position);
+            return position;
+        }
+        
+        Glyphs.bar = function(xarr, yarr, options){
+            options = _.extend({
+                width: 0.8
+            }, options);
+
+            _.each(xarr, function(label, i){
+                this.rect([[-0.8, yarr[i]]],
+                          [[ 0.8, 0]], _.extend(options, {
+                              position: create_x_descrete_position.call(this, label)
+                          }));
+            }.bind(this));
+            
+            this.xscale("ordinal");
+            this.interactive = false;
+            this.xarrs = [xarr];
         };
 
-        // ** shortcut methods from here ** //
+        Glyphs.box = function(){
+        };
+
+        Glyphs.beans = function(){
+        };
+
         Glyphs.add_rect = function(x, y, width, height, _options){
             if(_.isUndefined(_options))_options = {};
             
@@ -135,7 +220,7 @@ define([
                 box_width: width,
                 box_height: height
             });
-            this.rect([x], [y], ops);
+            this.rect([[x, y]], [[x+width, y+height]], ops);
         };
 
         Glyphs.add_circle = function(x, y, radius, _options){
