@@ -19,8 +19,29 @@ define([
                    }.bind(this));
         };
 
+
+        function process_glyph(glyph, options){
+            this._glyphs.push(glyph);
+            
+            // for legend
+            if(options.legend != false && !_.isUndefined(options.name)){
+                this.props._legend.props.names.push(options.name);
+                
+                if(!_.isUndefined(options.color))
+                    this.props._legend.props.colors.push(options.color);
+
+                this.props._legend.props.updates.push(glyph);
+            }
+
+            // for wheel_zoom
+            this.props._wheelzoom.props.updates.push(glyph);
+        }
+
+        function getClassName(str){
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
         _.each(["scatter", "line", "rect", "circle", "text"], function(str){
-            var className = str.charAt(0).toUpperCase() + str.slice(1);
             Glyphs[str] = function(xarr, yarr, options){
                 var xlabel = _.isUndefined(options.labels) ? "x" + uuid() : options.labels[0];
                 var ylabel = _.isUndefined(options.labels) ? "y" + uuid() : options.labels[1];
@@ -34,32 +55,22 @@ define([
                 
                 this._data.push(data);
 
-                var glyph = new S[className](_.extend({
+                var glyph = new S[getClassName(str)](_.extend({
                     x: xlabel,
                     y: ylabel,
                     data: data,
-                    position: this.props._position
+                    position: (
+                        _.isUndefined(options.position) ? 
+                            this.props._position : options.position
+                    )
                 }, options));
-                
-                this._glyphs.push(glyph);
+               
 
                 // for domain
                 this.xarrs.push(xarr);
                 this.yarrs.push(yarr);
 
-                // for legend
-                if(options.legend != false){
-                    var name = _.isUndefined(options.name) ? str : options.name;
-                    this.props._legend.props.names.push(name);
-                    
-                    if(!_.isUndefined(options.color))
-                        this.props._legend.props.colors.push(options.color);
-
-                    this.props._legend.props.updates.push(glyph);
-                }
-
-                // for wheel_zoom
-                this.props._wheelzoom.props.updates.push(glyph);
+                process_glyph.call(this, glyph, options);
             };
         });
 
