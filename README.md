@@ -24,6 +24,9 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 * [Histogram](http://www.domitry.com/nyaplot/histogram.html)
 * [Vectors](http://www.domitry.com/nyaplot/vectors.html)
 * [Benn](http://www.domitry.com/nyaplot/benn.html)
+* [Bar chart](http://www.domitry.com/nyaplot/bar.html)
+* [Multiple bar chart](http://www.domitry.com/nyaplot/multi_bar.html)
+* [Box plot](http://www.domitry.com/nyaplot/box.html)
 * [Rect and Circle](http://www.domitry.com/nyaplot/rect_circle.html)
 
 ### Features
