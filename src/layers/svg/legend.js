@@ -7,8 +7,8 @@ define([
         "legend",
         ["names"],
         {
-            width: "auto",
-            height: "auto",
+            dx: 0,
+            dy: 0,
             colors: [],
             default_color: "#000",
             text_color: "#323232",
@@ -17,6 +17,7 @@ define([
             fill_color: "none",
             stroke_color: "#000",
             stroke_width: 1,
+            opacity: 1,
             interactive: true,
             updates: [],
             interval_x: 5,
@@ -26,7 +27,10 @@ define([
         t.auto_append(
             "g",
             function(g, names, options){
-                g.attr("class", "legend");
+                g.attr({
+                    "class": "legend",
+                    "transform": "translate("+options.dx+","+options.dy+")"
+                });
 
                 var data = (function(){
                     var colors = _.clone(options.colors);
@@ -113,7 +117,8 @@ define([
                 
                 rect.attr({
                     width: width,
-                    height: height
+                    height: height,
+                    "fill-opacity": options.opacity
                 });
 
                 this.width = width;
