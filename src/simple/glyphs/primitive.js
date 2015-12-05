@@ -126,9 +126,16 @@ define([
             }, _.isUndefined(options) ? {} : options));
 
             this._data.push(data);
-            this.xarrs.push(_data.x);
-            this.yarrs.push(_data.y1);
-            this.yarrs.push(_data.y2);
+
+            if(options.transpose == true){
+                this.xarrs.push(_data.y1);
+                this.xarrs.push(_data.y2);
+                this.yarrs.push(_data.x);
+            }else{
+                this.xarrs.push(_data.x);
+                this.yarrs.push(_data.y1);
+                this.yarrs.push(_data.y2);
+            }
             
             process_glyph.call(this, glyph, options);
         };

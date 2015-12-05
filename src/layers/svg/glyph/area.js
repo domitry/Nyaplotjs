@@ -10,17 +10,31 @@ define([
             stroke_width: 0,
             stroke_color: 'none',
             interpolate: 'linear',
+            transpose: false,
             opacity: 0.6
         },
         function(context, data, xlabel, y0label, y1label, position, options){
             var path = (context.select("path").node()==null ? context.append("path") : context.select("path"));
+            var area = area = d3.svg.area().interpolate(options.interpolate);
+            
 	        path.datum(data.asarray());
+            
+            if(options.transpose){
+                var ylabel = xlabel;
+                var x0label = y0label;
+                var x1label = y1label;
 
-            var area = d3.svg.area()
+                area
+                    .y(position(x0label, ylabel).y)
+                    .x0(position(x0label, ylabel).x)
+                    .x1(position(x1label, ylabel).x);
+            }else{
+                area
                     .x(position(xlabel, y0label).x)
                     .y0(position(xlabel, y0label).y)
-                    .y1(position(xlabel, y1label).y)
-                    .interpolate(options.interpolate);
+                    .y1(position(xlabel, y1label).y);
+            }
+
 
             return path
                 .attr("d", area)
