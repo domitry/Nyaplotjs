@@ -88,8 +88,6 @@ define([
                 width: 0.8
             }, options);
 
-            console.log(xarr);
-
             _.each(xarr, function(label, i){
                 var start = -options.width/2;
                 var end = options.width/2;
