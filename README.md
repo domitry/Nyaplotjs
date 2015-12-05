@@ -21,6 +21,7 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 
 * [Scatter](http://www.domitry.com/nyaplot/scatter.html)
 * [Line](http://www.domitry.com/nyaplot/line.html)
+* [Line2](http://www.domitry.com/nyaplot/lorenz.html)
 * [Histogram](http://www.domitry.com/nyaplot/histogram.html)
 * [Vectors](http://www.domitry.com/nyaplot/vectors.html)
 * [Benn](http://www.domitry.com/nyaplot/benn.html)
