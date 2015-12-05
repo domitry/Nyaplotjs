@@ -1,7 +1,8 @@
 define([
     'underscore',
+    'd3',
     'utils/statistics'
-], function(_, stats){
+], function(_, d3, stats){
     return function(S, Glyphs){
         function create_x_descrete_position(label){
             var d2c = new S.D2c({
@@ -134,7 +135,47 @@ define([
             this.xarrs = [xarr];
         };
 
-        Glyphs.beans = function(){
+        Glyphs.beans = function(xarr, arrs, options){
+            options = _.extend({
+                width: 0.9,
+                bins: 50
+            }, options);
+
+            _.each(xarr, function(label, i){
+                var arr = arrs[i];
+                var hist = d3.layout.histogram().bins(options.bins)(arr);
+                
+                var position = create_x_descrete_position.call(this, label);
+
+                var x0 = (function(){
+                    var x_ = _.map(hist, function(bin){return bin.length;});
+                    var xmax = _.max(x_);
+                    return _.map(x_, function(l){return options.width*l/xmax;});
+                })();
+
+                var x1 = _.map(x0, function(x){return (-1)*x;});
+                var y = _.map(hist, function(bin){return bin.x;});
+
+                console.log(x0, x1, y);
+                console.log(x0.length, x1.length, y.length);
+                
+                this.area(y, x0, x1, {
+                    interpolate: 'bundle',
+                    transpose: true,
+                    position: position
+                });
+
+                var src = _.map(arr, function(v){return [-0.1, v];});
+                var dst = _.map(arr, function(v){return [0.1, v];});
+                this.vectors(src, dst, {
+                    position: position,
+                    color: _.isUndefined(options.tick_color) ? "#eee" : options.tick_color
+                });
+            }.bind(this));
+            
+            this.xscale("ordinal");
+            this.interactive = false;
+            this.xarrs = [xarr];
         };
     };
 });
