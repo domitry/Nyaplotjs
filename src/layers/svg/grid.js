@@ -22,9 +22,17 @@ define([
                     if(options.height=="auto")
                         options.height = options.children[0].height;
 
-                    var data = _.map(xscale.ticks(), function(_x){
+                    var data = _.map((
+                        !_.isUndefined(xscale.ticks) ?
+                            xscale.ticks() :
+                            xscale.domain()
+                    ), function(_x){
                         return {val: xscale(_x), orient: "y"};
-                    }).concat(_.map(yscale.ticks(), function(_y){
+                    }).concat(_.map((
+                        !_.isUndefined(yscale.ticks) ?
+                            yscale.ticks() :
+                            yscale.domain()
+                    ), function(_y){
                         return {val: yscale(_y), orient: "x"};
                     }));
                     
