@@ -28,22 +28,81 @@
 
        function render(){
          d3.select("svg").remove();
-         plot.inner_legend = !this.checked;
+         var inner = !(d3.select("#inner").node().checked);
+         plot.inner_legend = inner;
+         
+         var x_align = d3.select("#x_align").node().value;
+         var y_align = d3.select("#y_align").node().value;
+
+         var opacity = d3.select("#range").node().value;
+         plot.props._legend.props.opacity = parseFloat(opacity);
+         
+         if(inner){
+           d3.selectAll("select").each(function(){this.disabled = false;});
+           
+           // hack for getting Layer object manually //
+           var legend_uuid = plot.props._legend.uuid;
+           var plot_uuid = plot.uuid;
+           var legend = Nyaplot.core.plots[plot_uuid].layers[legend_uuid];
+           // -------------------------------------- //
+
+           if(x_align=="left"){
+             plot.props._legend.props.dx = 0;
+           }else{
+             plot.props._legend.props.dx = (400 - legend.width);
+           }
+
+           if(y_align=="top"){
+             plot.props._legend.props.dy = 0;
+           }else{
+             plot.props._legend.props.dy = (400 - legend.height);
+           }
+         }else{
+           d3.selectAll("select").each(function(){this.disabled = true;});
+           
+           plot.props._legend.props.dx = 0;
+           plot.props._legend.props.dy = 0;
+         }
          plot.render("#vis");
        }
 
        console.log(plot.create_models());
-       d3.select("input").on("mousedown", render);
+       d3.selectAll("input").on("change", render);
+       d3.selectAll("select").on("change", render);
        render();
-       
      };
     </script>
   </head>
   <body>
     <div id="vis"></div>
     <br>
-    <table>
-      <tr><td><input type="checkbox" checked="true"></td><td>legend position: innner?</td></tr>
+    <table style="border: solid 1px black">
+      <tr>
+        <td>legend position: inner?</td>
+        <td><input type="checkbox" checked="true" id="inner"></td>
+      </tr>
+      <tr>
+        <td>x-align?</td>
+        <td>
+          <select id="x_align">
+          <option value="left">left</option>
+          <option value="right">right</option>
+        </select>
+        </td>
+      </tr>
+      <tr>
+        <td>y-align?</td>
+        <td>
+        <select id="y_align">
+          <option value="top">top</option>
+          <option value="bottom">bottom</option>
+        </select>
+      </td>
+      </tr>
+      <tr>
+        <td>opacity?</td>
+        <td><input type="range" id="range" max="1.0" min="0.0" step="0.1" value="1.0"></td>
+      </tr>
     </table>
     <br>
     <h1>Legend</h1>
