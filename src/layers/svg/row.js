@@ -69,9 +69,17 @@ define([
             _.each(options.children, function(child, i){
                 trans[i].x += child.margin.left;
                 trans[i].y += child.margin.top;
-                
-                if(child.xalign == "center")
+
+                switch(child.xalign){
+                case "center":
                     trans[i].x += (options.width - get_w(child))/2;
+                    break;
+                case "right":
+                    trans[i].x += (options.width - get_w(child));
+                case "left":
+                default:
+                    break;
+                }
 
                 if(child.yalign == "center")
                     trans[i].y += get_h(child)/2;
