@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <title>Area</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr1=[], yarr2=[], N=20, curry1=0.0, curry2=0.0;
+       
+       for(var i=0;i < N;i++){
+         xarr.push(i);
+         yarr1.push(curry1+=(Math.random()-0.5));
+         yarr2.push(curry1 + 10 + 3*(Math.random()-0.5));
+       }
+       var plot = new Nyaplot.Simple.Plot();
+       plot.area(xarr, yarr1, yarr2, {color: "#66c2a5", name: "A-san"});
+       plot.title("Area plot");
+       plot.xlabel("Number of steps");
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>
