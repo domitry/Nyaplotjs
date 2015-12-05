@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <title>Box plot</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var a=[], b=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         a.push(Math.random());
+         b.push(Math.random());
+       }
+
+       // outliers
+       for(var i=0; i<30; i++){
+         a.push(5*(Math.random()-0.5));
+         b.push(4*(Math.random()-0.5));
+       }
+
+       var plot = new Nyaplot.Simple.Plot();
+
+       plot.title("Box chart");
+       plot.box(["A-san", "B-san"], [a, b], {colors: ["#80b1d3", "#fdb462"]});
+
+       console.log(plot.create_models());
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>
