@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <title>Line</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var STEP_NUM = 10000;
+       var p = 10, r = 28, b = 8/3;
+       var fx = function(x,y,z){return ((-1)*p*x + p*y)};
+       var fy = function(x,y,z){return ((-1)*x*z + r*x - y)};
+       var fz = function(x,y,z){return (x*y - b*z)};
+       var dt = 0.01;
+       var x = 1, y = 1, z = 1;
+       var x_arr = [], y_arr = [], z_arr = [];
+       for(var i=0;i < STEP_NUM;i++){
+         x += dt * fx(x,y,z);
+	     y += dt * fy(x,y,z);
+         z += dt * fz(x,y,z);
+         x_arr.push(x);
+         y_arr.push(y);
+         z_arr.push(z);
+	   }
+       
+       var plot = new Nyaplot.Simple.Plot();
+       plot.line(x_arr, z_arr, {color: "steelblue", stroke_width: 1});
+       plot.title("Lorenz Attractor");
+       plot.xlabel("X");
+       plot.ylabel("Y")
+       plot.props._legend.props.fill_color = "#fff";
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>
