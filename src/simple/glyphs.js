@@ -172,10 +172,41 @@ define([
             this.props._wheelzoom.props.updates.push(glyph);
         };
 
-        Glyphs.bar = function(xarr, yarr){
+        // ** shortcut methods from here ** //
+
+        function create_x_descrete_position(label){
+            var d2c = new S.D2c({
+                scale: this.props._xscale,
+                label: label
+            });
+
+            var position = new S.Position2d({
+                x: d2c,
+                y: this.props._yscale
+            });
+
+            this._dependencies.push(d2c);
+            this._dependencies.push(position);
+            return position;
+        }
+        
+        Glyphs.bar = function(xarr, yarr, options){
+            options = _.extend({
+                width: 0.8
+            }, options);
+
+            _.each(xarr, function(label, i){
+                this.rect([[-0.8, yarr[i]]],
+                          [[ 0.8, 0]], _.extend(options, {
+                              position: create_x_descrete_position.call(this, label)
+                          }));
+            }.bind(this));
+            
+            this.xscale("ordinal");
+            this.interactive = false;
+            this.xarrs = [xarr];
         };
 
-        // ** shortcut methods from here ** //
         Glyphs.add_rect = function(x, y, width, height, _options){
             if(_.isUndefined(_options))_options = {};
             
