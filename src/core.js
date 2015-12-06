@@ -56,8 +56,8 @@ define([
                     var v = plot.layers[def.uuid];
                     var div = p.append("div");
                     v.node = div;
-                    _.each(def.children, function(cdef){
-                        dfs(div, cdef);
+                    v.children = _.map(def.children, function(cdef){
+                        return dfs(div, cdef);
                     });
                     return v;
                 }
