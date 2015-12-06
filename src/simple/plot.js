@@ -83,6 +83,7 @@ define([
             this.reset_ydomian = true;
             this.interactive = true;
             this.inner_legend = false;
+            this.with_widget = false;
             this.y_axis_w = 70;
             
             this.props = {
@@ -95,6 +96,7 @@ define([
                 _xlabel: null,
                 _ylabel: null,
                 _title: null,
+                _widget: null,
                 _legend: legend,
                 _grid: grid,
                 _background: new S.Background({
@@ -166,6 +168,16 @@ define([
                         children: [simple2node(top), simple2node(bottom)]
                     };
                 };
+
+                var html_row = function(right, left, options){
+                    options = _.extend({}, options);
+                    var r = new S.Html_row(options);
+                    others.push(r);
+                    return {
+                        uuid: r.uuid,
+                        children: [simple2node(right), simple2node(left)]
+                    };
+                };
                 
                 var current = newNode(this.props._background.uuid, (function(){
                     if(this.show_grid==true)
@@ -179,7 +191,7 @@ define([
 
                 current = column(this.props._yaxis,
                                  row(current, this.props._xaxis),{
-                                     margin: {top: 15, bottom: 5, left: 5, right: 5}
+                                     margin: {top: 15, bottom: 5, left: 15, right: 15}
                                  });
 
                 if(!_.isNull(this.props._xlabel))
@@ -197,6 +209,11 @@ define([
                 
                 current = newNode(this.props._stage.uuid, [current]);
                 current.parser_type = "svg";
+
+                if(this.with_widget == true){
+                    this.props._widget = new S.Widget({});
+                    current = html_row(this.props._widget, current);
+                }
                 
                 return current;
             }.bind(this))();
