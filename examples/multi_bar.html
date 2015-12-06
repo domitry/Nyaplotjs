@@ -20,7 +20,8 @@
          plot.multi_bar(["A-san", "B-san", "C-san"], [[10, 20, 30], [1, 10, 50], [23, 1, 9]], {
            stacked: Boolean(d3.select("input").node().checked),
            interval: 0.15,
-           colors: ["#8da0cb","#e78ac3","#a6d854"]
+           colors: ["#8da0cb","#e78ac3","#a6d854"],
+           stroke_color: "none"
          });
          plot.render("#vis");
        }
