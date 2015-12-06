@@ -155,9 +155,6 @@ define([
 
                 var x1 = _.map(x0, function(x){return (-1)*x;});
                 var y = _.map(hist, function(bin){return bin.x;});
-
-                console.log(x0, x1, y);
-                console.log(x0.length, x1.length, y.length);
                 
                 this.area(y, x0, x1, {
                     interpolate: 'bundle',
