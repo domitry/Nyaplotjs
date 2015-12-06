@@ -2,7 +2,8 @@ define([
     'underscore',
     'core',
     'layers/html/row',
-    'layers/html/column'
+    'layers/html/column',
+    'layers/html/widget'
 ], function(_, core){
     var args = [].slice.call(arguments, 2);
 
