@@ -43,6 +43,7 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 
 ### Experimental features
 
+* [Widget](http://www.domitry.com/nyaplot/widget.html)
 * [Interactive 3-pane plot](http://www.domitry.com/gsoc/multi_pane2.html)
 
 ## How to use & How to contribute
