@@ -7,6 +7,18 @@ define([
         [],
         {},
         function(div, options){
+            var width = _.max(
+                _.select(options.children, function(c){
+                    return c.width != "auto";
+                }),function(c){
+                    return c.width;
+                }
+            ).width;
+
+            div.style({
+                width: width
+            });
+            
             return div;
         }
     ];
