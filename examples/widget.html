@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <title>Beans plot</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var a=[], b=[];
+
+       function rand(m, s) {
+         var a = 1 - Math.random();
+         var b = 1 - Math.random();
+         var c = Math.sqrt(-2 * Math.log(a));
+         if(0.5 - Math.random() > 0) {
+           return c * Math.sin(Math.PI * 2 * b) * s + m;
+         }else{
+           return c * Math.cos(Math.PI * 2 * b) * s + m;
+         }
+       };
+       
+       for(var i=-100;i < 100;i++){
+         a.push(rand(0, 1));
+         b.push(rand(0, 1));
+       }
+
+       var plot = new Nyaplot.Simple.Plot();
+
+       plot.title("Beans plot");
+       plot.beans(["A-san", "B-san"], [a, b], {
+         tick_color: "#444"
+       });
+
+       plot.with_widget = true;
+
+       console.log(plot.create_models());
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>
