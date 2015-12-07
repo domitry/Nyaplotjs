@@ -24,6 +24,15 @@ define([
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
+        function addYTooltip(glyph, target, xlabel, ylabel, position){
+            var tp = this.props._tooltip;
+            tp.props.targets.push(glyph);
+            tp.props.target_types.push(target);
+            tp.props.xlabels.push(xlabel);
+            tp.props.ylabels.push(ylabel);
+            tp.props.positions.push(position);
+        }
+
         _.each(["scatter", "line", "rect", "circle", "text"], function(str){
             Glyphs[str] = function(xarr, yarr, options){
                 var xlabel = _.isUndefined(options.labels) ? "x" + uuid() : options.labels[0];
@@ -78,6 +87,8 @@ define([
                 })();
 
                 var data = new S.Data({data: _data});
+                var position = _.isUndefined(options.position) ? 
+                        this.props._position : options.position;
 
                 var glyph = new S[getClassName(str)](_.extend({
                     x1: 'x1',
@@ -85,10 +96,7 @@ define([
                     x2: 'x2',
                     y2: 'y2',
                     data: data,
-                    position: (
-                        _.isUndefined(options.position) ? 
-                            this.props._position : options.position
-                    )
+                    position: position
                 }, _.isUndefined(options) ? {} : options));
 
                 this._data.push(data);
@@ -96,8 +104,14 @@ define([
                 this.xarrs.push(_data.x2);
                 this.yarrs.push(_data.y1);
                 this.yarrs.push(_data.y2);
+
+                if(options.tooltip){
+                    var xlabel = _.isUndefined(options.xlabel) ? "x1" : options.xlabel;
+                    addYTooltip.call(this, glyph, "rect", xlabel, "y1", position);
+                }
                 
                 process_glyph.call(this, glyph, options);
+                return glyph;
             };
         });
 

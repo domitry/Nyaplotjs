@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>Bar chart</title>
+    <script src='../release/nyaplot.js'></script>
+    <script>
+     window.onload = function(){
+       var xarr=[], yarr=[];
+       
+       for(var i=-1000;i < 1000;i++){
+         var x = i*0.01;
+         xarr.push(x);
+         yarr.push(Math.exp(x));
+       }
+       var plot = new Nyaplot.Simple.Plot();
+
+       plot.title("Bar chart");
+       plot.bar(["A-san", "B-san", "C-san"], [10, 25, 20], {
+         colors: ["#8da0cb","#e78ac3","#a6d854"],
+         stroke_color: 'none',
+         tooltip: true
+       });
+       plot.with_tooltip = true;
+
+       console.log(plot.create_models());
+       plot.render("#vis");
+     };
+    </script>
+  </head>
+  <body>
+    <div id="vis"></div>
+  </body>
+</html>

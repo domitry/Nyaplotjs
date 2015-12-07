@@ -72,6 +72,7 @@ define([
             this.uuid = uuid();
             this._data = [];
             this._glyphs = [];
+            this._tooltips = [];
             this._dependencies = [];
             this.xdomain = null;
             this.ydomain = null;
@@ -84,6 +85,7 @@ define([
             this.interactive = true;
             this.inner_legend = false;
             this.with_widget = false;
+            this.with_tooltip = false;
             this.y_axis_w = 70;
             
             this.props = {
@@ -110,6 +112,13 @@ define([
                     xscale: xscale,
                     yscale: yscale,
                     updates: [xaxis, yaxis, grid]
+                }, wh)),
+                _tooltip: new S.Ytooltip(_.extend({
+                    targets: [],
+                    target_types: [],
+                    xlabels: [],
+                    ylabels: [],
+                    positions: []
                 }, wh))
             };
         }
@@ -185,6 +194,9 @@ define([
                     else
                         return [context];
                 }.bind(this))());
+
+                if(this.with_tooltip)
+                    current = newNode(this.props._tooltip.uuid, [current]);
 
                 if(this.interactive)
                     current = newNode(this.props._wheelzoom.uuid, [current]);

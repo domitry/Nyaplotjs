@@ -11,10 +11,9 @@ define([
     'layers/svg/column',
     'layers/svg/row',
     'layers/svg/legend',
-    'layers/svg/wheel_zoom'
+    'layers/svg/wheel_zoom',
+    'layers/svg/y_tooltip',
     //'layers/svg/brush_zoom',
-    //'layers/svg/pane',
-    //'layers/svg/tooltip'
 ], function(_, core){
     var args = [].slice.call(arguments, 2);
 
