@@ -11,7 +11,8 @@ define([
             axis_color: "none",
             tick_color:"#000",
             stroke_width: 1.0,
-            orient: "bottom"
+            orient: "bottom",
+            ticks: 10
         },
         t.auto_bbox(
             t.auto_append(
@@ -20,7 +21,8 @@ define([
                     
                     var axis = d3.svg.axis()
                             .scale(scale)
-                            .orient(options.orient);
+                            .orient(options.orient)
+                            .ticks(options.ticks);
 
                     g.attr("class", "axis").call(axis);
 
