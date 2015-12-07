@@ -40,10 +40,11 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 * [MathLabel](http://www.domitry.com/nyaplot/mathlabel.html)
 * [Legend](http://www.domitry.com/nyaplot/legend.html)
 * [Theme](http://www.domitry.com/nyaplot/theme.html)
+* [Widget](http://www.domitry.com/nyaplot/widget.html)
 
 ### Experimental features
 
-* [Widget](http://www.domitry.com/nyaplot/widget.html)
+* [Tooltip](http://www.domitry.com/nyaplot/tooltip.html)
 * [Interactive 3-pane plot](http://www.domitry.com/gsoc/multi_pane2.html)
 
 ## How to use & How to contribute
