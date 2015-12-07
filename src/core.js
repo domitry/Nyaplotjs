@@ -2,8 +2,8 @@ define([
     'underscore',
     'd3',
     'layer',
-    'utils/svg2uri'
-],function(_, d3, LayerBase, svg2uri){
+    'utils/svg_utils'
+],function(_, d3, LayerBase, svg_utils){
     // {func: , stack: , clear: true}
     var layer_list = {};
     var plots = {};
@@ -83,7 +83,7 @@ define([
         var root = d3.select(_root);
         var svg = root.select("svg");
         
-        svg2uri(svg).then(function(uri){
+        svg_utils.svg2uri(svg).then(function(uri){
             svg.remove();
             root.append("img")
                 .attr("src", uri);
