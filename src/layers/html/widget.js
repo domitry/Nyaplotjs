@@ -1,52 +1,60 @@
 define([
     'underscore',
     'd3',
-    'utils/icons',
-    'utils/svg2uri'
-], function(_, d3, icons, svg2uri){
+    'utils/svg_utils',
+    'icons/cat.svg',
+    'icons/save.svg'
+], function(_, d3, svg_utils, cat_svg, save_svg){
     return [
         "widget",
         [],
-        {},
+        {
+            fname: "plot.png",
+            svg: {}
+        },
         function(div, options){
             div.style({
-                height: 50
+                height: 30
             });
 
             var p = div.append("div")
                 .style({
-                    height: 32,
-                    width: "100%",
-                    "border-bottom": "solid 2px #aaa"
+                    height: 23,
+                    width: "100%"
                 });
 
-            p.append("div")
-                .attr("title", "This plot was created with Nyaplot")
-                .style({
-                    width: 32,
-                    height: 32,
-                    float: "left",
-                    "background-image": "url(" + icons.cat + ")"
-                })
-                .on("click", function(){
-                    window.open("http://www.github.com/domitry/nyaplot");
-                });
-
-            p.append("div").style("height", 10);
-
-            var a = p.append("a")
+            _.each([
+                {file: save_svg, link: undefined, title: "save as png", id: "save"},
+                {file: cat_svg, link: "https://github.com/domitry/nyaplot", title: "created with nyaplot", id: "logo"}
+            ], function(info){
+                p
+                    .append("a")
+                    .attr("href", info.link)
+                    .attr("title", info.title)
+                    .attr("id", info.id)
+                    .style({width: 20, height: 20})
+                    .append("div")
                     .style({
-                        width: 20,
-                        height: 20
+                        float: "right",
+                        margin: "0 0 10 10"
+                    })
+                    .node().appendChild(svg_utils.loadSVG(info.file));
+            });
+
+            (function(){
+                function addEffect(a, svg){
+                    a.on("mouseover", function(){
+                        svg.selectAll("rect, path").style("fill", "#111111");
+                    }).on("mouseout", function(){
+                        svg.selectAll("rect, path").style("fill", "#cdcdcd");
                     });
-            
-            a.append("div")
-                .style({
-                    width: 20,
-                    height: 20,
-                    "background-image": "url(" + icons.save + ")",
-                    float: "right"
+                }
+
+                p.selectAll("a").each(function(){
+                    var a = d3.select(this);
+                    addEffect(a, a.select("svg"));
                 });
+            })();
 
             // these lines should be fixed
             window.setTimeout(
