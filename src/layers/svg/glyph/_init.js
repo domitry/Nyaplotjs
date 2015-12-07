@@ -22,7 +22,7 @@ define([
                 original.apply(this, [].slice.call(arguments));
                 return this.node;
             });
-            core.register_parser.apply(core, arg);
+            core.register_layer.apply(core, arg);
         });
     };
 });

@@ -10,7 +10,7 @@ define([
     var args = [].slice.call(arguments, 2);
     return function(){
         _.each(args, function(arg){
-            core.register_parser.apply(core, arg);
+            core.register_layer.apply(core, arg);
         });
     };
 });

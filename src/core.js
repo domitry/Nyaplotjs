@@ -70,11 +70,11 @@ define([
         plot.render();
     }
 
-    function register_root_parser(name, parser){
+    function register_parser(name, parser){
         parsers[name]= parser;
     };
 
-    function register_parser(type_name, required_args, optional_args, parser){
+    function register_layer(type_name, required_args, optional_args, parser){
         layer_list[type_name] = LayerBase.inherit(required_args, optional_args, parser);
     }
 
@@ -93,8 +93,8 @@ define([
     return {
         layers: layer_list,
         plots: plots,
+        register_layer: register_layer,
         register_parser: register_parser,
-        register_root_parser: register_root_parser,
         parse: parse,
         to_png: to_png
     };

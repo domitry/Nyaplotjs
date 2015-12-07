@@ -9,7 +9,7 @@ define([
 
     return function(){
         _.each(args, function(arg){
-            core.register_parser.apply(core, arg);
+            core.register_layer.apply(core, arg);
         });
     };
 });

@@ -6,7 +6,7 @@ define(function(require, exports, module){
     (require('layers/tool/_init'))();
     
     var core = require('core');
-    core.register_root_parser.apply(null, require('parser'));
+    core.register_parser.apply(null, require('parser'));
 
     return {
         d3: require('d3'),
