@@ -56,17 +56,19 @@ define([
                 });
             })();
 
-            // these lines should be fixed
-            window.setTimeout(
-                function(){
-                    svg2uri(d3.select("svg"))
+            d3.select("#save")
+                .style("cursor", "pointer")
+                .on("mouseup", function(){
+                    console.log("fuee");
+                    var a = document.createElement("a");
+                    svg_utils
+                        .svg2uri(options.svg.node)
                         .then(function(uri){
-                            a.attr({
-                                download: "plot.png",
-                                href: uri
-                            });
+                            a.href = uri;
+                            a.setAttribute("download", options.fname);
+                            a.dispatchEvent(new window.CustomEvent('click'));
                         });
-                }, 100);
+                });
 
             return div;
         }

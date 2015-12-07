@@ -211,7 +211,7 @@ define([
                 current.parser_type = "svg";
 
                 if(this.with_widget == true){
-                    this.props._widget = new S.Widget({});
+                    this.props._widget = new S.Widget({svg: this.props._stage});
                     current = html_row(this.props._widget, current);
                 }
                 
