@@ -59,7 +59,6 @@ define([
             d3.select("#save")
                 .style("cursor", "pointer")
                 .on("mouseup", function(){
-                    console.log("fuee");
                     var a = document.createElement("a");
                     svg_utils
                         .svg2uri(options.svg.node)
