@@ -36,6 +36,7 @@ You can try Nyaplotjs interactively on [JSFiddle](http://jsfiddle.net/domitry/z7
 
 * [to_png](http://www.domitry.com/nyaplot/to_png.html)
 * [Log scale](http://www.domitry.com/nyaplot/scale.html)
+* [Time scale](http://www.domitry.com/nyaplot/timescale.html)
 * [Annotation](http://www.domitry.com/nyaplot/annotation.html)
 * [MathLabel](http://www.domitry.com/nyaplot/mathlabel.html)
 * [Legend](http://www.domitry.com/nyaplot/legend.html)
