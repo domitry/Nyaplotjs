@@ -14,7 +14,12 @@ define([
                    function(arr){
                        var dname = arr[0], sname = arr[1];
                        var arrs = arr[2];
-                       
+
+                       if(!_.isNull(this[dname])){
+                           this["reset_" + dname] = false;
+                           return;
+                       }
+
                        switch(this.props[sname].props.type){
                        case "linear":
                        case "log":
@@ -34,20 +39,12 @@ define([
         };
 
         function decide_linear_domain(pname, arrs){
-            if(_.isNull(this[pname])){
-                arrs = _.flatten(arrs);
-                this[pname] = [_.min(arrs), _.max(arrs)];
-            }else{
-                this["reset_" + pname] = false;
-            }
+            arrs = _.flatten(arrs);
+            this[pname] = [_.min(arrs), _.max(arrs)];
         }
 
         function decide_ordinal_domain(pname, arrs){
-            if(_.isNull(this[pname])){
-                this[pname] = _.uniq(_.flatten(arrs));
-            }else{
-                this["reset_" + pname] = false;
-            }
+            this[pname] = _.uniq(_.flatten(arrs));
         }
 
         function decide_time_domain(pname, arrs){
