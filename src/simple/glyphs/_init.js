@@ -51,7 +51,9 @@ define([
         }
 
         function decide_time_domain(pname, arrs){
-            // TODO
+            arrs = _.flatten(arrs);
+            var f = function(str){return new Date(str);};
+            this[pname] = [_.min(arrs, f), _.max(arrs, f)];
         }
 
         init_primitive(S, Glyphs);
