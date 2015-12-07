@@ -21,8 +21,10 @@
            stacked: Boolean(d3.select("input").node().checked),
            interval: 0.15,
            colors: ["#8da0cb","#e78ac3","#a6d854"],
-           stroke_color: "none"
+           stroke_color: "none",
+           tooltip: true
          });
+         plot.with_tooltip = true;
          plot.render("#vis");
        }
 
