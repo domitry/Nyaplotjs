@@ -23,6 +23,8 @@ define([
                             if(_.isString(val))return scale_(new Date(val));
                             else return scale_(val);
                         }, scale_);
+                    }else if(type=="discrete"){
+                        return d3.scale.ordinal().domain(domain).range(range);
                     }else{
                         var scale = (d3.scale[type])().domain(domain);
                         if(type == "ordinal") scale.rangeBands(range);
