@@ -124,11 +124,11 @@ define([
         }
 
         Plot.prototype.render = function(text){
-            core.parse(text, this.create_models());
+            return core.parse(text, this.create_models());
         };
 
         Plot.prototype.to_png = function(text){
-            core.to_png(text, this.create_models());
+            return core.to_png(text, this.create_models());
         };
 
         Plot.prototype.create_models = function(){
