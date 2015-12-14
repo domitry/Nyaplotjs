@@ -18,6 +18,7 @@ define([
                 l.construct();
             }
             dfs(this.root);
+            return this;
         }};
         
         plots[model.uuid] = plot;
@@ -67,7 +68,7 @@ define([
         })();
 
         //// Apply given functions to each components
-        plot.render();
+        return plot.render();
     }
 
     function register_parser(name, parser){
