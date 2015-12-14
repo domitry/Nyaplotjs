@@ -2205,6 +2205,7 @@ define('core',[
                 l.construct();
             }
             dfs(this.root);
+            return this;
         }};
         
         plots[model.uuid] = plot;
@@ -2254,7 +2255,7 @@ define('core',[
         })();
 
         //// Apply given functions to each components
-        plot.render();
+        return plot.render();
     }
 
     function register_parser(name, parser){
@@ -2270,9 +2271,9 @@ define('core',[
         var root = d3.select(_root);
         var svg = root.select("svg");
         
-        svg_utils.svg2uri(svg).then(function(uri){
+        return svg_utils.svg2uri(svg).then(function(uri){
             svg.remove();
-            root.append("img")
+            return root.append("img")
                 .attr("src", uri);
         });
     };
@@ -4579,11 +4580,11 @@ define('simple/plot',[
         }
 
         Plot.prototype.render = function(text){
-            core.parse(text, this.create_models());
+            return core.parse(text, this.create_models());
         };
 
         Plot.prototype.to_png = function(text){
-            core.to_png(text, this.create_models());
+            return core.to_png(text, this.create_models());
         };
 
         Plot.prototype.create_models = function(){
