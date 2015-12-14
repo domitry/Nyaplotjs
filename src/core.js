@@ -18,6 +18,7 @@ define([
                 l.construct();
             }
             dfs(this.root);
+            return this;
         }};
         
         plots[model.uuid] = plot;
@@ -67,7 +68,7 @@ define([
         })();
 
         //// Apply given functions to each components
-        plot.render();
+        return plot.render();
     }
 
     function register_parser(name, parser){
@@ -83,9 +84,9 @@ define([
         var root = d3.select(_root);
         var svg = root.select("svg");
         
-        svg_utils.svg2uri(svg).then(function(uri){
+        return svg_utils.svg2uri(svg).then(function(uri){
             svg.remove();
-            root.append("img")
+            return root.append("img")
                 .attr("src", uri);
         });
     };
