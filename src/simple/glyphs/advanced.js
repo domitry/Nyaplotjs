@@ -146,7 +146,22 @@ define([
 
             _.each(xarr, function(label, i){
                 var arr = arrs[i];
-                var hist = d3.layout.histogram().bins(options.bins)(arr);
+                var hist = (function(){
+                    var h = d3.layout.histogram().bins(options.bins)(arr);
+                    var dx = h[0].dx;
+                    var min = h[0].x;
+                    var max = h[h.length-1].x;
+                    return _.map([{
+                        x: min-dx,
+                        length: 0
+                    }].concat(h.concat([{
+                        x: max+dx,
+                        length: 0
+                    }])), function(bin){
+                        bin.x = bin.x + dx/2;
+                        return bin;
+                    });
+                })();
                 
                 var position = create_x_descrete_position.call(this, label);
 
